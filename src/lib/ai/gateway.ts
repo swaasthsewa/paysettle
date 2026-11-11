@@ -104,7 +104,8 @@ export class AiGateway {
         messages: [{ role: "system", content: system }, ...messages.map((m) => ({ role: m.role, content: m.content }))],
       };
     }
-    return { model: c.model, temperature: 0, max_tokens: maxTokens, system, messages };
+    // No temperature: current Claude models reject the parameter (HTTP 400 "temperature is deprecated").
+    return { model: c.model, max_tokens: maxTokens, system, messages };
   }
 
   private headers(): Record<string, string> {
