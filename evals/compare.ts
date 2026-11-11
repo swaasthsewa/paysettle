@@ -25,9 +25,10 @@ import { compileRules, lintCriterion } from "../src/lib/ai/rules";
 import { configFromEnv } from "../src/lib/ai/config";
 import { AiGateway, memoryStore } from "../src/lib/ai/gateway";
 import { EMPTY_PEOPLE } from "../src/lib/ai/redact";
+import { fileURLToPath } from "node:url";
 
 try { process.loadEnvFile(".env.local"); } catch { /* optional */ }
-const dir = path.dirname(new URL(import.meta.url).pathname);
+const dir = path.dirname(fileURLToPath(import.meta.url));
 const argOf = (name: string) => { const i = process.argv.indexOf(name); return i >= 0 ? process.argv[i + 1] : undefined; };
 const r3 = (n: number) => Math.round(n * 1000) / 1000;
 const PENDING = "pending: needs AI_API_KEY";
@@ -94,7 +95,7 @@ async function main() {
   const items = set.items.filter((i) => typeof i.id === "string" && typeof i.text === "string" && typeof i.verifiable === "boolean");
   if (items.length !== set.items.length) console.log(`warning: ${set.items.length - items.length} row(s) skipped: each row needs id, text and verifiable (true/false).`);
   let commit = "unknown"; try { commit = execSync("git rev-parse --short HEAD", { encoding: "utf8" }).trim(); } catch { /* not a checkout */ }
-  const out: Record<string, unknown> = { at: new Date().toISOString(), commit, file: path.relative(process.cwd(), file), n: items.length, model: cfg.apiKey ? cfg.model : null, rewriteJudge: "rule linter (lintCriterion)" };
+  const out: Record<string, unknown> = { at: new Date().toISOString(), commit, file: path.relative(process.cwd(), file).split(path.sep).join("/"), n: items.length, model: cfg.apiKey ? cfg.model : null, rewriteJudge: "rule linter (lintCriterion)" };
 
   const rules = score(items, rulesSide(items));
   out.compilerRules = rules;

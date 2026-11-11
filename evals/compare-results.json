@@ -1,9 +1,9 @@
 {
-  "at": "2026-11-11T04:10:54.097Z",
-  "commit": "5a128c8",
+  "at": "2026-11-11T11:25:17.663Z",
+  "commit": "d198cb9",
   "file": "evals/golden/compile.json",
   "n": 60,
-  "model": null,
+  "model": "claude-sonnet-5-5",
   "rewriteJudge": "rule linter (lintCriterion)",
   "compilerRules": {
     "n": 60,
@@ -43,10 +43,37 @@
     ]
   },
   "compilerAi": {
-    "pending": "pending: needs AI_API_KEY"
+    "n": 60,
+    "answered": 60,
+    "precisionVague": 1,
+    "recallVague": 1,
+    "agreement": 1,
+    "rewrites": 30,
+    "rewritesCheckable": 30,
+    "rewriteCheckableRate": 1,
+    "flaggedWithoutRewrite": 0,
+    "misses": [],
+    "uncheckableRewrites": [],
+    "available": true
   },
   "baseline": {
-    "pending": "pending: needs AI_API_KEY",
-    "prompt": "eval.baseline@v1"
+    "n": 60,
+    "answered": 60,
+    "precisionVague": 1,
+    "recallVague": 1,
+    "agreement": 1,
+    "rewrites": 30,
+    "rewritesCheckable": 30,
+    "rewriteCheckableRate": 1,
+    "flaggedWithoutRewrite": 0,
+    "misses": [],
+    "uncheckableRewrites": [],
+    "prompt": "eval.baseline@v1",
+    "unanswered": 0
+  },
+  "cost": {
+    "calls": 6,
+    "tokens": 19948,
+    "costMicros": 191280
   }
 }
