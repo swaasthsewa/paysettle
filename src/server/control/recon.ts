@@ -167,7 +167,11 @@ export async function runReconcile(a: Actor | null, window: { from: Date; to: Da
   /* Plane C: one transactions() call per rail */
   const pick = o.rail ?? ((id: RailId) => railFor(id));
   const railData = new Map<string, TrancheInput["rail"]>();
-  for (const id of [...new Set(ts.map((t) => t.rail))] as RailId[]) {
+  /* the rail that actually holds the money: a tranche funded through the mock (a MOCKORD- order, e.g. a Fast-mock
+     playground run on a server that also has PayPal credentials) is checked against the mock rail, as money/internal.ts
+     railOf() drives it, not against PayPal's reporting feed, which never sees it */
+  const railKey = (t: { rail: string; paypalOrderId: string | null }): RailId => (t.paypalOrderId?.startsWith("MOCKORD-") ? "MOCK" : (t.rail as RailId));
+  for (const id of [...new Set(ts.map(railKey))]) {
     let rail: Rail | null = null;
     try {
       rail = pick(id);
@@ -181,7 +185,7 @@ export async function runReconcile(a: Actor | null, window: { from: Date; to: Da
   const lines = ts.flatMap((t) => {
     const ledger = led.filter((e) => e.trancheId === t.id);
     if (t.state === "CLOSED" && ledger.length && maxAt(ledger.map((e) => e.at)) < from) return []; /* settled long ago */
-    const ev = evaluateTranche(withDeadlineAdjustments({ tranche: t, milestones: ms.filter((m) => m.workspaceId === t.workspaceId && m.trancheIdx === t.idx), ledger, rail: railData.get(t.rail)!, now, windowFrom: from }, t.bonusPoolCents));
+    const ev = evaluateTranche(withDeadlineAdjustments({ tranche: t, milestones: ms.filter((m) => m.workspaceId === t.workspaceId && m.trancheIdx === t.idx), ledger, rail: railData.get(railKey(t))!, now, windowFrom: from }, t.bonusPoolCents));
     return [{ ...ev, trancheId: t.id, workspaceId: t.workspaceId, state: t.state, tripped: false }];
   });
 

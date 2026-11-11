@@ -24,7 +24,9 @@ export async function reconcileTranches(trancheIds: string[], opts: { now?: Date
   const ms = await db.select({ workspaceId: wsMilestones.workspaceId, trancheIdx: wsMilestones.trancheIdx, amountCents: wsMilestones.amountCents, state: wsMilestones.state, type: wsMilestones.type, active: wsMilestones.active }).from(wsMilestones).where(inArray(wsMilestones.workspaceId, wsIds));
   const led = await db.select().from(ledgerEntries).where(inArray(ledgerEntries.trancheId, trancheIds));
   const railData = new Map<string, { kind: "mock" | "paypal"; txns: PaypalTxn[] | null; error?: string }>();
-  for (const id of [...new Set(ts.map((t) => t.rail))] as RailId[]) {
+  /* the rail that holds the money: a mock-funded tranche (MOCKORD- order) is checked against the mock, as in recon.ts */
+  const railKey = (t: { rail: string; paypalOrderId: string | null }): RailId => (t.paypalOrderId?.startsWith("MOCKORD-") ? "MOCK" : (t.rail as RailId));
+  for (const id of [...new Set(ts.map(railKey))]) {
     if (opts.txns) { railData.set(id, { kind: opts.kind ?? "mock", txns: opts.txns }); continue; }
     try {
       const rail = railFor(id);
@@ -34,7 +36,7 @@ export async function reconcileTranches(trancheIds: string[], opts: { now?: Date
   return ts.map((t) => {
     const input = withDeadlineAdjustments({
       tranche: t, milestones: ms.filter((m) => m.workspaceId === t.workspaceId && m.trancheIdx === t.idx),
-      ledger: led.filter((e) => e.trancheId === t.id), rail: railData.get(t.rail)!, now, windowFrom: from,
+      ledger: led.filter((e) => e.trancheId === t.id), rail: railData.get(railKey(t))!, now, windowFrom: from,
     }, t.bonusPoolCents);
     return { ...evaluateTranche(input), trancheId: t.id, workspaceId: t.workspaceId, state: t.state };
   });
