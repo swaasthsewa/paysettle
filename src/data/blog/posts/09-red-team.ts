@@ -73,6 +73,6 @@ If you find an answer that does not hold up, tell us. A risk list is only useful
       { q: "Why not publish the severity scores?", a: "They are a reviewer's judgement of the plan, not measurements of the product, so this post concentrates on what we did about each risk." },
       { q: "Will the statuses change?", a: "Yes. When an action ships, its risk moves to answered in product, and the page says so." },
     ], { claimStatus: "product" }),
-    cta("cta1", "Read every answer", "Open the trust page", "/trust", "All 24 risks from the red team, the extra ones we track, and what we do not do."),
+    cta("cta1", "Read every answer", "Open the trust page", "/trust", "Every scenario we designed for, how PaySettle resolves it, the options we set aside, and what we do not do."),
   ],
 };

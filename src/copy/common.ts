@@ -6,7 +6,7 @@ export const common = {
   notMedical: "",
   nav: { tabs: "Sections", skip: "Skip to content", menu: "Main menu" },
   shell: {
-    home: "PaySettle home", menu: "Menu", collapse: "Fold the menu into a rail", expand: "Open the menu",
+    home: "PaySettle home", menu: "Menu", collapse: "Fold the menu into a rail", expand: "Open the menu", openMenu: "Open the menu", closeMenu: "Close the menu",
     search: { label: "Search", placeholder: "Search pages and contracts", hint: "Type to search", none: "Nothing found", open: "Open search", close: "Close search", groups: { pages: "Pages" } },
     theme: { label: "Appearance", light: "Light", dark: "Dark", system: "Device" },
     trail: "You are here", filter: { none: "Nothing matches" },

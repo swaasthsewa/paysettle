@@ -1,5 +1,5 @@
 /**
- * F3 · the landing page at /. Hero thread, then the chapters: the contract compiler, the problem, how it works, disputes, AI, agents,
+ * F3 · the landing page at /. The hero's settlement field, the scroll-driven reveal "from a sentence to a settlement", then the chapters: the contract compiler, the problem, how it works, disputes, AI, agents,
  * PayPal, trust, honest limits, and the close with the live waitlist count. Facts come from the database.
  */
 import { Ai, Agents, Compiler, Disputes, How, Limits, OnPaypal, Problem, Trust } from "@/components/site/landing/chapters";
@@ -8,6 +8,8 @@ import { Closing } from "@/components/site/landing/closing";
 import { landingFacts } from "@/components/site/landing/facts";
 import { Hero } from "@/components/site/landing/hero";
 import { Motion } from "@/components/site/landing/motion";
+import { SettleReveal } from "@/components/site/landing/SettleReveal";
+import "@/styles/landing.css";
 import { common } from "@/copy/common";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +20,8 @@ export default async function Home() {
   return (
     <Motion>
       <Hero />
+      {/* outside any data-scene: its stage is position: fixed, so no transformed ancestor may wrap it */}
+      <SettleReveal />
       <Compiler />
       <Problem />
       <How facts={facts} />

@@ -80,9 +80,9 @@ export const TOUR_STEPS: readonly TourStep[] = [
     scenarios: ["S6", "S7"],
   },
   {
-    id: "trust", tag: "Finally", title: "The hard questions, answered",
-    body: "Our own red team asked 24 hard questions about the plan. The trust page lists each answer, how far it is built and where to check it. The AI scorecard shows what each AI feature may and may not do, and its test results.",
-    look: ["The status chip on each risk.", "The links to the screen that shows each answer.", "Rule results on the AI scorecard, computed when the page loads."],
+    id: "trust", tag: "Finally", title: "Trust by design",
+    body: "The trust page walks through the scenarios PaySettle was designed around: held money, evidence, disputes, AI and data. For each it shows how the product resolves it, the options we set aside and where to see it. The AI scorecard shows what each AI feature may and may not do, and its test results.",
+    look: ["The status chip on each scenario.", "“Considered and set aside” beside each resolution.", "Rule results on the AI scorecard, computed when the page loads."],
     go: { href: "/trust", label: "Open the trust page" },
     also: { href: "/trust/ai", label: "AI scorecard" },
     scenarios: [],

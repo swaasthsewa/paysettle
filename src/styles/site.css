@@ -35,7 +35,10 @@
   .s-burger { display: inline-grid; place-items: center; order: 3; width: 42px; height: 42px; border-radius: 12px; border: 1px solid var(--line-2); background: var(--card); color: var(--ink); cursor: pointer; margin-left: 4px; }
   .s-burger svg { width: 18px; height: 18px; }
   .s-navr { order: 2; }
-  .s-links[data-open="true"] { position: fixed; left: 0; right: 0; top: var(--s-nav-h); bottom: 0; z-index: 49; margin: 0; padding: 12px 16px calc(24px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; align-items: stretch; gap: 4px; background: var(--paper); overflow-y: auto; }
+  /* a backdrop-filter makes the bar the containing block of its fixed children, which squeezed the open menu into the
+     64 px bar and let the hero show through it: while the menu is open the bar is solid and the menu has its own height */
+  .s-nav[data-open="true"] { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--paper); z-index: 100; }
+  .s-links[data-open="true"] { position: fixed; left: 0; right: 0; top: var(--s-nav-h); bottom: auto; height: calc(100dvh - var(--s-nav-h)); z-index: 49; margin: 0; padding: 12px 16px calc(24px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; align-items: stretch; gap: 4px; background: var(--paper); overflow-y: auto; }
   .s-links[data-open="true"] > a { display: flex; gap: 14px; align-items: center; padding: 12px; border-radius: var(--r-md); background: var(--card); border: 1px solid var(--line); }
   .s-link-icon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 12px; background: var(--sunken); color: var(--ink-2); flex: none; }
   .s-link-words { display: flex; flex-direction: column; }

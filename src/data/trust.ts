@@ -1,38 +1,20 @@
 /**
- * A8 · the public /trust page's content: the 24 risks our own red team raised against the PaySettle plan, our answer to
- * each, how far that answer is built, and the screens or pages where a reader can check it. Plus "what we do not do" and the
- * eight further risks we track. Pure data (no server imports) so client components can render it.
+ * A8 · the public /trust page's content, "trust by design": the scenarios PaySettle was designed around, grouped by
+ * theme, with what we built for each, the options we considered and set aside, how far it is built and where a reader can
+ * check it. Plus the lines we hold, what is deliberately out of scope, and the risk score. Pure data (no server imports).
  *
  * Accuracy rules (P10):
  *  - a status of "built" means the answer can be seen in this build; "progress" means part of it is still being built; "decided"
  *    is a scope decision with nothing to build.
  *  - numbers that the code defines (risk weights, the Ops threshold) are computed from src/lib/policy, not typed in.
- *  - every link points at a route that exists (src/data/trust.test.ts checks it).
+ *  - every link points at a route that exists (src/app/(site)/trust/trust.test.ts checks it).
  */
 import { RAIL_CAP_DAYS, RISK_OPS_THRESHOLD, riskScore, type PWorkspace } from "@/lib/policy";
 
 export type RiskStatus = "built" | "progress" | "decided";
-export type RiskArea = "Execution" | "Market" | "Financial" | "Regulatory" | "Competitive";
 
 /** A place where the answer can be checked. `as` names the demo person who can open an app screen (sign in from /login). */
 export interface TrustLink { href: string; label: string; as?: "Hackathon Judge" | "Olivia Grant (Ops)" | "any demo person" }
-
-export interface Risk {
-  n: number;
-  area: RiskArea;
-  /** The red team's rating of the risk, out of 10. */
-  rating: number;
-  /** The part of the business model the risk is about. */
-  block: string;
-  /** Plan horizon in months the risk was raised against. */
-  horizon: 12 | 24;
-  risk: string;
-  answer: string;
-  /** What is still to do, when anything is. */
-  next?: string;
-  status: RiskStatus;
-  links: TrustLink[];
-}
 
 export const STATUS_LABEL: Record<RiskStatus, string> = {
   built: "In the product",
@@ -73,198 +55,273 @@ export function riskWeights(): { key: string; label: string; points: number; mea
 }
 export const OPS_THRESHOLD = RISK_OPS_THRESHOLD;
 
-/* ── the 24 red-team risks ── */
+/* ── trust by design: the scenarios PaySettle was designed around ──
+ * Each scenario says what could go wrong in plain words, what we built for it, and the options we considered and set
+ * aside while designing, and why. Grouped by theme. */
 
 const ANY = "any demo person" as const;
 const JUDGE = "Hackathon Judge" as const;
 const OPS = "Olivia Grant (Ops)" as const;
 
-export const RISKS: readonly Risk[] = [
+/** An option we looked at and did not take, and why. */
+export interface SetAside { option: string; why: string }
+
+export interface Scenario {
+  /** Anchor on /trust, e.g. "money-held". */
+  id: string;
+  /** What could go wrong, as the reader would put it. */
+  question: string;
+  /** What PaySettle does about it. */
+  built: string;
+  setAside: readonly SetAside[];
+  /** What is still to do, when anything is. */
+  next?: string;
+  status: RiskStatus;
+  links: TrustLink[];
+}
+
+export interface Theme { id: string; title: string; lead: string; scenarios: readonly Scenario[] }
+
+export const THEMES: readonly Theme[] = [
   {
-    n: 1, area: "Execution", rating: 7, block: "Value proposition", horizon: 12,
-    risk: "The plan promised AI results such as 30% faster dispute resolution, 20% lower legal costs and 40% fewer penalties. Those numbers may not hold.",
-    answer: "We removed those percentages and do not publish them. AI only advises: every release still needs a person's signed approval or a mediator's signed verdict. Each AI feature has a rule-based fallback and a labelled test set.",
-    next: "Model results on the AI scorecard appear once the test sets run with an AI key. Until then the scorecard shows the rule results and says the model results are pending. The blog editor already refuses to publish a figure without a source.",
-    status: "progress",
-    links: [{ href: "/trust/ai", label: "AI scorecard" }, { href: "/account/ai", label: "AI & agents settings", as: ANY }],
+    id: "money", title: "Where the money is",
+    lead: "Staged work goes wrong when one side carries all the risk. The design question was who holds the money, for how long, and what happens when a payment system misbehaves.",
+    scenarios: [
+      {
+        id: "money-held",
+        question: "The client pays and the work never arrives, or the work arrives and the money never does.",
+        built: "Each stage of the work is funded as a PayPal authorization: the money is held in PayPal, not paid out and not held by PaySettle. When the client approves a milestone's evidence, PaySettle captures that milestone's share and nothing more. Money for work that is not needed is voided back to the client.",
+        setAside: [
+          { option: "Payment up front, or on completion", why: "Either way one side carries the whole risk, which is the problem we set out to fix." },
+          { option: "Holding the money in a PaySettle account", why: "That would make PaySettle a holder of other people's money, which is regulated in most markets. A custodial variant exists only in the sandbox, for comparison." },
+          { option: "A marketplace with built-in escrow", why: "It works only inside that marketplace and its fees, not with clients you already have." },
+        ],
+        status: "built",
+        links: [{ href: "/playground", label: "Judge Playground, scenario S1", as: JUDGE }, { href: "/how-it-works", label: "How it works" }],
+      },
+      {
+        id: "money-window",
+        question: "A project runs longer than PayPal will hold the money.",
+        built: `PayPal honours an authorization for a limited time. PaySettle splits a contract into tranches of at most ${RAIL_CAP_DAYS.A1} days, so no hold outlives its window. A watchdog warns before a hold runs out, offers to reauthorize or roll it over, and settles in time. Operations sees every hold on a radar.`,
+        setAside: [
+          { option: "One authorization for the whole project", why: "It would expire before a long project ends, and the hold would lapse." },
+          { option: "Capture everything first and pay out later", why: "PayPal's delayed disbursement needs partner approval and is offered in a few countries only. It is built behind a switch and off by default." },
+        ],
+        next: "This build runs on the PayPal Sandbox only. Production access to PayPal has not been requested yet.",
+        status: "progress",
+        links: [{ href: "/playground", label: "Judge Playground, scenario S3", as: JUDGE }, { href: "/ops/radar", label: "Hold-expiry radar", as: JUDGE }],
+      },
+      {
+        id: "money-faults",
+        question: "PayPal times out in the middle of a release, or sends the same notice twice.",
+        built: "Every release carries its own idempotency key, so a retry after a timeout makes one capture, not two. Every PayPal webhook is verified and recognised by its transmission id, so a second copy changes nothing. A three-way reconciliation compares the ledger, PayPal and the contract, and one cent of drift stops that tranche until a person looks.",
+        setAside: [
+          { option: "Retrying a failed call without a key", why: "A timeout does not say whether PayPal acted; a blind retry can pay twice." },
+          { option: "Reconciling by hand at month end", why: "Drift would be found weeks after the money moved." },
+        ],
+        status: "built",
+        links: [{ href: "/playground", label: "Judge Playground, scenario S5", as: JUDGE }, { href: "/admin/webhooks", label: "Webhooks and dead-letter queue", as: JUDGE }],
+      },
+      {
+        id: "money-chargeback",
+        question: "A client approves a milestone, then files a card chargeback.",
+        built: "When PayPal opens a dispute, PaySettle sends PayPal the signed approval, the fingerprints of the evidence and the timeline, so the provider's case is ready without a search.",
+        setAside: [
+          { option: "Keeping back part of every payout as a reserve", why: "It would cost every honest provider money for the rare bad client." },
+        ],
+        status: "built",
+        links: [{ href: "/admin/webhooks", label: "Webhooks", as: JUDGE }],
+      },
+      {
+        id: "money-collusion",
+        question: "The client and the provider are the same person, moving money to themselves.",
+        built: "PayPal checks the identity behind both accounts, and Operations can review the identities and signatures on any contract.",
+        setAside: [
+          { option: "Running our own identity checks", why: "PayPal already does this for every account; a second check would add friction without adding much." },
+        ],
+        next: "A warning when both parties sign or fund from the same network, and a limit on how much a new pair of parties can move.",
+        status: "progress",
+        links: [{ href: "/admin/identities", label: "Identity auditor", as: OPS }],
+      },
+    ],
   },
   {
-    n: 2, area: "Market", rating: 6, block: "Customer segments", horizon: 12,
-    risk: "Going after enterprises, governments and international buyers at the same time would spread a small team too thin.",
-    answer: "We start with freelancers and small service businesses running projects of about $1,000 to $25,000. Government buyers are not in the 24-month plan.",
-    status: "decided",
-    links: [{ href: "/trust#for-whom", label: "Who PaySettle is for" }, { href: "/pricing", label: "Pricing" }],
+    id: "contract", title: "Agreeing what “done” means",
+    lead: "Most disputes are not about money held. They are about whether the work is done. So the contract itself is checked before anyone signs.",
+    scenarios: [
+      {
+        id: "contract-vague",
+        question: "“Done” is a sentence nobody can check, such as “the website should be fast and modern”.",
+        built: "The Criteria Compiler flags acceptance criteria that a neutral person could not answer yes or no from evidence, says why, and suggests a measurable rewrite. A policy gate refuses signing while a paying milestone names no proof. Both parties then sign the same revision of the same text.",
+        setAside: [
+          { option: "Letting an AI write and approve the criteria on its own", why: "A rule check runs over every AI rewrite; wording that only sounds measurable is still rejected." },
+          { option: "A free-text contract with a signature", why: "Nothing would tie a payment to the evidence its clause names." },
+        ],
+        status: "built",
+        links: [{ href: "/trust/ai#features", label: "What the Criteria Compiler may and may not do" }, { href: "/blueprints", label: "Blueprints and their proof", as: JUDGE }],
+      },
+      {
+        id: "contract-tamper",
+        question: "Someone edits the contract, or the record of what happened, after the fact.",
+        built: "The signed contract is reduced to a canonical form and hashed, and each signature is bound to that hash. Every action is written to a hash-chained audit log that a verifier checks every hour, so a later edit shows.",
+        setAside: [
+          { option: "Putting contracts on a blockchain", why: "Hashes and a chained log give the same tamper evidence without gas fees, wallets, chain risk or scarce specialist skills." },
+        ],
+        next: "Optional, later: publish the audit chain's root hash once a day.",
+        status: "built",
+        links: [{ href: "/admin/audit", label: "Audit chain with verification", as: JUDGE }, { href: "/security", label: "Security controls" }],
+      },
+      {
+        id: "contract-change",
+        question: "The plan changes halfway: a new step, later dates, a step that is no longer needed.",
+        built: "Either party, or their agent, can propose a change order on a signed contract. Nothing changes until both parties sign it with their authenticator. The timeline shows the proposal over the signed plan, and new money is funded as a new tranche.",
+        setAside: [
+          { option: "Letting either party edit a signed contract", why: "The other party would lose the contract they signed." },
+          { option: "Cancelling and signing a new contract", why: "It would break the link between the money already held and the work already done." },
+        ],
+        status: "built",
+        links: [{ href: "/how-it-works", label: "How it works" }],
+      },
+    ],
   },
   {
-    n: 3, area: "Execution", rating: 5, block: "Channels", horizon: 12,
-    risk: "Relying on law firms and regulators to lend credibility makes the business depend on them.",
-    answer: "The core product needs only PayPal. Disputes that need a person go to our own mediator network, drawn from several firms, so no single firm is critical.",
-    status: "built",
-    links: [{ href: "/mediators", label: "The mediator network" }, { href: "/mediator/cases", label: "Mediator case queue", as: JUDGE }],
+    id: "evidence", title: "Evidence and disputes",
+    lead: "A release is only as good as the evidence behind it, and a disagreement should not stop work that nobody disputes.",
+    scenarios: [
+      {
+        id: "evidence-photos",
+        question: "Photos are faked, made by AI, or reused from another job.",
+        built: "Location and date signals flag photos taken in the wrong place or at the wrong time, and a fingerprint check compares each photo with photos from other contracts.",
+        setAside: [
+          { option: "Trusting photo metadata alone", why: "It is easy to edit, so it is one signal among several and never the only one." },
+        ],
+        next: "Reading content credentials (C2PA) where a photo carries them.",
+        status: "built",
+        links: [{ href: "/playground", label: "Judge Playground, scenario S2", as: JUDGE }],
+      },
+      {
+        id: "evidence-dispute",
+        question: "The parties disagree about one milestone.",
+        built: "Only that milestone's money is frozen; the rest of the contract carries on and stays paid. The dispute moves through three tiers with fixed clocks: blind bids for 48 hours, then a sealed evidence vault, then a human mediator. The verdict executes as two separate payments, each with its own idempotency key.",
+        setAside: [
+          { option: "Freezing the whole contract", why: "It stops work and payments that nobody disputes." },
+          { option: "Verdicts by AI", why: "An AI proposal is a starting point only. A mediator signs every verdict, and above $5,000 a second mediator co-signs." },
+        ],
+        status: "built",
+        links: [{ href: "/playground", label: "Judge Playground, scenario S4", as: JUDGE }, { href: "/mediator/cases", label: "Mediator case queue", as: JUDGE }],
+      },
+      {
+        id: "evidence-mediator",
+        question: "A mediator favours one side.",
+        built: "Conflict-of-interest checks run before a case is assigned. A random 5% of closed verdicts get a second review, both parties rate the mediator after settlement, and large or early-career verdicts need a senior co-signer from another firm.",
+        setAside: [
+          { option: "One partner law firm for every dispute", why: "PaySettle would depend on that firm, and its view would shape every outcome. Mediators come from several firms." },
+        ],
+        status: "built",
+        links: [{ href: "/mediators", label: "How mediators are assigned" }],
+      },
+    ],
   },
   {
-    n: 4, area: "Financial", rating: 4, block: "Customer relationships", horizon: 12,
-    risk: "Account managers and manual risk reviews would make each customer expensive to win.",
-    answer: `PaySettle is self-serve. A person from Operations looks only at contracts with a risk score of ${RISK_OPS_THRESHOLD} or more, and a mediator only at disputes that reach Tier 3.`,
-    status: "built",
-    links: [{ href: "/ops/clearance", label: "Contract clearance queue", as: OPS }, { href: "/marketing", label: "Growth funnel with the share of contracts that needed a person", as: JUDGE }],
+    id: "ai", title: "AI that advises",
+    lead: "AI is useful for drafting and checking, and wrong often enough that it must never be in charge of money.",
+    scenarios: [
+      {
+        id: "ai-money",
+        question: "An AI decides who gets paid, and nobody can see why.",
+        built: "AI drafts, checks and proposes. People sign every contract and approve every release, and a mediator signs every verdict. Every AI panel says it is advice and shows its reasons. Every AI call is logged with its purpose, model, tokens and cost, and personal data is masked before anything is sent.",
+        setAside: [
+          { option: "AI-led negotiation and AI verdicts", why: "A black box that moves money is the opposite of what both parties need." },
+        ],
+        status: "built",
+        links: [{ href: "/trust/ai#governance", label: "AI governance" }, { href: "/playground", label: "Judge Playground, scenario S4", as: JUDGE }],
+      },
+      {
+        id: "ai-claims",
+        question: "The promised benefits of the AI turn out not to be true.",
+        built: "We publish measured results, not projections, and the misses with them. The blog editor refuses to publish a figure without a source.",
+        setAside: [
+          { option: "Projected gains such as “30% faster dispute resolution”", why: "They were estimates. We measure dispute rate, time to release and on-time delivery instead." },
+        ],
+        next: "Running the AI test sets as a required check before each release; today the rule test set runs on every push.",
+        status: "progress",
+        links: [{ href: "/trust/ai#evals", label: "AI scorecard and test sets" }],
+      },
+      {
+        id: "ai-vendor",
+        question: "An AI provider changes its prices, its models or its terms.",
+        built: "One gateway talks to any provider through configuration, a daily token cap limits spend, the tests run against a fake model, and the product works with AI switched off: every feature falls back to its rules. The AI reads only the case in front of it.",
+        setAside: [
+          { option: "Our own model, trained on legal texts", why: "It needs a large legal dataset and a standing AI team, and the case in front of it is what matters." },
+          { option: "One provider wired in directly", why: "Switching would mean rewriting every feature." },
+        ],
+        status: "built",
+        links: [{ href: "/trust/ai#features", label: "AI features and their fallbacks" }, { href: "/account/ai", label: "Today's AI use against the cap", as: ANY }],
+      },
+      {
+        id: "ai-injection",
+        question: "Someone hides instructions for the AI inside their evidence.",
+        built: "Text from either party is marked as untrusted before the AI reads it, and the AI's answer is checked by rules that the hidden text cannot change. A labelled set of hidden instructions is part of the AI test sets.",
+        setAside: [
+          { option: "Filtering suspicious words out of evidence", why: "Attackers rephrase. Treating all party text as data is sturdier than guessing which text is an attack." },
+        ],
+        status: "built",
+        links: [{ href: "/trust/ai#evals", label: "Prompt-injection test results" }],
+      },
+    ],
   },
   {
-    n: 5, area: "Market", rating: 6, block: "Revenue streams", horizon: 12,
-    risk: "Selling anonymised data trends could let people be re-identified and would cost trust.",
-    answer: "We dropped that revenue stream. We do not sell data. Analytics inside the product are aggregates only, with personal data removed, and any group smaller than five is hidden.",
-    status: "built",
-    links: [{ href: "/privacy#no-sale", label: "Privacy: we do not sell data" }, { href: "/marketing", label: "Aggregate analytics", as: JUDGE }],
-  },
-  {
-    n: 6, area: "Execution", rating: 8, block: "Key activities", horizon: 12,
-    risk: "The AI would need a large legal training dataset.",
-    answer: "We do not train models on legal texts. The AI reads only the case in front of it: the signed clauses, the evidence and the parties' replies, with personal data masked and party text marked as untrusted. The root-cause tags mediators add to each verdict build our own outcome data.",
-    status: "built",
-    links: [{ href: "/trust/ai#data", label: "What the AI reads" }],
-  },
-  {
-    n: 7, area: "Execution", rating: 7, block: "Key resources", horizon: 12,
-    risk: "An in-house AI team is a large fixed cost.",
-    answer: "One gateway talks to any provider through configuration, a daily token cap limits spend, and every AI feature has a rule-based fallback. A small team can run it.",
-    status: "built",
-    links: [{ href: "/trust/ai#features", label: "AI features and their fallbacks" }, { href: "/account/ai", label: "Today's AI use against the cap", as: ANY }],
-  },
-  {
-    n: 8, area: "Regulatory", rating: 5, block: "Key partners", horizon: 12,
-    risk: "Offering contract insurance needs insurance licences.",
-    answer: "There is no insurance in this build or in the 12-month plan. If it is added later, it will be a referral only: a licensed insurer sells it and PaySettle takes no commission.",
-    status: "decided",
-    links: [{ href: "/trust#not", label: "What we do not do" }],
-  },
-  {
-    n: 9, area: "Market", rating: 4, block: "Customer segments", horizon: 12,
-    risk: "Government procurement is slow and uncertain.",
-    answer: "Government buyers are not a target segment.",
-    status: "decided",
-    links: [{ href: "/trust#for-whom", label: "Who PaySettle is for" }],
-  },
-  {
-    n: 10, area: "Competitive", rating: 3, block: "Value proposition", horizon: 12,
-    risk: "Competitors could copy the AI features.",
-    answer: "The AI is not what is hard to copy. That is the PayPal orchestration that splits work into holds that fit PayPal's authorization window, the blueprints with machine-checkable proof for each milestone, the outcome data from disputes, and the mediator network.",
-    status: "decided",
-    links: [{ href: "/blueprints", label: "Blueprints", as: JUDGE }, { href: "/playground", label: "Judge Playground, scenario S3", as: JUDGE }],
-  },
-  {
-    n: 11, area: "Execution", rating: 4, block: "Key partners", horizon: 12,
-    risk: "Depending on AI vendors.",
-    answer: "The gateway switches providers by configuration, the tests run against a fake model, and the product works with AI switched off: each feature falls back to its rules.",
-    status: "built",
-    links: [{ href: "/trust/ai#governance", label: "Switching AI off" }, { href: "/account/ai", label: "AI availability", as: ANY }],
-  },
-  {
-    n: 12, area: "Financial", rating: 6, block: "Cost structure", horizon: 12,
-    risk: "Spending on enterprise sales may not pay back.",
-    answer: "There is no enterprise sales team in the first year. The product is self-serve, with one fee taken when a milestone is released.",
-    status: "decided",
-    links: [{ href: "/pricing", label: "Pricing" }],
-  },
-  {
-    n: 13, area: "Execution", rating: 7, block: "Value proposition", horizon: 24,
-    risk: "The claim of 20% or better contract outcomes is unproven.",
-    answer: "We do not make that claim. We measure dispute rate, time to release and on-time delivery instead.",
-    next: "On-time delivery becomes measurable per milestone with the optional deadline terms (a deduction for late delivery, a bonus for early delivery), which ship in this release.",
-    status: "progress",
-    links: [{ href: "/marketing", label: "Growth funnel", as: JUDGE }, { href: "/playground", label: "Judge Playground, scenario S7", as: JUDGE }],
-  },
-  {
-    n: 14, area: "Market", rating: 6, block: "Customer segments", horizon: 24,
-    risk: "Consortia, non-profits and universities are too broad a market.",
-    answer: "They are out of scope. A grant-in-stages blueprint may be the only bridge to them, and only later.",
-    status: "decided",
-    links: [{ href: "/trust#for-whom", label: "Who PaySettle is for" }],
-  },
-  {
-    n: 15, area: "Regulatory", rating: 8, block: "Channels", horizon: 24,
-    risk: "Integrations with government systems are fragile.",
-    answer: "We do not plan any.",
-    status: "decided",
-    links: [{ href: "/trust#for-whom", label: "Who PaySettle is for" }],
-  },
-  {
-    n: 16, area: "Execution", rating: 5, block: "Customer relationships", horizon: 24,
-    risk: "AI-led negotiation can feel impersonal, like a black box.",
-    answer: "People sign every contract and every release. AI drafts and checks only, and verdicts are given by people. Every AI panel says it is advice and shows its reasons.",
-    status: "built",
-    links: [{ href: "/how-it-works", label: "How it works" }, { href: "/playground", label: "Judge Playground, scenario S4", as: JUDGE }],
-  },
-  {
-    n: 17, area: "Financial", rating: 7, block: "Revenue streams", horizon: 24,
-    risk: "Insurance commissions could bias the risk scores.",
-    answer: "The risk score is a published, fixed formula of five parts: contract value, protective clauses switched off, custom clauses, provider tier and front-loaded payments. None of it is linked to revenue, and we take no commissions.",
-    status: "built",
-    links: [{ href: "/trust#formula", label: "The risk formula" }, { href: "/ops/clearance", label: "Score parts in the clearance queue", as: OPS }],
-  },
-  {
-    n: 18, area: "Execution", rating: 8, block: "Key activities", horizon: 24,
-    risk: "Integrating several blockchains is costly and risky.",
-    answer: "There is no blockchain, by design. Hashes of the canonical contract, signatures bound to that hash and a hash-chained audit log show tampering without gas fees, wallets or chain risk.",
-    next: "Optional, later: publish the audit chain's root hash once a day.",
-    status: "built",
-    links: [{ href: "/admin/audit", label: "Audit chain with verification", as: JUDGE }, { href: "/security", label: "Security controls" }],
-  },
-  {
-    n: 19, area: "Execution", rating: 6, block: "Key resources", horizon: 24,
-    risk: "An AI ethics board can be weak, or just for show.",
-    answer: "AI cannot move money. A person decides every outcome, and a mediator signs every verdict. Every AI call is logged with its purpose, model, token count and cost, and personal data is masked before anything is sent. The governance note names the model card, the test gates and who can turn AI off.",
-    next: "Run the model test sets as a required check before each release; today the rule test set runs on every push.",
-    status: "built",
-    links: [{ href: "/trust/ai#governance", label: "AI governance note" }],
-  },
-  {
-    n: 20, area: "Competitive", rating: 5, block: "Key partners", horizon: 24,
-    risk: "Decentralised insurance protocols are immature.",
-    answer: "We do not use them.",
-    status: "decided",
-    links: [{ href: "/trust#not", label: "What we do not do" }],
-  },
-  {
-    n: 21, area: "Financial", rating: 6, block: "Cost structure", horizon: 24,
-    risk: "The cost of AI ethics compliance grows over time.",
-    answer: "Automated checks keep that cost small. The rule test set for the Criteria Compiler runs with the unit tests on every push. The model test sets run with one command when an AI key is set.",
-    next: "Make the model test sets a required check before release.",
-    status: "progress",
-    links: [{ href: "/trust/ai#evals", label: "Test sets and results" }],
-  },
-  {
-    n: 22, area: "Market", rating: 4, block: "Value proposition", horizon: 24,
-    risk: "Game-like DAO rewards attract the wrong people.",
-    answer: "There is no DAO and there are no tokens. Reputation is a provider trust tier earned from real contract outcomes, and governance is four-eyes approval plus mediator panels.",
-    status: "built",
-    links: [{ href: "/ops/providers", label: "Provider health and trust tiers", as: JUDGE }, { href: "/admin/dual-control", label: "Four-eyes queue", as: JUDGE }],
-  },
-  {
-    n: 23, area: "Execution", rating: 5, block: "Key resources", horizon: 24,
-    risk: "Blockchain engineers are hard to hire.",
-    answer: "We do not need them: there is no blockchain (see risk 18).",
-    status: "built",
-    links: [{ href: "/trust#risk-18", label: "Risk 18" }],
-  },
-  {
-    n: 24, area: "Execution", rating: 4, block: "Key partners", horizon: 24,
-    risk: "Joining a regulatory sandbox invites scrutiny.",
-    answer: "The design is non-custodial: the money is held in PayPal, not by PaySettle. The custodial rail is limited to the sandbox, and the compliance export shows that money passes straight through.",
-    status: "built",
-    links: [{ href: "/finance", label: "Finance overview with the compliance export", as: JUDGE }, { href: "/security", label: "Security controls" }],
+    id: "data", title: "Your data",
+    lead: "A record of who paid whom, and for what, is sensitive. The design keeps what the record needs and sells none of it.",
+    scenarios: [
+      {
+        id: "data-sale",
+        question: "Data about your contracts is sold, or someone is picked out of “anonymous” statistics.",
+        built: "We do not sell data: not personal data, and not anonymised trends. Analytics inside the product are aggregates with personal data removed, and any group smaller than five is hidden.",
+        setAside: [
+          { option: "Selling anonymised market trends", why: "Small groups can be re-identified, and it would cost the trust the product depends on." },
+        ],
+        status: "built",
+        links: [{ href: "/privacy#no-sale", label: "Privacy: we do not sell data" }, { href: "/marketing", label: "Aggregate analytics", as: JUDGE }],
+      },
+      {
+        id: "data-erasure",
+        question: "You ask to be erased, but evidence records cannot be changed.",
+        built: "The design: keep the hashes, encrypt personal fields with a key per person, and destroy that key on erasure. The record still proves what happened; the person can no longer be read from it.",
+        setAside: [
+          { option: "Deleting rows from the record", why: "It would break the audit chain that proves every other contract." },
+        ],
+        next: "Designed and documented; to be built before any real money moves.",
+        status: "decided",
+        links: [{ href: "/privacy", label: "Privacy" }],
+      },
+    ],
   },
 ];
 
-/* ── what we do not do ── */
+/** Every scenario, in page order. */
+export const SCENARIOS: readonly Scenario[] = THEMES.flatMap((t) => t.scenarios);
 
-export const WE_DO_NOT: readonly { title: string; body: string; risk?: number }[] = [
-  { title: "We do not sell data", body: "Not personal data, and not anonymised trends. Analytics stay inside the product, as aggregates.", risk: 5 },
-  { title: "We do not use a blockchain", body: "No tokens, wallets, gas fees or DAO. Tamper evidence comes from hashes and a hash-chained audit log.", risk: 18 },
-  { title: "We do not earn insurance commissions", body: "There is no insurance product. Nothing about a risk score is linked to revenue.", risk: 17 },
-  { title: "AI never moves money", body: "AI drafts, checks and proposes. People sign, approve and release, and a mediator signs every verdict.", risk: 16 },
+/* ── lines we hold ── */
+
+export const WE_DO_NOT: readonly { title: string; body: string; scenario?: string }[] = [
+  { title: "We do not sell data", body: "Not personal data, and not anonymised trends. Analytics stay inside the product, as aggregates.", scenario: "data-sale" },
+  { title: "We do not use a blockchain", body: "No tokens, wallets, gas fees or DAO. Tamper evidence comes from hashes and a hash-chained audit log.", scenario: "contract-tamper" },
+  { title: "We do not earn insurance commissions", body: "There is no insurance product, and nothing about a risk score is linked to revenue.", scenario: "formula" },
+  { title: "AI never moves money", body: "AI drafts, checks and proposes. People sign, approve and release, and a mediator signs every verdict.", scenario: "ai-money" },
 ];
 
-/* ── who it is for (risks 2, 9, 14, 15) ── */
+/* ── deliberately out of scope: ideas from the first plan that we chose not to build ── */
+
+export const OUT_OF_SCOPE: readonly { title: string; why: string }[] = [
+  { title: "Government buyers and their systems", why: "Procurement is slow and system integrations are fragile; a small team would spread too thin." },
+  { title: "Consortia, non-profits and universities", why: "Too broad a market to serve well at first." },
+  { title: "An enterprise sales team", why: "PaySettle is self-serve, with one fee taken when a milestone is released." },
+  { title: "Contract insurance", why: "It needs insurance licences. If it comes later, a licensed insurer sells it and PaySettle takes no commission." },
+  { title: "DAO governance, tokens and decentralised insurance", why: "Governance is four-eyes approval and mediator panels; reputation is a trust tier earned from real contract outcomes." },
+];
+
+/* ── who it is for ── */
 
 export const FOR_WHOM = {
   who: "Freelancers and small service businesses, and the clients who hire them, for staged projects of about $1,000 to $25,000.",
@@ -272,71 +329,8 @@ export const FOR_WHOM = {
   notFor: "Government procurement, consortia, non-profits and universities are not target segments in the 24-month plan.",
 } as const;
 
-/* ── eight further risks we track (not raised by the red team) ── */
-
-export interface TrackedRisk { title: string; risk: string; answer: string; status: RiskStatus; links: TrustLink[] }
-
-export const TRACKED: readonly TrackedRisk[] = [
-  {
-    title: "PayPal rail limits",
-    risk: "A PayPal authorization is honoured for a limited time, can be reauthorized once, and delayed disbursement needs partner approval.",
-    answer: `Rail A (authorize, then capture) is the default. Work is split into holds of at most ${RAIL_CAP_DAYS.A1} days, a watchdog acts before a hold runs out, and the mock rail stays available as a visible fallback. A live test against PayPal runs as soon as live keys arrive.`,
-    status: "progress",
-    links: [{ href: "/playground", label: "Judge Playground, scenario S3", as: JUDGE }, { href: "/ops/radar", label: "Hold-expiry radar", as: JUDGE }],
-  },
-  {
-    title: "AI-made or reused photos",
-    risk: "Photo metadata is easy to fake, and one photo can be reused across contracts.",
-    answer: "Location and date signals flag photos taken in the wrong place, and a fingerprint check compares each photo with photos from other contracts. Checking content credentials (C2PA), where a photo carries them, comes later.",
-    status: "built",
-    links: [{ href: "/playground", label: "Judge Playground, scenario S2", as: JUDGE }],
-  },
-  {
-    title: "Chargebacks after release",
-    risk: "A buyer approves a milestone, then files a card chargeback.",
-    answer: "When PayPal opens a dispute, PaySettle sends the signed approval, the evidence fingerprints and the timeline to PayPal as evidence.",
-    status: "built",
-    links: [{ href: "/admin/webhooks", label: "Webhooks", as: JUDGE }],
-  },
-  {
-    title: "Collusion and money laundering",
-    risk: "The client and the provider are the same person, moving money to themselves.",
-    answer: "PayPal checks identity. PaySettle is adding a warning when both parties sign or fund from the same network. A limit on how much money a new pair of parties can move comes later.",
-    status: "progress",
-    links: [{ href: "/admin/identities", label: "Identity auditor", as: OPS }],
-  },
-  {
-    title: "Mediator bias or bribery",
-    risk: "A mediator favours one side.",
-    answer: "Conflict-of-interest checks run before assignment. A random 5% of closed verdicts get a second review, both parties rate the mediator after settlement, and large or early-career verdicts need a senior co-signer from another firm.",
-    status: "built",
-    links: [{ href: "/mediators", label: "How mediators are assigned" }],
-  },
-  {
-    title: "Privacy and write-once records",
-    risk: "The right to erasure conflicts with evidence records that cannot be changed.",
-    answer: "Our plan: keep the hashes, encrypt personal fields with a key per person, and destroy that key on erasure. This is documented now and built later.",
-    status: "decided",
-    links: [{ href: "/privacy", label: "Privacy" }],
-  },
-  {
-    title: "A rough first visit for judges",
-    risk: "A cold start, sign-in friction or a slow PayPal Sandbox can spoil a short review.",
-    answer: "A one-click judge sign-in, a fast mock mode in the playground and a guided three-minute tour. A warm-up request before each judging session is still to do.",
-    status: "progress",
-    links: [{ href: "/judges", label: "Start here, judges" }],
-  },
-  {
-    title: "Hackathon rules",
-    risk: "The project must be new or significantly updated, and the video may not use third-party trademarks or music.",
-    answer: "A reuse list in the repository names every reused part. The video is planned with only our own screens and no music.",
-    status: "progress",
-    links: [{ href: "/judges", label: "Start here, judges" }],
-  },
-];
-
-/** Count of risks per status, in display order. */
-export function statusCounts(list: readonly { status: RiskStatus }[] = RISKS): { status: RiskStatus; label: string; n: number }[] {
+/** Count of scenarios per status, in display order. */
+export function statusCounts(list: readonly { status: RiskStatus }[] = SCENARIOS): { status: RiskStatus; label: string; n: number }[] {
   return (["built", "progress", "decided"] as const).map((s) => ({ status: s, label: STATUS_LABEL[s], n: list.filter((r) => r.status === s).length }));
 }
 

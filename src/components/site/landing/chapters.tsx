@@ -45,7 +45,7 @@ export function Compiler() {
             ))}
           </ol>
         </div>
-        <div className="lp-gatecard" data-part>
+        <div className="lp-gatecard" data-part data-depth="-0.06">
           <div className="lp-compile" aria-label="Criteria Compiler: a vague criterion and its rewrite">
             <p><s>{`“${t.before}”`}</s></p>
             <p><span className="chip" data-b="danger">{verdict.verifiable ? "Checkable" : t.rejected}</span> {verdict.reason}</p>
@@ -87,7 +87,7 @@ export function Problem() {
       <div className="lp-wrap">
         <Head id="lp-problem-h" kicker={t.kicker} title={t.title} lead={t.lead} />
         <div className="lp-stage" data-part>
-          <svg className="lp-apart" viewBox="0 0 1240 520" role="img" aria-label={t.art}>
+          <svg className="lp-apart" data-depth="0.08" viewBox="0 0 1240 520" role="img" aria-label={t.art}>
             <path className="lp-line" pathLength={1} d={wave(170, 34, 0)} stroke={TEAL} />
             <path className="lp-line" pathLength={1} d={wave(350, 34, Math.PI)} stroke={AMBER} />
             <line x1="620" y1="214" x2="620" y2="306" stroke="#4e545c" strokeWidth="2" strokeDasharray="6 7" />
@@ -131,7 +131,7 @@ export function How({ facts }: { facts: LandingFacts }) {
           </ol>
         </div>
         {ex && (
-          <figure className="lp-contract" data-part>
+          <figure className="lp-contract" data-part data-depth="-0.07">
             <figcaption className="lp-contract-head">
               <b>{t.example(ex.title, ex.days)}</b>
               <span className="lp-pill">{t.total(ex.totalCents)}</span>
@@ -230,7 +230,7 @@ export function Agents() {
           <h2 id="lp-agents-h" data-part>{t.title}</h2>
           <p className="lp-lead lp-lead-left" data-part>{t.lead}</p>
         </div>
-        <ol className="lp-term" data-part aria-label="An agent-to-agent contract, call by call">
+        <ol className="lp-term" data-part data-depth="-0.05" aria-label="An agent-to-agent contract, call by call">
           {t.calls.map((c, i) => (
             <li key={c.tool} className={c.gate ? "lp-term-gate" : undefined} data-row style={{ "--i": i } as CSSProperties}>
               <span className="lp-term-who">{c.who}</span>
@@ -258,7 +258,7 @@ export function OnPaypal({ facts }: { facts: LandingFacts }) {
       <div className="lp-wrap">
         <Head id="lp-paypal-h" kicker={t.kicker} title={t.title} lead={t.lead} />
         {parts.length > 0 && (
-          <div className="lp-auth" data-part>
+          <div className="lp-auth" data-part data-depth="-0.05">
             <div className="lp-auth-bar" role="img" aria-label={t.art(siteMoney(total))}>
               {parts.map((p, i) => (
                 <span key={p.code} className={`lp-auth-seg lp-auth-${p.s}`} data-bar style={{ flexGrow: p.amountCents, "--i": i } as CSSProperties}>

@@ -1,36 +1,43 @@
 /**
- * A8 · /trust — the 24 risks our red team raised against the plan, our answer to each with its status and the screen
- * that shows it; what we do not do; the published risk formula (read from src/lib/policy); who PaySettle is for; and the
- * eight further risks we track. Content: src/data/trust.ts.
+ * A8 · /trust — trust by design. The scenarios PaySettle was designed around, by theme: what could go wrong, how the
+ * product resolves it, the options we considered and set aside, how far it is built and where to see it. Then the lines
+ * we hold, what is deliberately out of scope, the published risk formula (read from src/lib/policy) and who PaySettle is
+ * for. Content: src/data/trust.ts.
  */
 import "@/styles/trust.css";
 import Link from "next/link";
 import { Cta, PageHero, SiteMain } from "@/components/site/parts";
 import { JudgeTour } from "@/components/tour/JudgeTour";
-import { FOR_WHOM, OPS_THRESHOLD, RISKS, STATUS_HINT, STATUS_LABEL, STATUS_TONE, TRACKED, WE_DO_NOT, riskWeights, statusCounts } from "@/data/trust";
-import { RiskList, TrustLinks } from "./risk-list";
+import { FOR_WHOM, OPS_THRESHOLD, OUT_OF_SCOPE, SCENARIOS, STATUS_HINT, STATUS_LABEL, STATUS_TONE, THEMES, WE_DO_NOT, riskWeights, statusCounts } from "@/data/trust";
+import { ScenarioCard } from "./scenario";
 
 export const metadata = {
-  title: "Trust",
-  description: "The 24 hard questions our own red team asked about PaySettle, our answer to each, how far it is built, and where to check it.",
+  title: "Trust by design",
+  description: "The scenarios PaySettle was designed around: what could go wrong with held money, evidence, disputes, AI and data, how the product resolves each, and the options we set aside.",
   alternates: { canonical: "/trust" },
 };
 
 export default function Page() {
   const counts = statusCounts();
   const weights = riskWeights();
+  const offset = THEMES.map((_, i) => THEMES.slice(0, i).reduce((a, t) => a + t.scenarios.length, 0));
   return (
     <SiteMain>
       <PageHero
-        kicker="Trust"
-        title="The hard questions, answered in the open"
-        lead="Before building PaySettle we asked our own red team to attack the plan. These are the 24 risks they raised, what we did about each one, how far that answer is built, and where you can check it yourself."
+        kicker="Trust by design"
+        title="What could go wrong, and how PaySettle handles it"
+        lead={`Money held between milestones, evidence, disputes and AI each fail in their own ways. These are the ${SCENARIOS.length} scenarios we designed PaySettle around: how the product resolves each one, the options we considered and set aside, and where you can see it in the live demo.`}
       >
-        <ul className="tr-sum" aria-label="Answers by status">
-          {counts.map((c) => (
+        <ul className="tr-sum" aria-label="Scenarios by status">
+          {counts.filter((c) => c.n > 0).map((c) => (
             <li key={c.status}><b>{c.n}</b> <span className="chip" data-b={STATUS_TONE[c.status]}>{c.label}</span></li>
           ))}
         </ul>
+        <nav className="tb-themes" aria-label="Themes on this page">
+          {THEMES.map((t, i) => (
+            <a key={t.id} href={`#${t.id}`}><span className="tb-themes-n" aria-hidden="true">{String(i + 1).padStart(2, "0")}</span>{t.title}<span className="tb-themes-c">{t.scenarios.length}</span></a>
+          ))}
+        </nav>
         <p className="s-chips tr-hero-links">
           <Link className="btn" href="/trust/ai">AI scorecard</Link>
           <Link className="btn" href="/security">Security controls</Link>
@@ -38,37 +45,58 @@ export default function Page() {
         </p>
       </PageHero>
 
-      <section id="risks" className="s-section tight tr" aria-labelledby="risks-h">
+      <section className="s-section tight tr" aria-label="How to read each scenario">
         <div className="s-wrap">
-          <div className="s-head">
-            <h2 id="risks-h">24 risks, one answer each</h2>
-            <p className="s-lead">Each answer links to the page or screen that shows it. App screens open in the live demo; the link says which demo person to sign in as.</p>
-          </div>
           <dl className="tr-legend">
             {(["built", "progress", "decided"] as const).map((s) => (
               <div key={s}><dt><span className="chip" data-b={STATUS_TONE[s]}>{STATUS_LABEL[s]}</span></dt><dd>{STATUS_HINT[s]}</dd></div>
             ))}
           </dl>
-          <RiskList risks={RISKS} />
         </div>
       </section>
 
+      {THEMES.map((t, i) => (
+        <section key={t.id} id={t.id} className={`s-section tr tb-theme${i % 2 ? " alt" : ""}`} aria-labelledby={`${t.id}-h`}>
+          <div className="s-wrap tb-grid">
+            <div className="tb-head">
+              <p className="tb-num" aria-hidden="true">{String(i + 1).padStart(2, "0")}</p>
+              <h2 id={`${t.id}-h`}>{t.title}</h2>
+              <p className="s-lead">{t.lead}</p>
+            </div>
+            <ol className="tb-list">
+              {t.scenarios.map((s, k) => <ScenarioCard key={s.id} s={s} n={offset[i] + k + 1} />)}
+            </ol>
+          </div>
+        </section>
+      ))}
+
       <section id="not" className="s-section alt tr" aria-labelledby="not-h">
         <div className="s-wrap">
-          <div className="s-head"><h2 id="not-h">What we do not do</h2><p className="s-lead">Four lines we hold to, because each one removes a conflict of interest or a risk we do not need.</p></div>
+          <div className="s-head"><h2 id="not-h">Lines we hold</h2><p className="s-lead">Four decisions that each remove a conflict of interest or a risk nobody needs.</p></div>
           <ul className="tr-not">
             {WE_DO_NOT.map((w) => (
               <li key={w.title} className="s-card">
                 <h3><span className="tr-no" aria-hidden="true" />{w.title}</h3>
                 <p>{w.body}</p>
-                {w.risk && <p className="tr-ref"><a href={`#risk-${w.risk}`}>See risk {w.risk}</a></p>}
+                {w.scenario && <p className="tr-ref"><a href={`#${w.scenario}`}>{w.scenario === "formula" ? "See the risk formula" : "See the scenario"}</a></p>}
               </li>
             ))}
           </ul>
         </div>
       </section>
 
-      <section id="formula" className="s-section tr" aria-labelledby="formula-h">
+      <section id="scope" className="s-section tr" aria-labelledby="scope-h">
+        <div className="s-wrap">
+          <div className="s-head"><h2 id="scope-h">Deliberately out of scope</h2><p className="s-lead">Ideas from the first plan that we chose not to build. Each would need evidence, a legal review and a clear benefit to the people using PaySettle before it came back.</p></div>
+          <ul className="tb-scope">
+            {OUT_OF_SCOPE.map((o) => (
+              <li key={o.title}><b>{o.title}</b><span>{o.why}</span></li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section id="formula" className="s-section alt tr" aria-labelledby="formula-h">
         <div className="s-wrap">
           <div className="s-head">
             <h2 id="formula-h">The risk score, in full</h2>
@@ -90,29 +118,11 @@ export default function Page() {
         </div>
       </section>
 
-      <section id="for-whom" className="s-section alt tr" aria-labelledby="for-whom-h">
+      <section id="for-whom" className="s-section tr" aria-labelledby="for-whom-h">
         <div className="s-wrap tr-for">
           <div className="s-head"><h2 id="for-whom-h">Who PaySettle is for</h2><p className="s-lead">{FOR_WHOM.who}</p></div>
           <ul className="s-ticks">{FOR_WHOM.examples.map((e) => <li key={e}>{e}</li>)}</ul>
           <p className="tr-notfor">{FOR_WHOM.notFor}</p>
-        </div>
-      </section>
-
-      <section id="tracked" className="s-section tr" aria-labelledby="tracked-h">
-        <div className="s-wrap">
-          <div className="s-head"><h2 id="tracked-h">Eight more risks we track</h2><p className="s-lead">The red team did not raise these. We did, while building.</p></div>
-          <ul className="tr-tracked">
-            {TRACKED.map((t, i) => (
-              <li key={t.title} className="s-card">
-                <article aria-labelledby={`tracked-${i}-h`}>
-                  <div className="tr-risk-top"><h3 id={`tracked-${i}-h`}>{t.title}</h3><span className="chip" data-b={STATUS_TONE[t.status]}>{STATUS_LABEL[t.status]}</span></div>
-                  <p className="tr-risk-text">{t.risk}</p>
-                  <p className="tr-answer"><b>Our answer.</b> {t.answer}</p>
-                  <div className="tr-check"><p className="tr-check-h">Check it</p><TrustLinks links={t.links} /></div>
-                </article>
-              </li>
-            ))}
-          </ul>
         </div>
       </section>
 

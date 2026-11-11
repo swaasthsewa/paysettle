@@ -1,5 +1,5 @@
 /**
- * A8, A10 · the trust page (24 risks, filter, links), the AI scorecard, the privacy "no sale" line, and the
+ * A8, A10 · the trust page (design scenarios by theme, links), the AI scorecard, the privacy "no sale" line, and the
  * judge tour: keyboard only, focus kept in the dialog, Escape returns focus, nothing left over the page once it is dismissed,
  * the tour tucks away while a screen is open and carries over to the next page. axe (WCAG 2.0/2.1 A + AA) on each page, with
  * the tour dialog open too. Needs the mount <JudgeTour launcher={false}/> in
@@ -22,31 +22,30 @@ async function axe(page: Page, name: string) {
 const dialog = (page: Page) => page.getByRole("dialog");
 const insideDialog = (page: Page) => page.evaluate(() => !!document.activeElement?.closest("dialog[open]"));
 
-test("A8 /trust lists the 24 risks with a status and a link to check each, and the filter narrows the list", async ({ page }) => {
+test("A8 /trust walks through the design scenarios by theme, each with its resolution, the options set aside and a link", async ({ page }) => {
   await page.goto("/trust");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("The hard questions, answered in the open");
-  const items = page.locator("ol.tr-risks > li");
-  await expect(items).toHaveCount(24);
-  for (const n of [1, 17, 24]) {
-    const card = page.locator(`#risk-${n}`);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("What could go wrong, and how PaySettle handles it");
+  const themes = page.getByRole("navigation", { name: "Themes on this page" }).getByRole("link");
+  expect(await themes.count()).toBeGreaterThanOrEqual(5);
+  const cards = page.locator("ol.tb-list > li");
+  expect(await cards.count()).toBeGreaterThanOrEqual(15);
+  for (const id of ["money-held", "contract-tamper", "ai-money"]) {
+    const card = page.locator(`#${id}`);
     await expect(card.locator(".chip")).toBeVisible();
+    await expect(card).toContainText("How PaySettle resolves it");
+    await expect(card).toContainText("Considered and set aside");
     await expect(card.getByRole("link").first()).toBeVisible();
   }
-  await expect(page.locator("#risk-18").getByRole("link", { name: /audit chain/i })).toHaveAttribute("href", "/admin/audit");
+  await expect(page.locator("#contract-tamper").getByRole("link", { name: /audit chain/i })).toHaveAttribute("href", "/admin/audit");
+  await expect(page.locator("#contract-tamper")).toContainText("Putting contracts on a blockchain");
   await expect(page.locator("#formula").getByRole("row")).toHaveCount(7); // header, five parts, total
   await expect(page.locator("#not").getByRole("heading", { level: 3 })).toHaveCount(4);
-  await expect(page.locator("#tracked ul.tr-tracked > li")).toHaveCount(8);
-
-  const decided = page.getByRole("button", { name: /^Scope decision/ });
-  await decided.click();
-  await expect(decided).toHaveAttribute("aria-pressed", "true");
-  const n = Number((await decided.locator(".tr-pill-n").textContent())?.trim());
-  await expect(items).toHaveCount(n);
-  await expect(page.getByRole("status")).toHaveText(`Showing ${n} of 24 risks.`);
-  await page.getByRole("button", { name: /^All/ }).click();
-  await expect(items).toHaveCount(24);
+  await expect(page.locator("#scope ul.tb-scope > li").first()).toBeVisible();
+  // the theme links jump to their section
+  await themes.first().click();
+  await expect(page).toHaveURL(/#money$/);
   const text = (await page.locator("main").innerText()).toLowerCase();
-  for (const banned of ["risk-free", "guaranteed", "100% irreversible", "bank-grade"]) expect(text).not.toContain(banned);
+  for (const banned of ["risk-free", "guaranteed", "100% irreversible", "bank-grade", "red team"]) expect(text).not.toContain(banned);
   await axe(page, "trust");
 });
 
@@ -113,8 +112,8 @@ test("A10 opening a screen tucks the tour into a resume bar that does not block 
   await expect(bar).toBeVisible();
   await expect(bar).toContainText("Step 8 of 8");
   // the page stays usable while the bar is shown
-  await page.getByRole("button", { name: /^In the product/ }).click();
-  await expect(page.getByRole("button", { name: /^In the product/ })).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("navigation", { name: "Themes on this page" }).getByRole("link").nth(1).click();
+  await expect(page).toHaveURL(/#contract$/);
   await axe(page, "trust with the resume bar");
 
   await page.reload();

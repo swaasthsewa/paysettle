@@ -7,6 +7,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { BrandMark } from "@/components/brand";
 import { common } from "@/copy/common";
+import { DrawerToggle } from "./drawer";
 import { RailToggle } from "./rail";
 import { AppSearch } from "./search";
 import { ThemeToggle } from "./theme";
@@ -22,6 +23,7 @@ export function TopBar({ home, search = true, person, children }: {
   return (
     <header className="topbar">
       <RailToggle />
+      <DrawerToggle />
       <Link href={home} className="tb-home" aria-label={common.shell.home}><BrandMark /><span>{common.product}</span></Link>
       {search && <AppSearch />}
       <div className="tb-end">

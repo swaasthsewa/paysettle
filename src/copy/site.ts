@@ -31,7 +31,7 @@ export const site = {
   footer: {
     about: "Checkable milestone contracts. Money held through PayPal, released milestone by milestone on proof.",
     groups: [
-      { title: "Product", links: [{ href: "/how-it-works", label: "How it works" }, { href: "/pricing", label: "Pricing" }, { href: "/security", label: "Security" }, { href: "/trust", label: "Trust & red team" }, { href: "/trust/ai", label: "AI scorecard" }, { href: "/judges", label: "For judges" }, { href: "/playground", label: "Judge playground" }] },
+      { title: "Product", links: [{ href: "/how-it-works", label: "How it works" }, { href: "/pricing", label: "Pricing" }, { href: "/security", label: "Security" }, { href: "/trust", label: "Trust by design" }, { href: "/trust/ai", label: "AI scorecard" }, { href: "/judges", label: "For judges" }, { href: "/playground", label: "Judge playground" }] },
       { title: "People", links: [{ href: "/for-providers", label: "For providers" }, { href: "/for-clients", label: "For clients" }, { href: "/register", label: "Create an account" }, { href: "/mediators", label: "Become a mediator" }, { href: "/blog", label: "Blog" }, { href: "/waitlist", label: "Join the waitlist" }, { href: "/login", label: "Live demo" }] },
       { title: "Legal", links: [{ href: "/privacy", label: "Privacy" }, { href: "/terms", label: "Terms" }] },
     ],
@@ -44,12 +44,13 @@ export const site = {
     hero: {
       line1: "Agree what done means.",
       line2: "Get paid when it is.",
-      lead: "PaySettle is a contract compiler. A vague statement of work goes in. Criteria nobody could check are flagged with a measurable rewrite, both sides sign what proves each milestone, the money is held through PayPal, and each partial capture is tied to the evidence its clause names. Built for freelancers and small service businesses, and the clients who hire them, on staged projects of about $1,000 to $25,000.",
+      badge: "A contract compiler for staged work · PayPal Sandbox",
+      lead: "A vague statement of work goes in. Checkable milestones come out, signed by both sides. PayPal holds the money, and each milestone's share is released only against the evidence its clause names. For freelancers, small service businesses and the clients who hire them, on projects of about $1,000 to $25,000.",
       demo: "Try the live demo",
       judge: "Judge playground",
       waitlist: "Join the waitlist",
-      chips: { client: "Client: pays for verified progress", provider: "Provider: paid on delivery", both: "One agreement, settled" },
-      art: "Two lines, one teal for the client and one amber for the provider, weave through the heading and leave as one line.",
+      chips: { client: "Client's money, held in PayPal", provider: "Provider, paid on delivery", both: "Evidence checked per milestone" },
+      art: "Key to the animation: money pulses leave the client, wait in a PayPal hold, pass one milestone's evidence check and reach the provider; a failed check freezes only that share.",
     },
 
     compiler: {

@@ -4,7 +4,7 @@
  * them into scroll scenes with CSS transitions and one IntersectionObserver (no animation library).
  *
  *   moving  motion allowed: scenes still below the screen when the page opens wait (data-wait); each plays its
- *           entrance as it arrives. The hero's doubled first line fuses and its chips drift as the page scrolls.
+ *           entrance as it arrives, and parts marked data-depth drift at their own speed as the page scrolls (parallax).
  *   still   reduced motion, the staff motion setting at calm or off, or no script: nothing runs and every scene
  *           stays in its final, readable state.
  *
@@ -35,17 +35,21 @@ export function Motion({ children }: { children: ReactNode }) {
       if (el.getBoundingClientRect().top > fold * 0.92) { el.dataset.wait = ""; io.observe(el); }
     }
 
-    /* the hero: the teal and amber copies of the first line fuse into the white ink, and the chips drift apart */
-    const hero = root.querySelector<HTMLElement>("[data-scene='hero']");
-    const rows = hero ? Array.from(hero.querySelectorAll<HTMLElement>("[data-split]")) : [];
-    const chips = hero ? Array.from(hero.querySelectorAll<HTMLElement>("[data-chip]")) : [];
+    /* parallax: a part marked data-depth drifts against the scroll by its depth (a fraction of its distance from the
+       middle of the screen), so the illustrations sit on a different plane from the text */
+    const deep = Array.from(root.querySelectorAll<HTMLElement>("[data-depth]"));
     let frame = 0;
     const paint = () => {
       frame = 0;
-      if (!hero) return;
-      const p = Math.min(1, Math.max(0, window.scrollY / Math.max(1, hero.offsetHeight * 0.6)));
-      for (const r of rows) r.style.setProperty("--split", `${(0.04 * (1 - p)).toFixed(4)}em`);
-      chips.forEach((c, i) => { c.style.translate = `0 ${(-(i % 2 ? 48 : 92) * p).toFixed(1)}px`; });
+      const mid = window.innerHeight / 2;
+      for (const el of deep) {
+        const r = el.getBoundingClientRect();
+        if (r.bottom < -200 || r.top > window.innerHeight + 200) continue;
+        const was = Number(el.dataset.ty) || 0; // measure where the part sits without its own drift
+        const ty = (r.top - was + r.height / 2 - mid) * (Number(el.dataset.depth) || 0);
+        el.dataset.ty = ty.toFixed(1);
+        el.style.translate = `0 ${ty.toFixed(1)}px`;
+      }
     };
     const onScroll = () => { if (!frame) frame = requestAnimationFrame(paint); };
     paint();
@@ -57,6 +61,7 @@ export function Motion({ children }: { children: ReactNode }) {
 
     return () => {
       io.disconnect();
+      for (const el of deep) el.style.translate = "";
       window.removeEventListener("scroll", onScroll);
       calm.removeEventListener("change", stop);
       if (frame) cancelAnimationFrame(frame);

@@ -25,7 +25,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     <div className="shell">
       <script nonce={nonce} dangerouslySetInnerHTML={{ __html: RAIL_BOOT }} />
       <a className="skip" href="#page">{common.nav.skip}</a>
-      <aside className="side">
+      <aside className="side" id="app-side">
         <Link href={home} className="logo" title={common.product}><BrandMark /><span className="side-text">{common.product}</span></Link>
         <Link href="/account" className="who" title={v.name}>
           <i className="who-initial" aria-hidden="true">{initialOf(v.name)}</i>

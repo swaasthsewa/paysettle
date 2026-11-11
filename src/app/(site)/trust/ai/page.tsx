@@ -80,7 +80,7 @@ export default async function Page() {
               : `Model calls are off in this build: ${status.reason ?? "no AI key is set."} Every feature below is running on its rules.`}
         </p>
         <p className="s-chips tr-hero-links">
-          <Link className="btn" href="/trust">All 24 risks</Link>
+          <Link className="btn" href="/trust">Trust by design</Link>
           <a className="btn" href="#evals">Test results</a>
           <a className="btn" href="#governance">Governance note</a>
         </p>

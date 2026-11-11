@@ -96,6 +96,8 @@ p { margin: 0; }
    screens only. Pointing at a group's picture shows that group's links beside the rail; the top bar's button opens
    the whole menu again. ── */
 .navg-btn, .navf-title { display: none; }
+.tb-btn.tb-drawer { display: none; }
+@keyframes drawer-in { from { transform: translateX(-16px); opacity: 0.4; } to { transform: none; opacity: 1; } }
 @media (min-width: 981px) {
   html[data-rail="on"] .shell { grid-template-columns: 76px minmax(0, 1fr); }
   html[data-rail="on"] .side :is(.side-text, .navh) { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
@@ -199,6 +201,10 @@ p { margin: 0; }
 @media (max-width: 980px) {
   .shell { grid-template-columns: minmax(0, 1fr); }
   .side { display: none; }
+  /* the sidebar becomes a drawer over the page (DrawerToggle in the top bar) */
+  .tb-btn.tb-drawer { display: inline-grid; margin-right: 2px; }
+  html[data-drawer="open"] .side { display: flex; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100; width: min(300px, 86vw); height: 100dvh; padding-top: calc(env(safe-area-inset-top, 0px) + 18px); box-shadow: 0 0 0 100vmax rgba(10, 12, 16, 0.45), 0 24px 60px -12px rgba(10, 12, 16, 0.5); animation: drawer-in 0.2s cubic-bezier(0.22, 1, 0.36, 1); }
+  html[data-drawer="open"], html[data-drawer="open"] body { overflow: hidden; }
   .page { padding: 18px 16px 28px; }
   /* phone: the logo leads home, then search and the bell; the person is the You tab */
   .topbar { min-height: 56px; padding: env(safe-area-inset-top, 0px) 8px 0 14px; gap: 4px; }
