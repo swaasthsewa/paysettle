@@ -20,7 +20,9 @@ import {
 } from "./actions";
 import { ChangeOrders } from "@/components/contracts/ChangeOrders";
 import { changeOrderRoom, type ChangeOrderRoom } from "@/server/contracts/change-orders";
-import { declineChangeOrderAction, proposeChangeOrderAction, signChangeOrderAction } from "./change-order-actions";
+import { continueAction, declineChangeOrderAction, proposeChangeOrderAction, signChangeOrderAction } from "./change-order-actions";
+import { ContinuePanel, PeriodChain } from "@/components/contracts/Continuation";
+import { carryable, periodChain } from "@/server/contracts/continuation";
 import "@/styles/contracts.css";
 
 export const metadata = { title: "Contract" };
@@ -48,6 +50,9 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   const v = d.view;
   /* F2.12 change orders on a locked contract */
   const coRoom: ChangeOrderRoom | null = v.state === "LOCKED" ? await changeOrderRoom(a, id) : null;
+  /* F2.13 the period chain and the next-period panel */
+  const chain = await periodChain(a, id);
+  const carry = v.state === "LOCKED" && d.viewerRole ? await carryable(a, id) : [];
   const party = d.viewerRole;
   const editable = party !== null && SIGNABLE.includes(v.state);
   const active = v.milestones.filter((m) => m.active);
@@ -69,6 +74,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
         <div>
           <p className="crumb"><Link href={back}>Contracts</Link> › {v.title}</p>
           <h1>{v.title}</h1>
+          <PeriodChain chain={chain} />
           <p className="sub">{v.client.name} (client) ↔ {v.provider ? `${v.provider.name} (provider)` : v.inviteEmail ? `${v.inviteEmail} (invited)` : "no provider yet"} · from blueprint <Link href={`/blueprints/${v.blueprintCode}`}>{v.blueprintCode}</Link></p>
         </div>
         <div className="stats">
@@ -91,6 +97,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
 
       {sp.err && <div className="notice" data-b="danger" role="alert">{sp.err}</div>}
       {sp.ok === "signed" && <div className="notice" data-b="ok" role="status">Your signature on revision {v.revision} is recorded.</div>}
+      {sp.ok === "continued" && <div className="notice" data-b="ok" role="status">Period {chain.periodNo} is a draft. Review it, change it if needed, and both sign; then the client funds it through PayPal.</div>}
       {sp.ok?.startsWith("co_") && <div className="notice" data-b="ok" role="status">{CO_OK[sp.ok] ?? "Done."}</div>}
       {sp.note && <div className="notice" role="status">{sp.note}</div>}
       {d.opsNotes[0]?.decision === "returned" && v.state === "DRAFT" && (
@@ -152,6 +159,8 @@ export default async function Page({ params, searchParams }: { params: Promise<{
         </div>
 
         {coRoom && <ChangeOrders wsId={v.id} revision={v.revision} room={coRoom} party={party} proposeAction={proposeChangeOrderAction} signAction={signChangeOrderAction} declineAction={declineChangeOrderAction} />}
+
+        {v.state === "LOCKED" && party && !chain.next && <ContinuePanel wsId={v.id} title={v.title} periodNo={chain.periodNo} carryable={carry} blocked={coRoom?.open ? `Change order ${coRoom.open.no} is open; sign, decline or withdraw it before starting the next period.` : null} action={continueAction} />}
 
         <section className="c span12" id="deadline" aria-labelledby="dl-h">
           <div className="c-head"><h2 id="dl-h">Deadline terms</h2><span className="r"><DeadlineChip t={v.deadline ?? null} /></span></div>
@@ -403,7 +412,8 @@ function changeLabel(r: RevisionRow, v: View): string {
   const t = r.change.target ?? "";
   const title = (code: string) => v.milestones.find((m) => m.code === code)?.title ?? "";
   switch (r.change.action) {
-    case "CREATE": return det.source === "ai_draft" ? `Created from an AI draft (blueprint ${String(det.blueprint ?? "")})` : `Created from blueprint ${String(det.blueprint ?? v.blueprintCode)}`;
+    case "CREATE": if (det.source === "continuation") return `Created as period ${String(det.periodNo ?? "")}, continuing the previous contract${Array.isArray(det.carried) && det.carried.length ? ` (carries ${det.carried.join(", ")})` : ""}`;
+      return det.source === "ai_draft" ? `Created from an AI draft (blueprint ${String(det.blueprint ?? "")})` : `Created from blueprint ${String(det.blueprint ?? v.blueprintCode)}`;
     case "PRUNE": return `Pruned ${t} ${title(t)}`;
     case "RESTORE": return `Restored ${t} ${title(t)}`;
     case "APPEND": return `Appended ${t} ${title(t)}`;

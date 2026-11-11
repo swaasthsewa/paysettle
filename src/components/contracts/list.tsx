@@ -1,10 +1,10 @@
-/** F2.02 F2.03 — the contract list for a client or a provider (title, counterpart, state, total, updated). */
+/** F2.02 F2.03 F2.13 — the contract list (with the period number of continuation contracts) for a client or a provider (title, counterpart, state, total, updated). */
 import Link from "next/link";
 import { formatCents } from "@/lib/money";
 import { WsChip } from "./chips";
 import "@/styles/contracts.css";
 
-export interface ListRow { id: string; title: string; state: string; totalCents: number; counterpart: string; updatedAt: Date }
+export interface ListRow { id: string; title: string; state: string; totalCents: number; counterpart: string; updatedAt: Date; periodNo?: number; continues?: boolean }
 
 const fmtDate = (d: Date) => new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(d);
 
@@ -17,7 +17,7 @@ export function ContractList({ rows, counterpartLabel, empty }: { rows: ListRow[
         <tbody>
           {rows.map((r) => (
             <tr key={r.id} className="rowlink">
-              <td><Link className="stretch" href={`/contracts/${r.id}`}><b>{r.title}</b></Link></td>
+              <td><Link className="stretch" href={`/contracts/${r.id}`}><b>{r.title}</b></Link>{r.continues || (r.periodNo ?? 1) > 1 ? <> <span className="chip" data-b="plain">Period {r.periodNo}</span></> : null}</td>
               <td>{r.counterpart}</td>
               <td><WsChip state={r.state} /></td>
               <td className="n money">{formatCents(r.totalCents)}</td>

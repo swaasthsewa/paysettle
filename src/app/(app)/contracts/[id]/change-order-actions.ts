@@ -9,6 +9,7 @@ import { redirect } from "next/navigation";
 import { parseDollarsToCents } from "@/server/contracts";
 import { changeOrderRoom, declineChangeOrder, proposeChangeOrder, signChangeOrder } from "@/server/contracts/change-orders";
 import type { CoItem } from "@/server/contracts/change-core";
+import { createContinuation } from "@/server/contracts/continuation";
 import { currentActor, domainMessage } from "@/server/contracts/web";
 import { db } from "@/db/client";
 import { changeOrders } from "@/db/schema-amend";
@@ -110,3 +111,14 @@ export async function declineChangeOrderAction(f: FormData) {
   redirect(msg ? `${path}?err=${encodeURIComponent(msg)}#co` : `${path}?ok=co_closed#co`);
 }
 
+/** F2.13 continue a locked contract into its next period (a new draft linked to this one). */
+export async function continueAction(f: FormData) {
+  const id = s(f, "wsId");
+  if (!/^ws_[a-z0-9]{1,40}$/.test(id)) redirect("/client/contracts");
+  const { a } = await currentActor(["client", "provider"]);
+  let msg: string | null = null, next = "";
+  try { next = (await createContinuation(a, id, { title: s(f, "title") || undefined, repeat: Boolean(f.get("repeat")), carry: f.getAll("carry").map((x) => String(x)), note: s(f, "note") || undefined })).workspaceId; }
+  catch (e) { msg = domainMessage(e); }
+  revalidatePath(`/contracts/${id}`);
+  redirect(msg ? `/contracts/${id}?err=${encodeURIComponent(msg)}#next-period` : `/contracts/${next}?ok=continued`);
+}
