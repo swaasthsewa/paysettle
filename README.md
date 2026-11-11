@@ -6,6 +6,13 @@ PayPal partial capture is tied to the evidence its clause names.
 
 Built for the PayPal AI Hackathon. **Sandbox only: no real money moves.**
 
+**Live demo: <https://paysettle.onrender.com>** → **Try the live demo** → **Hackathon Judge** (no password). It runs on
+Render against the PayPal Sandbox; the Judge Playground's **Fast mock** mode needs no PayPal account at all.
+
+Measured on 11 Nov 2026 ([`RESULTS.md`](RESULTS.md)): 750 unit tests and 54 end-to-end journeys pass, 65 of 65
+requirements traced to code and tests; the AI evaluation sets with their targets and their one miss (the evidence
+verifier: 0.813 against 0.85, with no spoofed package advised to approve).
+
 ### One criterion, end to end
 
 | Step | What happens |
@@ -37,7 +44,7 @@ submit evidence; a person approves the hold in PayPal and confirms every release
 
 ## For judges
 
-1. Open the hosted demo (link in the Devpost submission) or run it locally (below), then press **Try the live demo**.
+1. Open the hosted demo at <https://paysettle.onrender.com> or run it locally (below), then press **Try the live demo**.
 2. Pick **Hackathon Judge** — no password in the sandbox. You land on the **Judge Playground**.
 3. Choose **Fast mock**, press **Start** on **S1 Happy path**, then **Run all**. Every step should show ✓; the four views
    below show the client, the provider, the ledger and the PayPal wire log for the same contract.
