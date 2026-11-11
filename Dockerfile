@@ -29,6 +29,9 @@ ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=8080 HOSTNAME=0.0.0.0
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
+# evidence files are stored under /app/uploads (src/server/evidence/storage.ts); /app belongs to root, so the folder is
+# created here and handed to the user the server runs as, or every evidence upload fails with EACCES
+RUN mkdir -p /app/uploads && chown node:node /app/uploads
 USER node
 EXPOSE 8080
 CMD ["node", "server.js"]

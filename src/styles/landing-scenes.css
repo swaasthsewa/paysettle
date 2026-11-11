@@ -294,7 +294,7 @@
 .cl2-orbit { position: absolute; left: 50%; top: 50%; width: min(1100px, 150vw); aspect-ratio: 1; translate: -50% -50%; pointer-events: none; z-index: 0; }
 .cl2-orbit i { position: absolute; inset: calc(var(--r) * 1%); border-radius: 50%; border: 1px solid rgba(148, 163, 184, 0.14); }
 .cl2-orbit .cl2-ring { position: absolute; inset: calc(var(--r) * 1%); border-radius: 50%; animation: cl2-turn var(--s) linear infinite; }
-.cl2-orbit .cl2-chip { position: absolute; left: 50%; top: 0; translate: -50% -50%; padding: 5px 11px; border-radius: 999px; font: 600 12px ui-monospace, "Cascadia Mono", Consolas, monospace; background: rgba(13, 20, 36, 0.92); border: 1px solid var(--lp-edge); color: var(--lp-mint); animation: cl2-turn var(--s) linear infinite reverse; }
+.cl2-orbit .cl2-chip { position: absolute; left: 50%; top: 0; translate: -50% -50%; opacity: 0.45; padding: 4px 9px; border-radius: 999px; font: 600 12px ui-monospace, "Cascadia Mono", Consolas, monospace; background: rgba(13, 20, 36, 0.92); border: 1px solid var(--lp-edge); color: var(--lp-mint); animation: cl2-turn var(--s) linear infinite reverse; }
 .cl2-orbit .cl2-chip.gold { color: var(--lp-gold); }
 .lp-close-in { position: relative; z-index: 1; }
 .lp .lp-close .btn-g { background: var(--lp-mint); color: #04201c; border-color: var(--lp-mint); }
