@@ -8,6 +8,9 @@ import { eq } from "drizzle-orm";
 import { db, pool } from "@/db/client";
 import { users, wsMilestones } from "@/db/schema";
 import { simWorkspaces } from "@/db/schema-sim";
+import { moneyNotices } from "@/db/schema-money";
+import { newId } from "@/lib/ids";
+import { noticesForViewer } from "@/server/notifications";
 import { mockControl } from "@/lib/rails/mock";
 import { reasonClause } from "@/lib/ai/gateway";
 import { rateLimitKey } from "@/lib/net";
@@ -16,7 +19,7 @@ import { loadOverview } from "@/lib/identity/overview";
 import { listWorkspaces } from "@/server/contracts";
 import { confirmTranche, fundTranche, releaseMilestone } from "@/server/money";
 import { makeContract, recordApproval, type Fixture } from "@/server/money/fixtures";
-import { payoutsFor, radar, receiptsFor } from "@/server/money/queries";
+import { noticesFor, payoutsFor, radar, receiptsFor } from "@/server/money/queries";
 
 beforeAll(() => { delete process.env.PAYPAL_CLIENT_ID; process.env.MONEY_RETRY_MS = "0"; });
 beforeEach(() => mockControl.reset());
@@ -58,6 +61,19 @@ describe("sim and test data stay out of default views", () => {
     expect(ids).toContain(real.workspaceId);
     expect(ids).not.toContain(sim.workspaceId);
     expect((await radar(true)).map((r) => r.workspaceId)).toContain(sim.workspaceId);
+  });
+
+  it("P9 notices about a playground run stay out of the person's inbox and the receipts page notices", async () => {
+    const real = await makeContract({ orgId: "org_demo", milestones: [{ day: 3, amountCents: 10_000 }], title: "Notice filter real contract" });
+    const sim = await makeContract({ orgId: "org_demo", clientId: real.clientId, providerId: real.providerId, milestones: [{ day: 3, amountCents: 10_000 }], title: "Notice filter playground contract" });
+    await db.insert(simWorkspaces).values({ workspaceId: sim.workspaceId, simId: "sim_n11" });
+    const tag = newId("t");
+    await db.insert(moneyNotices).values([
+      { id: newId("ntc"), workspaceId: real.workspaceId, trancheId: real.trancheId, userId: real.clientId, kind: "WARN", message: "Real notice", dedupKey: `real:${tag}` },
+      { id: newId("ntc"), workspaceId: sim.workspaceId, trancheId: sim.trancheId, userId: real.clientId, kind: "WARN", message: "Simulated notice", dedupKey: `sim:${tag}` },
+    ]);
+    expect((await noticesForViewer({ id: real.clientId, role: "client" })).filter((n) => n.source === "money").map((n) => n.body)).toEqual(["Real notice"]);
+    expect((await noticesFor(real.clientId)).map((n) => n.message)).toEqual(["Real notice"]);
   });
 
   it("F5.06 a person in a test organisation still sees their own test contracts; staff views hide test orgs", async () => {
