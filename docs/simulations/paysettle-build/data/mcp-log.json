@@ -1,0 +1,934 @@
+[
+  {
+    "label": "initialize",
+    "request": {
+      "method": "initialize",
+      "params": {
+        "protocolVersion": "2025-06-18",
+        "capabilities": {},
+        "clientInfo": {
+          "name": "provider-agent",
+          "version": "1.0"
+        }
+      }
+    },
+    "status": 200,
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "protocolVersion": "2025-06-18",
+        "capabilities": {
+          "tools": {
+            "listChanged": false
+          }
+        },
+        "serverInfo": {
+          "name": "paysettle",
+          "title": "PaySettle milestone contracts",
+          "version": "0.1.0"
+        },
+        "instructions": "PaySettle holds a client's money through PayPal and releases it milestone by milestone. You act for the person who minted your token. You can draft and negotiate workspaces, read status, request funding (the buyer approves in PayPal), submit evidence notes and links, ask for a release (the client confirms in the app) and open disputes. You cannot sign, approve or move money yourself."
+      }
+    }
+  },
+  {
+    "label": "tools/list",
+    "request": {
+      "method": "tools/list",
+      "params": {}
+    },
+    "status": 200,
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "result": {
+        "tools": [
+          {
+            "name": "search_blueprints",
+            "title": "Search blueprints",
+            "description": "Find vetted contract templates (blueprints) by free text, vertical and maximum duration. Read-only.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "query": {
+                  "type": "string",
+                  "maxLength": 300
+                },
+                "vertical": {
+                  "type": "string",
+                  "maxLength": 80
+                },
+                "maxDays": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 365
+                }
+              },
+              "additionalProperties": false
+            },
+            "annotations": {
+              "readOnlyHint": true,
+              "openWorldHint": false
+            }
+          },
+          {
+            "name": "draft_contract",
+            "title": "Draft a contract workspace",
+            "description": "Create a negotiation workspace (a draft, not a contract) from a brief, budget and duration. Uses the AI drafter when available, else rule-based blueprint matching. Nothing is signed or funded; both parties still negotiate and sign in the app.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "brief": {
+                  "type": "string",
+                  "minLength": 10,
+                  "maxLength": 4000
+                },
+                "budgetCents": {
+                  "type": "integer",
+                  "minimum": 1000,
+                  "maximum": 100000000
+                },
+                "days": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 365
+                },
+                "providerEmail": {
+                  "type": "string",
+                  "format": "email",
+                  "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                },
+                "providerId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 80
+                }
+              },
+              "required": [
+                "brief",
+                "budgetCents",
+                "days"
+              ],
+              "additionalProperties": false
+            },
+            "annotations": {
+              "readOnlyHint": false,
+              "destructiveHint": false,
+              "idempotentHint": false,
+              "openWorldHint": false
+            }
+          },
+          {
+            "name": "propose_changes",
+            "title": "Propose changes to a workspace",
+            "description": "Apply prune/restore/append and share, day, clause or total changes to a negotiation workspace. Each change makes a new revision; the counterparty sees the diff and any earlier signature is voided.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "contractId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 80
+                },
+                "changes": {
+                  "minItems": 1,
+                  "maxItems": 10,
+                  "type": "array",
+                  "items": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "action": {
+                            "type": "string",
+                            "const": "PRUNE"
+                          },
+                          "milestoneCode": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 80
+                          }
+                        },
+                        "required": [
+                          "action",
+                          "milestoneCode"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "action": {
+                            "type": "string",
+                            "const": "RESTORE"
+                          },
+                          "milestoneCode": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 80
+                          }
+                        },
+                        "required": [
+                          "action",
+                          "milestoneCode"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "action": {
+                            "type": "string",
+                            "const": "APPEND"
+                          },
+                          "milestone": {
+                            "type": "object",
+                            "properties": {
+                              "title": {
+                                "type": "string",
+                                "minLength": 3,
+                                "maxLength": 160
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "GATE",
+                                  "PAY"
+                                ]
+                              },
+                              "day": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 365
+                              },
+                              "bps": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 10000
+                              },
+                              "proof": {
+                                "type": "object",
+                                "properties": {
+                                  "artifacts": {
+                                    "maxItems": 10,
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "type": "string",
+                                          "enum": [
+                                            "IMAGE",
+                                            "VIDEO",
+                                            "PDF",
+                                            "LOG",
+                                            "LINK",
+                                            "SIGNATURE",
+                                            "ORACLE"
+                                          ]
+                                        },
+                                        "min": {
+                                          "type": "integer",
+                                          "minimum": 1,
+                                          "maximum": 50
+                                        },
+                                        "note": {
+                                          "type": "string",
+                                          "maxLength": 200
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "min"
+                                      ]
+                                    }
+                                  },
+                                  "criteria": {
+                                    "minItems": 1,
+                                    "maxItems": 8,
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 300
+                                    }
+                                  },
+                                  "gpsRadiusM": {
+                                    "type": "integer",
+                                    "exclusiveMinimum": 0,
+                                    "maximum": 100000
+                                  },
+                                  "oracle": {
+                                    "type": "string",
+                                    "maxLength": 40
+                                  }
+                                },
+                                "required": [
+                                  "artifacts",
+                                  "criteria"
+                                ]
+                              },
+                              "lockRule": {
+                                "type": "string",
+                                "minLength": 3,
+                                "maxLength": 300
+                              },
+                              "disputeRule": {
+                                "type": "string",
+                                "minLength": 3,
+                                "maxLength": 300
+                              },
+                              "afterCode": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 80
+                              }
+                            },
+                            "required": [
+                              "title",
+                              "type",
+                              "day",
+                              "bps",
+                              "proof",
+                              "lockRule",
+                              "disputeRule"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "action",
+                          "milestone"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "action": {
+                            "type": "string",
+                            "const": "SET_BPS"
+                          },
+                          "shares": {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string"
+                            },
+                            "additionalProperties": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 10000
+                            }
+                          }
+                        },
+                        "required": [
+                          "action",
+                          "shares"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "action": {
+                            "type": "string",
+                            "const": "SET_DAY"
+                          },
+                          "milestoneCode": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 80
+                          },
+                          "day": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 365
+                          }
+                        },
+                        "required": [
+                          "action",
+                          "milestoneCode",
+                          "day"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "action": {
+                            "type": "string",
+                            "const": "TOGGLE_CLAUSE"
+                          },
+                          "clauseCode": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 80
+                          },
+                          "active": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "action",
+                          "clauseCode",
+                          "active"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "action": {
+                            "type": "string",
+                            "const": "APPEND_CLAUSE"
+                          },
+                          "title": {
+                            "type": "string",
+                            "minLength": 3,
+                            "maxLength": 120
+                          },
+                          "body": {
+                            "type": "string",
+                            "minLength": 3,
+                            "maxLength": 2000
+                          },
+                          "linkedMilestone": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 80
+                          }
+                        },
+                        "required": [
+                          "action",
+                          "title",
+                          "body"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "action": {
+                            "type": "string",
+                            "const": "SET_TOTAL"
+                          },
+                          "totalCents": {
+                            "type": "integer",
+                            "minimum": 1000,
+                            "maximum": 100000000
+                          }
+                        },
+                        "required": [
+                          "action",
+                          "totalCents"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "contractId",
+                "changes"
+              ],
+              "additionalProperties": false
+            },
+            "annotations": {
+              "readOnlyHint": false,
+              "destructiveHint": false,
+              "idempotentHint": false,
+              "openWorldHint": false
+            }
+          },
+          {
+            "name": "get_contract_status",
+            "title": "Get contract status",
+            "description": "Read a contract's state, revision, tranches (with PayPal approval links when waiting), milestones and policy violations. Read-only.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "contractId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 80
+                }
+              },
+              "required": [
+                "contractId"
+              ],
+              "additionalProperties": false
+            },
+            "annotations": {
+              "readOnlyHint": true,
+              "openWorldHint": false
+            }
+          },
+          {
+            "name": "request_funding",
+            "title": "Request funding of a tranche",
+            "description": "Create the PayPal order for one tranche of a signed contract and return the approval URL. HUMAN GATE: the buyer must open the URL and approve in PayPal; nothing is held until then. Limited by this token's spend limit.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "contractId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 80
+                },
+                "trancheIdx": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 50
+                }
+              },
+              "required": [
+                "contractId"
+              ],
+              "additionalProperties": false
+            },
+            "annotations": {
+              "readOnlyHint": false,
+              "destructiveHint": false,
+              "idempotentHint": true,
+              "openWorldHint": true
+            }
+          },
+          {
+            "name": "submit_evidence",
+            "title": "Submit milestone evidence",
+            "description": "Submit evidence for a milestone as a text note plus links (URLs). Files and photos are uploaded by people in the app. The client then reviews; the AI verifier report is advisory.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "contractId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 80
+                },
+                "milestoneId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 80
+                },
+                "note": {
+                  "type": "string",
+                  "minLength": 3,
+                  "maxLength": 4000
+                },
+                "urls": {
+                  "default": [],
+                  "maxItems": 10,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "uri"
+                  }
+                }
+              },
+              "required": [
+                "contractId",
+                "milestoneId",
+                "note"
+              ],
+              "additionalProperties": false
+            },
+            "annotations": {
+              "readOnlyHint": false,
+              "destructiveHint": false,
+              "idempotentHint": false,
+              "openWorldHint": false
+            }
+          },
+          {
+            "name": "approve_release",
+            "title": "Ask the client to approve a release",
+            "description": "Request the release of a submitted milestone. HUMAN GATE: this moves no money. It records a pending request; the client confirms it in the app with MFA, which creates the signed approval.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "contractId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 80
+                },
+                "milestoneId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 80
+                },
+                "note": {
+                  "default": "",
+                  "type": "string",
+                  "maxLength": 1000
+                }
+              },
+              "required": [
+                "contractId",
+                "milestoneId"
+              ],
+              "additionalProperties": false
+            },
+            "annotations": {
+              "readOnlyHint": false,
+              "destructiveHint": false,
+              "idempotentHint": true,
+              "openWorldHint": false
+            }
+          },
+          {
+            "name": "open_dispute",
+            "title": "Open a dispute on a milestone",
+            "description": "Flag one milestone as disputed. Only that milestone's amount is frozen; the rest of the contract continues.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "milestoneId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 80
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 3,
+                  "maxLength": 200
+                },
+                "narrative": {
+                  "type": "string",
+                  "minLength": 10,
+                  "maxLength": 4000
+                }
+              },
+              "required": [
+                "milestoneId",
+                "reason",
+                "narrative"
+              ],
+              "additionalProperties": false
+            },
+            "annotations": {
+              "readOnlyHint": false,
+              "destructiveHint": false,
+              "idempotentHint": false,
+              "openWorldHint": false
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "label": "provider agent reads status",
+    "request": {
+      "method": "tools/call",
+      "params": {
+        "name": "get_contract_status",
+        "arguments": {
+          "contractId": "ws_09b92b8ae8774f7bb133"
+        }
+      }
+    },
+    "status": 200,
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 3,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"id\": \"ws_09b92b8ae8774f7bb133\",\n  \"title\": \"PaySettle build · period 3 (weeks 8–10)\",\n  \"state\": \"LOCKED\",\n  \"revision\": 9,\n  \"rail\": \"MOCK\",\n  \"currency\": \"USD\",\n  \"total\": \"$30,000.00\",\n  \"totalCents\": 3000000,\n  \"client\": \"Dan Okafor\",\n  \"provider\": \"Arjun Rao\",\n  \"riskScore\": 30,\n  \"milestones\": [\n    {\n      \"id\": \"ms_badd1fdf202b4b90be64\",\n      \"code\": \"C01\",\n      \"title\": \"Judge Playground, MCP server and role consoles\",\n      \"type\": \"PAY\",\n      \"state\": \"RELEASED\",\n      \"day\": 8,\n      \"share\": \"30%\",\n      \"amount\": \"$9,000.00\",\n      \"tranche\": 1\n    },\n    {\n      \"id\": \"ms_52953cf174d04bdb9cd4\",\n      \"code\": \"C02\",\n      \"title\": \"iOS build on TestFlight\",\n      \"type\": \"PAY\",\n      \"state\": \"RELEASED\",\n      \"day\": 10,\n      \"share\": \"30%\",\n      \"amount\": \"$9,000.00\",\n      \"tranche\": 1\n    },\n    {\n      \"id\": \"ms_81743ba167ec42b5a7cc\",\n      \"code\": \"C03\",\n      \"title\": \"Play Store and App Store listings\",\n      \"type\": \"PAY\",\n      \"state\": \"OPEN\",\n      \"day\": 15,\n      \"share\": \"20%\",\n      \"amount\": \"$6,000.00\",\n      \"tranche\": 1\n    },\n    {\n      \"id\": \"ms_20398dab7c5f4c91bcbb\",\n      \"code\": \"M01\",\n      \"title\": \"Production launch\",\n      \"type\": \"PAY\",\n      \"state\": \"LOCKED\",\n      \"day\": 20,\n      \"share\": \"12%\",\n      \"amount\": \"$3,600.00\",\n      \"tranche\": 1\n    },\n    {\n      \"id\": \"ms_319f35e42557430794da\",\n      \"code\": \"M02\",\n      \"title\": \"Handover and documentation\",\n      \"type\": \"PAY\",\n      \"state\": \"LOCKED\",\n      \"day\": 24,\n      \"share\": \"8%\",\n      \"amount\": \"$2,400.00\",\n      \"tranche\": 1\n    }\n  ],\n  \"tranches\": [\n    {\n      \"id\": \"tr_c62080a1394e46b99840\",\n      \"idx\": 1,\n      \"state\": \"PARTIALLY_RELEASED\",\n      \"amount\": \"$30,000.00\",\n      \"amountCents\": 3000000,\n      \"days\": \"1–24\",\n      \"approveUrl\": \"http://localhost:3100/api/paypal/return?tranche=tr_c62080a1394e46b99840&token=MOCKORD-EE587B6ECFEA9124A\"\n    }\n  ],\n  \"signatures\": [\n    {\n      \"role\": \"provider\",\n      \"revision\": 9\n    },\n    {\n      \"role\": \"client\",\n      \"revision\": 9\n    }\n  ],\n  \"violations\": []\n}"
+          }
+        ],
+        "structuredContent": {
+          "id": "ws_09b92b8ae8774f7bb133",
+          "title": "PaySettle build · period 3 (weeks 8–10)",
+          "state": "LOCKED",
+          "revision": 9,
+          "rail": "MOCK",
+          "currency": "USD",
+          "total": "$30,000.00",
+          "totalCents": 3000000,
+          "client": "Dan Okafor",
+          "provider": "Arjun Rao",
+          "riskScore": 30,
+          "milestones": [
+            {
+              "id": "ms_badd1fdf202b4b90be64",
+              "code": "C01",
+              "title": "Judge Playground, MCP server and role consoles",
+              "type": "PAY",
+              "state": "RELEASED",
+              "day": 8,
+              "share": "30%",
+              "amount": "$9,000.00",
+              "tranche": 1
+            },
+            {
+              "id": "ms_52953cf174d04bdb9cd4",
+              "code": "C02",
+              "title": "iOS build on TestFlight",
+              "type": "PAY",
+              "state": "RELEASED",
+              "day": 10,
+              "share": "30%",
+              "amount": "$9,000.00",
+              "tranche": 1
+            },
+            {
+              "id": "ms_81743ba167ec42b5a7cc",
+              "code": "C03",
+              "title": "Play Store and App Store listings",
+              "type": "PAY",
+              "state": "OPEN",
+              "day": 15,
+              "share": "20%",
+              "amount": "$6,000.00",
+              "tranche": 1
+            },
+            {
+              "id": "ms_20398dab7c5f4c91bcbb",
+              "code": "M01",
+              "title": "Production launch",
+              "type": "PAY",
+              "state": "LOCKED",
+              "day": 20,
+              "share": "12%",
+              "amount": "$3,600.00",
+              "tranche": 1
+            },
+            {
+              "id": "ms_319f35e42557430794da",
+              "code": "M02",
+              "title": "Handover and documentation",
+              "type": "PAY",
+              "state": "LOCKED",
+              "day": 24,
+              "share": "8%",
+              "amount": "$2,400.00",
+              "tranche": 1
+            }
+          ],
+          "tranches": [
+            {
+              "id": "tr_c62080a1394e46b99840",
+              "idx": 1,
+              "state": "PARTIALLY_RELEASED",
+              "amount": "$30,000.00",
+              "amountCents": 3000000,
+              "days": "1–24",
+              "approveUrl": "http://localhost:3100/api/paypal/return?tranche=tr_c62080a1394e46b99840&token=MOCKORD-EE587B6ECFEA9124A"
+            }
+          ],
+          "signatures": [
+            {
+              "role": "provider",
+              "revision": 9
+            },
+            {
+              "role": "client",
+              "revision": 9
+            }
+          ],
+          "violations": []
+        },
+        "isError": false
+      }
+    }
+  },
+  {
+    "label": "retry: provider agent submits store-listing evidence with the links also in the note",
+    "request": {
+      "method": "tools/call",
+      "params": {
+        "name": "submit_evidence",
+        "arguments": {
+          "contractId": "ws_09b92b8ae8774f7bb133",
+          "milestoneId": "ms_81743ba167ec42b5a7cc",
+          "note": "Store listings submitted by the provider's agent (sample links, simulation on sandbox data):\nhttps://play.google.com/store/apps/details?id=example.paysettle.sample\nhttps://apps.apple.com/app/paysettle-sample/id0000000000",
+          "urls": [
+            "https://play.google.com/store/apps/details?id=example.paysettle.sample",
+            "https://apps.apple.com/app/paysettle-sample/id0000000000"
+          ]
+        }
+      }
+    },
+    "status": 200,
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 4,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"packageId\": \"ev_747dce32c6734cc9a46e\",\n  \"rootHash\": \"7bbdbeb41af2efc5980826bcef31bc0dedc6f28f895175a13c461fade34ae195\",\n  \"signals\": [\n    {\n      \"code\": \"COUNT_LINK\",\n      \"level\": \"ok\",\n      \"detail\": \"Links: 2 links in the note (2 required) — Store listing URLs (sample)\"\n    },\n    {\n      \"code\": \"EXTRA_LOG\",\n      \"level\": \"ok\",\n      \"detail\": \"2 log files not named in the spec (kept as extra context)\"\n    },\n    {\n      \"code\": \"HASH\",\n      \"level\": \"ok\",\n      \"detail\": \"Root 7bbdbeb41af2… over 2 files (SHA-256).\"\n    }\n  ],\n  \"next\": \"The client reviews the evidence in the app.\",\n  \"link\": \"http://localhost:3100/contracts/ws_09b92b8ae8774f7bb133/m/ms_81743ba167ec42b5a7cc\"\n}"
+          }
+        ],
+        "structuredContent": {
+          "packageId": "ev_747dce32c6734cc9a46e",
+          "rootHash": "7bbdbeb41af2efc5980826bcef31bc0dedc6f28f895175a13c461fade34ae195",
+          "signals": [
+            {
+              "code": "COUNT_LINK",
+              "level": "ok",
+              "detail": "Links: 2 links in the note (2 required) — Store listing URLs (sample)"
+            },
+            {
+              "code": "EXTRA_LOG",
+              "level": "ok",
+              "detail": "2 log files not named in the spec (kept as extra context)"
+            },
+            {
+              "code": "HASH",
+              "level": "ok",
+              "detail": "Root 7bbdbeb41af2… over 2 files (SHA-256)."
+            }
+          ],
+          "next": "The client reviews the evidence in the app.",
+          "link": "http://localhost:3100/contracts/ws_09b92b8ae8774f7bb133/m/ms_81743ba167ec42b5a7cc"
+        },
+        "isError": false
+      }
+    }
+  },
+  {
+    "label": "provider agent submits store-listing evidence",
+    "request": {
+      "method": "tools/call",
+      "params": {
+        "name": "submit_evidence",
+        "arguments": {
+          "contractId": "ws_09b92b8ae8774f7bb133",
+          "milestoneId": "ms_81743ba167ec42b5a7cc",
+          "note": "Store listings submitted by the provider's agent: Play Store and App Store pages with description, privacy details and screenshots. Sample links, simulation on sandbox data.",
+          "urls": [
+            "https://play.google.com/store/apps/details?id=example.paysettle.sample",
+            "https://apps.apple.com/app/paysettle-sample/id0000000000"
+          ]
+        }
+      }
+    },
+    "status": 200,
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 5,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "BAD_STATE: C03 is submitted; evidence can be submitted while it is open or a fix was requested."
+          }
+        ],
+        "structuredContent": {
+          "error": {
+            "code": "BAD_STATE",
+            "message": "C03 is submitted; evidence can be submitted while it is open or a fix was requested."
+          }
+        },
+        "isError": true
+      }
+    }
+  },
+  {
+    "label": "provider agent asks for release (human gate)",
+    "request": {
+      "method": "tools/call",
+      "params": {
+        "name": "approve_release",
+        "arguments": {
+          "contractId": "ws_09b92b8ae8774f7bb133",
+          "milestoneId": "ms_81743ba167ec42b5a7cc",
+          "note": "Both listings are live in review; please approve C03."
+        }
+      }
+    },
+    "status": 200,
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 6,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "PERMISSION_DENIED: Your role (provider) may not release approve."
+          }
+        ],
+        "structuredContent": {
+          "error": {
+            "code": "PERMISSION_DENIED",
+            "message": "Your role (provider) may not release approve."
+          }
+        },
+        "isError": true
+      }
+    }
+  },
+  {
+    "label": "client agent records a release request (moves no money)",
+    "request": {
+      "method": "tools/call",
+      "params": {
+        "name": "approve_release",
+        "arguments": {
+          "contractId": "ws_09b92b8ae8774f7bb133",
+          "milestoneId": "ms_81743ba167ec42b5a7cc",
+          "note": "Store listings look complete; queue C03 for my approval."
+        }
+      }
+    },
+    "status": 200,
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 7,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"approvalId\": \"apr_7d012179e89948f58d29\",\n  \"state\": \"PENDING\",\n  \"released\": false,\n  \"amount\": \"$6,000.00\",\n  \"confirmUrl\": \"http://localhost:3100/contracts/ws_09b92b8ae8774f7bb133/m/ms_81743ba167ec42b5a7cc\",\n  \"humanAction\": \"No money moved. The client opens the link and approves with MFA; only that signed approval releases the milestone.\"\n}"
+          }
+        ],
+        "structuredContent": {
+          "approvalId": "apr_7d012179e89948f58d29",
+          "state": "PENDING",
+          "released": false,
+          "amount": "$6,000.00",
+          "confirmUrl": "http://localhost:3100/contracts/ws_09b92b8ae8774f7bb133/m/ms_81743ba167ec42b5a7cc",
+          "humanAction": "No money moved. The client opens the link and approves with MFA; only that signed approval releases the milestone."
+        },
+        "isError": false
+      }
+    }
+  },
+  {
+    "label": "client agent asks to fund the new $3,000 tranche with a $1,000 spend limit",
+    "request": {
+      "method": "tools/call",
+      "params": {
+        "name": "request_funding",
+        "arguments": {
+          "contractId": "ws_09b92b8ae8774f7bb133"
+        }
+      }
+    },
+    "status": 200,
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 8,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "SPEND_LIMIT: Funding $3,000.00 would pass this agent token's spend limit ($1,000.00, $1,000.00 left). Ask the person to mint a token with a higher limit."
+          }
+        ],
+        "structuredContent": {
+          "error": {
+            "code": "SPEND_LIMIT",
+            "message": "Funding $3,000.00 would pass this agent token's spend limit ($1,000.00, $1,000.00 left). Ask the person to mint a token with a higher limit."
+          }
+        },
+        "isError": true
+      }
+    }
+  }
+]

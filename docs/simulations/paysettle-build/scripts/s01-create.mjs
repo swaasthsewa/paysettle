@@ -1,0 +1,18 @@
+import { launch, as, dumpForms, close, shot, loadState, saveState } from "./lib.mjs";
+await launch();
+const st = loadState();
+const p = await as("dan");
+await p.goto("/client/new");
+await p.selectOption("#n-bp", "UC_WEB_MVP");
+await p.fill("#n-title", "PaySettle build: web, Android and iOS");
+await p.fill("#n-total", "30,000");
+await p.selectOption("#n-prov", "u_arjun");
+await p.fill("#n-brief", "Build PaySettle: milestone contracts with funds held through PayPal (policy gate, rails, ledger, evidence checks, disputes, reconciliation, AI agents, MCP server, Judge Playground, role consoles) as a web app plus Android and iOS apps. 10-week build in rolling 3-4 week periods, then 6 months of maintenance.");
+await shot(p, "w01-client-new-contract-form");
+await p.getByRole("button", { name: "Create the contract" }).click();
+await p.waitForURL(/\/contracts\/ws_/);
+st.p1 = p.url().split(/[?#]/)[0].replace(/^.*\/contracts\//, "");
+saveState(st);
+console.log(p.url());
+console.log(await dumpForms(p));
+await close();

@@ -1,0 +1,16 @@
+import { launch, as, close, loadState, shot, room, toDay, settle } from "./lib.mjs";
+import { deliver } from "./evidence.mjs";
+const b = await launch(); const st = loadState(); const ws = st.p1;
+const dan = await as("dan"), arjun = await as("arjun");
+await toDay(ws, 1);
+await room(dan, ws); await shot(dan, "w01-client-contract-room-tranche-held");
+await room(arjun, ws); await shot(arjun, "w01-provider-contract-room-tranche-held", false);
+await deliver(b, ws, "M02", 6, { prefix: "w01", shots: true, note: "Clickable prototype for web, Android and iOS (designer + tech lead). Screen list maps every backlog feature. Sample evidence, simulation." });
+await dan.goto("/client"); await settle(dan); await shot(dan, "w01-client-overview");
+await arjun.goto("/provider"); await settle(arjun); await shot(arjun, "w01-provider-overview");
+await deliver(b, ws, "M03", 11, { prefix: "w02", shots: true, note: "Data model, policy gate and contract API on staging; CI green on main (engineers 1 and 2, QA). Sample evidence, simulation." });
+await deliver(b, ws, "M04", 17, { prefix: "w03", shots: false, note: "Core features on staging: contracts, tranches, ledger, evidence upload, role consoles. Walkthrough and e2e report attached (sample)." });
+await deliver(b, ws, "M05", 21, { prefix: "w03", shots: true, note: "Quality pass: Lighthouse mobile 91, axe scan with no serious issues, dependency scan clean (sample reports)." });
+await room(dan, ws); await shot(dan, "w03-client-room-end-of-period-1");
+await arjun.goto("/provider/payouts"); await settle(arjun); await shot(arjun, "w03-provider-payouts-period-1");
+await close(); process.exit(0);

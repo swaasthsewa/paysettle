@@ -1,0 +1,11 @@
+import { launch, as, dumpForms, close, loadState, room } from "./lib.mjs";
+await launch();
+const st = loadState();
+const p = await as(process.argv[2]);
+await room(p, st[process.argv[3]]);
+const hrefs = await p.locator(`a[href*="/m/"]`).evaluateAll((as) => as.map((a) => a.textContent.trim().slice(0,40) + " -> " + a.getAttribute("href")));
+console.log(hrefs.join("\n"));
+const h = (await p.locator(`a[href*="/m/"]`).nth(Number(process.argv[4] ?? 1)).getAttribute("href"));
+await p.goto(h);
+console.log(p.url()); console.log((await p.locator("main").innerText()).slice(0, 3000)); console.log(await dumpForms(p));
+await close(); process.exit(0);

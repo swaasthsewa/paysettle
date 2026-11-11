@@ -1,0 +1,37 @@
+import fs from "node:fs";
+import { launch, as, close, loadState, shot, settle, q } from "./lib.mjs";
+await launch(); const st = loadState(); const tag = process.argv[2] ?? "build";
+const ours = [st.p1, st.p2, st.p3, ...(st.maint ?? [])].filter(Boolean);
+const fin = await as("fin");
+await fin.goto("/finance/recon"); await settle(fin);
+await Promise.all([fin.waitForNavigation().catch(() => {}), fin.getByRole("button", { name: "Run now" }).click()]);
+await fin.waitForLoadState("networkidle").catch(() => {}); await fin.waitForTimeout(2000);
+const txt = await fin.locator("main").innerText();
+const titles = (await q("select id, title from workspaces where id = any($1)", [ours])).map((r) => r.title);
+const cards = txt.split(/\n(?=[^\n]+ · tranche \d+\n)/).filter((c) => titles.some((t) => c.startsWith(t)));
+const out = { tag, head: txt.slice(0, 600), cards: cards.map((c) => c.slice(0, 900)) };
+fs.writeFileSync(`/home/user/paysettle/sim/recon-${tag}.json`, JSON.stringify(out, null, 2));
+console.log(out.head); for (const c of cards) console.log("---\n" + c.split("\n").slice(0, 4).join(" | "));
+await shot(fin, `${tag}-finance-recon-run`, false);
+// scroll to one of ours
+const first = fin.locator("text=PaySettle build").first();
+if (await first.count()) { await first.scrollIntoViewIfNeeded(); await fin.screenshot({ path: `/home/user/paysettle/docs/simulations/paysettle-build/shots/${tag}-finance-recon-our-tranches.jpg`, type: "jpeg", quality: 80 }); }
+await fin.goto("/finance/ledger"); await settle(fin); await shot(fin, `${tag}-finance-ledger`, false);
+await fin.goto("/finance/fees"); await settle(fin); await shot(fin, `${tag}-finance-fees`, false);
+const admin = await as("admin");
+await admin.goto("/admin/audit"); await settle(admin);
+await Promise.all([admin.waitForNavigation().catch(() => {}), admin.getByRole("button", { name: "Verify chain" }).click()]);
+await admin.waitForLoadState("networkidle").catch(() => {}); await admin.waitForTimeout(1500);
+const integ = (await admin.locator("main").innerText()).match(/Integrity[\s\S]{0,300}/)?.[0];
+console.log("AUDIT", integ); fs.writeFileSync(`/home/user/paysettle/sim/audit-${tag}.txt`, integ ?? "");
+await shot(admin, `${tag}-admin-audit-chain-verified`, false);
+const ops = await as("ops");
+await ops.goto("/ops/clearance"); await settle(ops); await shot(ops, `${tag}-ops-clearance-queue`, false);
+console.log("OPS", (await ops.locator("main").innerText()).slice(0, 600));
+await ops.goto("/ops"); await settle(ops); await shot(ops, `${tag}-ops-overview`, false);
+const med = await as("med");
+await med.goto("/mediator"); await settle(med);
+const mt = await med.locator("main").innerText();
+console.log("MED mentions our contracts:", /PaySettle build|PaySettle maintenance/.test(mt));
+await shot(med, `${tag}-mediator-console-no-case-for-this-contract`, false);
+await close(); process.exit(0);

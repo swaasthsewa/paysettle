@@ -1,0 +1,1434 @@
+{
+  "since": "2026-11-11T07:55:48.666Z",
+  "periods": [
+    {
+      "label": "Build period 1 (weeks 1–3)",
+      "ws": "ws_ee3ef9c8eb9a47668a64",
+      "w": {
+        "id": "ws_ee3ef9c8eb9a47668a64",
+        "title": "PaySettle build: web, Android and iOS",
+        "state": "LOCKED",
+        "total_cents": "1800000",
+        "revision": 10,
+        "risk_score": 30,
+        "period_no": 1,
+        "parent_workspace_id": null,
+        "fee_bps": 250
+      },
+      "ms": [
+        {
+          "code": "M01",
+          "title": "Kickoff, access and MVP backlog agreed",
+          "type": "GATE",
+          "state": "RELEASED",
+          "amount_cents": "0",
+          "target_day": 2,
+          "tranche_idx": 1,
+          "active": true,
+          "carried_from": null
+        },
+        {
+          "code": "M02",
+          "title": "Clickable design approved (web, Android, iOS)",
+          "type": "PAY",
+          "state": "RELEASED",
+          "amount_cents": "360000",
+          "target_day": 6,
+          "tranche_idx": 1,
+          "active": true,
+          "carried_from": null
+        },
+        {
+          "code": "M03",
+          "title": "Data model and API on staging",
+          "type": "PAY",
+          "state": "RELEASED",
+          "amount_cents": "480000",
+          "target_day": 11,
+          "tranche_idx": 1,
+          "active": true,
+          "carried_from": null
+        },
+        {
+          "code": "M04",
+          "title": "Core features on staging",
+          "type": "PAY",
+          "state": "RELEASED",
+          "amount_cents": "600000",
+          "target_day": 17,
+          "tranche_idx": 1,
+          "active": true,
+          "carried_from": null
+        },
+        {
+          "code": "M05",
+          "title": "Quality pass: performance, accessibility, security",
+          "type": "PAY",
+          "state": "RELEASED",
+          "amount_cents": "360000",
+          "target_day": 21,
+          "tranche_idx": 1,
+          "active": true,
+          "carried_from": null
+        },
+        {
+          "code": "C01",
+          "title": "In-app chat between client and provider",
+          "type": "PAY",
+          "state": "OPEN",
+          "amount_cents": "360000",
+          "target_day": 23,
+          "tranche_idx": 1,
+          "active": false,
+          "carried_from": null
+        },
+        {
+          "code": "M06",
+          "title": "Production launch",
+          "type": "PAY",
+          "state": "LOCKED",
+          "amount_cents": "360000",
+          "target_day": 24,
+          "tranche_idx": 1,
+          "active": false,
+          "carried_from": null
+        },
+        {
+          "code": "C02",
+          "title": "Offline mode for the mobile apps",
+          "type": "PAY",
+          "state": "LOCKED",
+          "amount_cents": "240000",
+          "target_day": 25,
+          "tranche_idx": 1,
+          "active": false,
+          "carried_from": null
+        },
+        {
+          "code": "M07",
+          "title": "Handover and documentation",
+          "type": "PAY",
+          "state": "LOCKED",
+          "amount_cents": "240000",
+          "target_day": 26,
+          "tranche_idx": 1,
+          "active": false,
+          "carried_from": null
+        }
+      ],
+      "tr": [
+        {
+          "idx": 1,
+          "state": "CLOSED",
+          "amount_cents": "3000000"
+        }
+      ],
+      "led": {
+        "FEE": {
+          "cents": 45000,
+          "n": 4
+        },
+        "HOLD": {
+          "cents": 3000000,
+          "n": 1
+        },
+        "RELEASE": {
+          "cents": 1755000,
+          "n": 4
+        },
+        "VOID": {
+          "cents": 1200000,
+          "n": 4
+        }
+      },
+      "cos": [
+        {
+          "no": 1,
+          "state": "APPLIED",
+          "note": "Moves C01, M06, C02, M07 into period 2 (“PaySettle build · period 2 (weeks 4–7)”). Weeks 4–7. Launch and handover move again with the build; chat and offline mode are planned for this period.",
+          "proposed_role": "client",
+          "money": {
+            "fund": [],
+            "moved": [],
+            "planned": [],
+            "returns": [
+              {
+                "items": [
+                  {
+                    "amountCents": 360000,
+                    "milestoneCode": "C01"
+                  },
+                  {
+                    "amountCents": 360000,
+                    "milestoneCode": "M06"
+                  },
+                  {
+                    "amountCents": 240000,
+                    "milestoneCode": "C02"
+                  },
+                  {
+                    "amountCents": 240000,
+                    "milestoneCode": "M07"
+                  }
+                ],
+                "trancheIdx": 1,
+                "amountCents": 1200000
+              }
+            ],
+            "netCents": -1200000
+          },
+          "total_from_cents": "3000000",
+          "total_to_cents": "1800000",
+          "risk": 30,
+          "continuation_id": "ws_6a1a890491204363b998",
+          "returns": [
+            {
+              "items": [
+                {
+                  "amountCents": 360000,
+                  "milestoneCode": "C01"
+                },
+                {
+                  "amountCents": 360000,
+                  "milestoneCode": "M06"
+                },
+                {
+                  "amountCents": 240000,
+                  "milestoneCode": "C02"
+                },
+                {
+                  "amountCents": 240000,
+                  "milestoneCode": "M07"
+                }
+              ],
+              "status": "DONE",
+              "idemKey": "8e05b8e8-2317-52bb-b8e0-4cf09ed6aafa",
+              "refundId": "ret_01179052f35144f186f4",
+              "trancheId": "tr_083bcfeddeef492d8c26",
+              "trancheIdx": 1,
+              "amountCents": 1200000
+            }
+          ]
+        }
+      ],
+      "clockHours": 504
+    },
+    {
+      "label": "Build period 2 (weeks 4–7)",
+      "ws": "ws_6a1a890491204363b998",
+      "w": {
+        "id": "ws_6a1a890491204363b998",
+        "title": "PaySettle build · period 2 (weeks 4–7)",
+        "state": "LOCKED",
+        "total_cents": "3400000",
+        "revision": 16,
+        "risk_score": 30,
+        "period_no": 2,
+        "parent_workspace_id": "ws_ee3ef9c8eb9a47668a64",
+        "fee_bps": 250
+      },
+      "ms": [
+        {
+          "code": "C01",
+          "title": "Evidence vault, scoped disputes and mediator console",
+          "type": "PAY",
+          "state": "RELEASED",
+          "amount_cents": "800000",
+          "target_day": 7,
+          "tranche_idx": 1,
+          "active": true,
+          "carried_from": null
+        },
+        {
+          "code": "C02",
+          "title": "AI agents and three-way reconciliation",
+          "type": "PAY",
+          "state": "RELEASED",
+          "amount_cents": "800000",
+          "target_day": 12,
+          "tranche_idx": 1,
+          "active": true,
+          "carried_from": null
+        },
+        {
+          "code": "M01",
+          "title": "Agent access over MCP with spend limits",
+          "type": "PAY",
+          "state": "RELEASED",
+          "amount_cents": "600000",
+          "target_day": 14,
+          "tranche_idx": 2,
+          "active": true,
+          "carried_from": "ms_864e7215a7094d42ba03"
+        },
+        {
+          "code": "M03",
+          "title": "Offline mode for the mobile apps",
+          "type": "PAY",
+          "state": "LOCKED",
+          "amount_cents": "240000",
+          "target_day": 18,
+          "tranche_idx": 1,
+          "active": false,
+          "carried_from": "ms_df0e85f04c904925a9ce"
+        },
+        {
+          "code": "C03",
+          "title": "Android build on the internal testing track",
+          "type": "PAY",
+          "state": "RELEASED",
+          "amount_cents": "1200000",
+          "target_day": 23,
+          "tranche_idx": 1,
+          "active": true,
+          "carried_from": null
+        },
+        {
+          "code": "M02",
+          "title": "Production launch",
+          "type": "PAY",
+          "state": "OPEN",
+          "amount_cents": "360000",
+          "target_day": 25,
+          "tranche_idx": 1,
+          "active": false,
+          "carried_from": "ms_9cd4599a919c4820b052"
+        },
+        {
+          "code": "M04",
+          "title": "Handover and documentation",
+          "type": "PAY",
+          "state": "LOCKED",
+          "amount_cents": "240000",
+          "target_day": 26,
+          "tranche_idx": 1,
+          "active": false,
+          "carried_from": "ms_e659f2ebb6b347d29a82"
+        }
+      ],
+      "tr": [
+        {
+          "idx": 1,
+          "state": "CLOSED",
+          "amount_cents": "4000000"
+        },
+        {
+          "idx": 2,
+          "state": "CLOSED",
+          "amount_cents": "600000"
+        }
+      ],
+      "led": {
+        "RELEASE": {
+          "cents": 3315000,
+          "n": 4
+        },
+        "FEE": {
+          "cents": 85000,
+          "n": 4
+        },
+        "HOLD": {
+          "cents": 4600000,
+          "n": 2
+        },
+        "VOID": {
+          "cents": 1200000,
+          "n": 4
+        }
+      },
+      "cos": [
+        {
+          "no": 1,
+          "state": "APPLIED",
+          "note": "Feature change in week 5: in-app chat is replaced by agent access over MCP with spend limits. Chat has not started.",
+          "proposed_role": "client",
+          "money": {
+            "fund": [
+              {
+                "codes": [
+                  "M01"
+                ],
+                "endDay": 14,
+                "startDay": 14,
+                "trancheIdx": 2,
+                "amountCents": 600000
+              }
+            ],
+            "moved": [
+              {
+                "code": "M01",
+                "toTranche": 2,
+                "fromTranche": 1
+              }
+            ],
+            "planned": [],
+            "returns": [
+              {
+                "items": [
+                  {
+                    "amountCents": 360000,
+                    "milestoneCode": "M01"
+                  }
+                ],
+                "trancheIdx": 1,
+                "amountCents": 360000
+              }
+            ],
+            "netCents": 240000
+          },
+          "total_from_cents": "4000000",
+          "total_to_cents": "4240000",
+          "risk": 30,
+          "continuation_id": null,
+          "returns": [
+            {
+              "items": [
+                {
+                  "amountCents": 360000,
+                  "milestoneCode": "M01"
+                }
+              ],
+              "status": "DONE",
+              "idemKey": "51cbcf10-11f8-5968-a6dd-5de950015a10",
+              "refundId": "ret_05cb4195e54e421b805b",
+              "trancheId": "tr_4bb92821b0a942ec8889",
+              "trancheIdx": 1,
+              "amountCents": 360000
+            }
+          ]
+        },
+        {
+          "no": 2,
+          "state": "APPLIED",
+          "note": "Offline mode is dropped from the build: not started, money goes back to the client.",
+          "proposed_role": "client",
+          "money": {
+            "fund": [],
+            "moved": [],
+            "planned": [],
+            "returns": [
+              {
+                "items": [
+                  {
+                    "amountCents": 240000,
+                    "milestoneCode": "M03"
+                  }
+                ],
+                "trancheIdx": 1,
+                "amountCents": 240000
+              }
+            ],
+            "netCents": -240000
+          },
+          "total_from_cents": "4240000",
+          "total_to_cents": "4000000",
+          "risk": 30,
+          "continuation_id": null,
+          "returns": [
+            {
+              "items": [
+                {
+                  "amountCents": 240000,
+                  "milestoneCode": "M03"
+                }
+              ],
+              "status": "DONE",
+              "idemKey": "3881bd28-b838-5263-b58e-483eb67c12cd",
+              "refundId": "ret_4ee943542be74044980a",
+              "trancheId": "tr_4bb92821b0a942ec8889",
+              "trancheIdx": 1,
+              "amountCents": 240000
+            }
+          ]
+        },
+        {
+          "no": 3,
+          "state": "APPLIED",
+          "note": "Play Console review of the internal testing track takes longer than planned; Android build due day 20 → day 23. Amount unchanged.",
+          "proposed_role": "provider",
+          "money": {
+            "fund": [],
+            "moved": [],
+            "planned": [],
+            "returns": [],
+            "netCents": 0
+          },
+          "total_from_cents": "4000000",
+          "total_to_cents": "4000000",
+          "risk": 30,
+          "continuation_id": null,
+          "returns": []
+        },
+        {
+          "no": 4,
+          "state": "APPLIED",
+          "note": "Moves M02, M04 into period 3 (“PaySettle build · period 3 (weeks 8–10)”). Final period: iOS, Judge Playground and consoles, store listings, launch and handover.",
+          "proposed_role": "provider",
+          "money": {
+            "fund": [],
+            "moved": [],
+            "planned": [],
+            "returns": [
+              {
+                "items": [
+                  {
+                    "amountCents": 360000,
+                    "milestoneCode": "M02"
+                  },
+                  {
+                    "amountCents": 240000,
+                    "milestoneCode": "M04"
+                  }
+                ],
+                "trancheIdx": 1,
+                "amountCents": 600000
+              }
+            ],
+            "netCents": -600000
+          },
+          "total_from_cents": "4000000",
+          "total_to_cents": "3400000",
+          "risk": 30,
+          "continuation_id": "ws_09b92b8ae8774f7bb133",
+          "returns": [
+            {
+              "items": [
+                {
+                  "amountCents": 360000,
+                  "milestoneCode": "M02"
+                },
+                {
+                  "amountCents": 240000,
+                  "milestoneCode": "M04"
+                }
+              ],
+              "status": "DONE",
+              "idemKey": "d2835aa4-5d70-5eb1-99c6-ed9ff9aad48c",
+              "refundId": "ret_add8bd16d29c4592aad0",
+              "trancheId": "tr_4bb92821b0a942ec8889",
+              "trancheIdx": 1,
+              "amountCents": 600000
+            }
+          ]
+        }
+      ],
+      "clockHours": 600
+    },
+    {
+      "label": "Build period 3 (weeks 8–10)",
+      "ws": "ws_09b92b8ae8774f7bb133",
+      "w": {
+        "id": "ws_09b92b8ae8774f7bb133",
+        "title": "PaySettle build · period 3 (weeks 8–10)",
+        "state": "LOCKED",
+        "total_cents": "3300000",
+        "revision": 10,
+        "risk_score": 30,
+        "period_no": 3,
+        "parent_workspace_id": "ws_6a1a890491204363b998",
+        "fee_bps": 250
+      },
+      "ms": [
+        {
+          "code": "C01",
+          "title": "Judge Playground, MCP server and role consoles",
+          "type": "PAY",
+          "state": "RELEASED",
+          "amount_cents": "900000",
+          "target_day": 8,
+          "tranche_idx": 1,
+          "active": true,
+          "carried_from": null
+        },
+        {
+          "code": "C02",
+          "title": "iOS build on TestFlight",
+          "type": "PAY",
+          "state": "RELEASED",
+          "amount_cents": "900000",
+          "target_day": 10,
+          "tranche_idx": 1,
+          "active": true,
+          "carried_from": null
+        },
+        {
+          "code": "C03",
+          "title": "Play Store and App Store listings",
+          "type": "PAY",
+          "state": "RELEASED",
+          "amount_cents": "600000",
+          "target_day": 15,
+          "tranche_idx": 1,
+          "active": true,
+          "carried_from": null
+        },
+        {
+          "code": "M01",
+          "title": "Production launch",
+          "type": "PAY",
+          "state": "RELEASED",
+          "amount_cents": "360000",
+          "target_day": 20,
+          "tranche_idx": 1,
+          "active": true,
+          "carried_from": "ms_689de311348a4791a742"
+        },
+        {
+          "code": "C04",
+          "title": "Landing page, launch blog posts and store screenshots",
+          "type": "PAY",
+          "state": "RELEASED",
+          "amount_cents": "300000",
+          "target_day": 22,
+          "tranche_idx": 2,
+          "active": true,
+          "carried_from": null
+        },
+        {
+          "code": "M02",
+          "title": "Handover and documentation",
+          "type": "PAY",
+          "state": "RELEASED",
+          "amount_cents": "240000",
+          "target_day": 24,
+          "tranche_idx": 1,
+          "active": true,
+          "carried_from": "ms_1fcb1ea3da1a4c8ea878"
+        }
+      ],
+      "tr": [
+        {
+          "idx": 1,
+          "state": "CLOSED",
+          "amount_cents": "3000000"
+        },
+        {
+          "idx": 2,
+          "state": "CLOSED",
+          "amount_cents": "300000"
+        }
+      ],
+      "led": {
+        "RELEASE": {
+          "cents": 3217500,
+          "n": 6
+        },
+        "FEE": {
+          "cents": 82500,
+          "n": 6
+        },
+        "HOLD": {
+          "cents": 3300000,
+          "n": 2
+        }
+      },
+      "cos": [
+        {
+          "no": 1,
+          "state": "APPLIED",
+          "note": "Last-week addition: landing page, launch blog posts and store screenshots for the launch.",
+          "proposed_role": "client",
+          "money": {
+            "fund": [
+              {
+                "codes": [
+                  "C04"
+                ],
+                "endDay": 22,
+                "startDay": 22,
+                "trancheIdx": 2,
+                "amountCents": 300000
+              }
+            ],
+            "moved": [],
+            "planned": [],
+            "returns": [],
+            "netCents": 300000
+          },
+          "total_from_cents": "3000000",
+          "total_to_cents": "3300000",
+          "risk": 30,
+          "continuation_id": null,
+          "returns": []
+        }
+      ],
+      "clockHours": 576
+    },
+    {
+      "label": "Maintenance month 1",
+      "ws": "ws_19550ab2da594b84bb54",
+      "w": {
+        "id": "ws_19550ab2da594b84bb54",
+        "title": "PaySettle maintenance · month 1",
+        "state": "LOCKED",
+        "total_cents": "400000",
+        "revision": 12,
+        "risk_score": 10,
+        "period_no": 4,
+        "parent_workspace_id": "ws_09b92b8ae8774f7bb133",
+        "fee_bps": 250
+      },
+      "ms": [
+        {
+          "code": "M01",
+          "title": "Judge Playground, MCP server and role consoles",
+          "type": "PAY",
+          "state": "DRAFT",
+          "amount_cents": "0",
+          "target_day": 8,
+          "tranche_idx": 1,
+          "active": false,
+          "carried_from": null
+        },
+        {
+          "code": "M02",
+          "title": "iOS build on TestFlight",
+          "type": "PAY",
+          "state": "DRAFT",
+          "amount_cents": "0",
+          "target_day": 10,
+          "tranche_idx": 1,
+          "active": false,
+          "carried_from": null
+        },
+        {
+          "code": "C01",
+          "title": "Security patches applied",
+          "type": "PAY",
+          "state": "RELEASED",
+          "amount_cents": "100000",
+          "target_day": 10,
+          "tranche_idx": 1,
+          "active": true,
+          "carried_from": null
+        },
+        {
+          "code": "M03",
+          "title": "Play Store and App Store listings",
+          "type": "PAY",
+          "state": "DRAFT",
+          "amount_cents": "0",
+          "target_day": 15,
+          "tranche_idx": 1,
+          "active": false,
+          "carried_from": null
+        },
+        {
+          "code": "M04",
+          "title": "Production launch",
+          "type": "PAY",
+          "state": "DRAFT",
+          "amount_cents": "0",
+          "target_day": 20,
+          "tranche_idx": 1,
+          "active": false,
+          "carried_from": null
+        },
+        {
+          "code": "C02",
+          "title": "Bug-fix SLA met",
+          "type": "PAY",
+          "state": "RELEASED",
+          "amount_cents": "100000",
+          "target_day": 20,
+          "tranche_idx": 1,
+          "active": true,
+          "carried_from": null
+        },
+        {
+          "code": "M05",
+          "title": "Landing page, launch blog posts and store screenshots",
+          "type": "PAY",
+          "state": "DRAFT",
+          "amount_cents": "0",
+          "target_day": 22,
+          "tranche_idx": 1,
+          "active": false,
+          "carried_from": null
+        },
+        {
+          "code": "M06",
+          "title": "Handover and documentation",
+          "type": "PAY",
+          "state": "DRAFT",
+          "amount_cents": "0",
+          "target_day": 24,
+          "tranche_idx": 1,
+          "active": false,
+          "carried_from": null
+        },
+        {
+          "code": "C03",
+          "title": "Monthly uptime report ≥ 99.5%",
+          "type": "PAY",
+          "state": "RELEASED",
+          "amount_cents": "100000",
+          "target_day": 25,
+          "tranche_idx": 1,
+          "active": true,
+          "carried_from": null
+        },
+        {
+          "code": "C04",
+          "title": "Monthly release note",
+          "type": "PAY",
+          "state": "RELEASED",
+          "amount_cents": "100000",
+          "target_day": 26,
+          "tranche_idx": 1,
+          "active": true,
+          "carried_from": null
+        }
+      ],
+      "tr": [
+        {
+          "idx": 1,
+          "state": "CLOSED",
+          "amount_cents": "400000"
+        }
+      ],
+      "led": {
+        "FEE": {
+          "cents": 10000,
+          "n": 4
+        },
+        "HOLD": {
+          "cents": 400000,
+          "n": 1
+        },
+        "RELEASE": {
+          "cents": 390000,
+          "n": 4
+        }
+      },
+      "cos": [],
+      "clockHours": 624
+    },
+    {
+      "label": "Maintenance month 2",
+      "ws": "ws_4686f67a0f1a4c4591e7",
+      "w": {
+        "id": "ws_4686f67a0f1a4c4591e7",
+        "title": "PaySettle maintenance · month 2",
+        "state": "LOCKED",
+        "total_cents": "400000",
+        "revision": 1,
+        "risk_score": 10,
+        "period_no": 5,
+        "parent_workspace_id": "ws_19550ab2da594b84bb54",
+        "fee_bps": 250
+      },
+      "ms": [
+        {
+          "code": "M01",
+          "title": "Security patches applied",
+          "type": "PAY",
+          "state": "RELEASED",
+          "amount_cents": "100000",
+          "target_day": 10,
+          "tranche_idx": 1,
+          "active": true,
+          "carried_from": null
+        },
+        {
+          "code": "M02",
+          "title": "Bug-fix SLA met",
+          "type": "PAY",
+          "state": "RELEASED",
+          "amount_cents": "100000",
+          "target_day": 20,
+          "tranche_idx": 1,
+          "active": true,
+          "carried_from": null
+        },
+        {
+          "code": "M03",
+          "title": "Monthly uptime report ≥ 99.5%",
+          "type": "PAY",
+          "state": "RELEASED",
+          "amount_cents": "100000",
+          "target_day": 25,
+          "tranche_idx": 1,
+          "active": true,
+          "carried_from": null
+        },
+        {
+          "code": "M04",
+          "title": "Monthly release note",
+          "type": "PAY",
+          "state": "RELEASED",
+          "amount_cents": "100000",
+          "target_day": 26,
+          "tranche_idx": 1,
+          "active": true,
+          "carried_from": null
+        }
+      ],
+      "tr": [
+        {
+          "idx": 1,
+          "state": "CLOSED",
+          "amount_cents": "400000"
+        }
+      ],
+      "led": {
+        "FEE": {
+          "cents": 10000,
+          "n": 4
+        },
+        "HOLD": {
+          "cents": 400000,
+          "n": 1
+        },
+        "RELEASE": {
+          "cents": 390000,
+          "n": 4
+        }
+      },
+      "cos": [],
+      "clockHours": 624
+    },
+    {
+      "label": "Maintenance month 3",
+      "ws": "ws_fdca3958ce304ddba644",
+      "w": {
+        "id": "ws_fdca3958ce304ddba644",
+        "title": "PaySettle maintenance · month 3",
+        "state": "LOCKED",
+        "total_cents": "400000",
+        "revision": 1,
+        "risk_score": 10,
+        "period_no": 6,
+        "parent_workspace_id": "ws_4686f67a0f1a4c4591e7",
+        "fee_bps": 250
+      },
+      "ms": [
+        {
+          "code": "M01",
+          "title": "Security patches applied",
+          "type": "PAY",
+          "state": "RELEASED",
+          "amount_cents": "100000",
+          "target_day": 10,
+          "tranche_idx": 1,
+          "active": true,
+          "carried_from": null
+        },
+        {
+          "code": "M02",
+          "title": "Bug-fix SLA met",
+          "type": "PAY",
+          "state": "RELEASED",
+          "amount_cents": "100000",
+          "target_day": 20,
+          "tranche_idx": 1,
+          "active": true,
+          "carried_from": null
+        },
+        {
+          "code": "M03",
+          "title": "Monthly uptime report ≥ 99.5%",
+          "type": "PAY",
+          "state": "RELEASED",
+          "amount_cents": "100000",
+          "target_day": 25,
+          "tranche_idx": 1,
+          "active": true,
+          "carried_from": null
+        },
+        {
+          "code": "M04",
+          "title": "Monthly release note",
+          "type": "PAY",
+          "state": "RELEASED",
+          "amount_cents": "100000",
+          "target_day": 26,
+          "tranche_idx": 1,
+          "active": true,
+          "carried_from": null
+        }
+      ],
+      "tr": [
+        {
+          "idx": 1,
+          "state": "CLOSED",
+          "amount_cents": "400000"
+        }
+      ],
+      "led": {
+        "FEE": {
+          "cents": 10000,
+          "n": 4
+        },
+        "HOLD": {
+          "cents": 400000,
+          "n": 1
+        },
+        "RELEASE": {
+          "cents": 390000,
+          "n": 4
+        }
+      },
+      "cos": [],
+      "clockHours": 624
+    },
+    {
+      "label": "Maintenance month 4",
+      "ws": "ws_4d029aeb281f4399a560",
+      "w": {
+        "id": "ws_4d029aeb281f4399a560",
+        "title": "PaySettle maintenance · month 4",
+        "state": "LOCKED",
+        "total_cents": "400000",
+        "revision": 1,
+        "risk_score": 10,
+        "period_no": 7,
+        "parent_workspace_id": "ws_fdca3958ce304ddba644",
+        "fee_bps": 250
+      },
+      "ms": [
+        {
+          "code": "M01",
+          "title": "Security patches applied",
+          "type": "PAY",
+          "state": "RELEASED",
+          "amount_cents": "100000",
+          "target_day": 10,
+          "tranche_idx": 1,
+          "active": true,
+          "carried_from": null
+        },
+        {
+          "code": "M02",
+          "title": "Bug-fix SLA met",
+          "type": "PAY",
+          "state": "RELEASED",
+          "amount_cents": "100000",
+          "target_day": 20,
+          "tranche_idx": 1,
+          "active": true,
+          "carried_from": null
+        },
+        {
+          "code": "M03",
+          "title": "Monthly uptime report ≥ 99.5%",
+          "type": "PAY",
+          "state": "RELEASED",
+          "amount_cents": "100000",
+          "target_day": 25,
+          "tranche_idx": 1,
+          "active": true,
+          "carried_from": null
+        },
+        {
+          "code": "M04",
+          "title": "Monthly release note",
+          "type": "PAY",
+          "state": "RELEASED",
+          "amount_cents": "100000",
+          "target_day": 26,
+          "tranche_idx": 1,
+          "active": true,
+          "carried_from": null
+        }
+      ],
+      "tr": [
+        {
+          "idx": 1,
+          "state": "CLOSED",
+          "amount_cents": "400000"
+        }
+      ],
+      "led": {
+        "FEE": {
+          "cents": 10000,
+          "n": 4
+        },
+        "HOLD": {
+          "cents": 400000,
+          "n": 1
+        },
+        "RELEASE": {
+          "cents": 390000,
+          "n": 4
+        }
+      },
+      "cos": [],
+      "clockHours": 624
+    },
+    {
+      "label": "Maintenance month 5",
+      "ws": "ws_d20286d58f364c7b8c3c",
+      "w": {
+        "id": "ws_d20286d58f364c7b8c3c",
+        "title": "PaySettle maintenance · month 5",
+        "state": "LOCKED",
+        "total_cents": "400000",
+        "revision": 1,
+        "risk_score": 10,
+        "period_no": 8,
+        "parent_workspace_id": "ws_4d029aeb281f4399a560",
+        "fee_bps": 250
+      },
+      "ms": [
+        {
+          "code": "M01",
+          "title": "Security patches applied",
+          "type": "PAY",
+          "state": "RELEASED",
+          "amount_cents": "100000",
+          "target_day": 10,
+          "tranche_idx": 1,
+          "active": true,
+          "carried_from": null
+        },
+        {
+          "code": "M02",
+          "title": "Bug-fix SLA met",
+          "type": "PAY",
+          "state": "RELEASED",
+          "amount_cents": "100000",
+          "target_day": 20,
+          "tranche_idx": 1,
+          "active": true,
+          "carried_from": null
+        },
+        {
+          "code": "M03",
+          "title": "Monthly uptime report ≥ 99.5%",
+          "type": "PAY",
+          "state": "RELEASED",
+          "amount_cents": "100000",
+          "target_day": 25,
+          "tranche_idx": 1,
+          "active": true,
+          "carried_from": null
+        },
+        {
+          "code": "M04",
+          "title": "Monthly release note",
+          "type": "PAY",
+          "state": "RELEASED",
+          "amount_cents": "100000",
+          "target_day": 26,
+          "tranche_idx": 1,
+          "active": true,
+          "carried_from": null
+        }
+      ],
+      "tr": [
+        {
+          "idx": 1,
+          "state": "CLOSED",
+          "amount_cents": "400000"
+        }
+      ],
+      "led": {
+        "FEE": {
+          "cents": 10000,
+          "n": 4
+        },
+        "HOLD": {
+          "cents": 400000,
+          "n": 1
+        },
+        "RELEASE": {
+          "cents": 390000,
+          "n": 4
+        }
+      },
+      "cos": [],
+      "clockHours": 624
+    },
+    {
+      "label": "Maintenance month 6",
+      "ws": "ws_25e110ebf7ee4f35a4ed",
+      "w": {
+        "id": "ws_25e110ebf7ee4f35a4ed",
+        "title": "PaySettle maintenance · month 6",
+        "state": "LOCKED",
+        "total_cents": "400000",
+        "revision": 1,
+        "risk_score": 10,
+        "period_no": 9,
+        "parent_workspace_id": "ws_d20286d58f364c7b8c3c",
+        "fee_bps": 250
+      },
+      "ms": [
+        {
+          "code": "M01",
+          "title": "Security patches applied",
+          "type": "PAY",
+          "state": "RELEASED",
+          "amount_cents": "100000",
+          "target_day": 10,
+          "tranche_idx": 1,
+          "active": true,
+          "carried_from": null
+        },
+        {
+          "code": "M02",
+          "title": "Bug-fix SLA met",
+          "type": "PAY",
+          "state": "RELEASED",
+          "amount_cents": "100000",
+          "target_day": 20,
+          "tranche_idx": 1,
+          "active": true,
+          "carried_from": null
+        },
+        {
+          "code": "M03",
+          "title": "Monthly uptime report ≥ 99.5%",
+          "type": "PAY",
+          "state": "RELEASED",
+          "amount_cents": "100000",
+          "target_day": 25,
+          "tranche_idx": 1,
+          "active": true,
+          "carried_from": null
+        },
+        {
+          "code": "M04",
+          "title": "Monthly release note",
+          "type": "PAY",
+          "state": "RELEASED",
+          "amount_cents": "100000",
+          "target_day": 26,
+          "tranche_idx": 1,
+          "active": true,
+          "carried_from": null
+        }
+      ],
+      "tr": [
+        {
+          "idx": 1,
+          "state": "CLOSED",
+          "amount_cents": "400000"
+        }
+      ],
+      "led": {
+        "FEE": {
+          "cents": 10000,
+          "n": 4
+        },
+        "HOLD": {
+          "cents": 400000,
+          "n": 1
+        },
+        "RELEASE": {
+          "cents": 390000,
+          "n": 4
+        }
+      },
+      "cos": [],
+      "clockHours": 624
+    }
+  ],
+  "ai": [
+    {
+      "purpose": "A3.verify@v1",
+      "model": "claude-sonnet-5-5",
+      "n": "39",
+      "tin": 46180,
+      "tout": 14810,
+      "cost": "360690",
+      "failed": 0,
+      "lat": 3061
+    }
+  ],
+  "aiVerdicts": [
+    {
+      "rec": "request_fix",
+      "v": null,
+      "n": "15"
+    },
+    {
+      "rec": "unclear",
+      "v": null,
+      "n": "24"
+    }
+  ],
+  "notices": [
+    {
+      "kind": "CHANGE_ORDER",
+      "user_id": "u_dan",
+      "n": "10"
+    },
+    {
+      "kind": "CHANGE_ORDER",
+      "user_id": "u_arjun",
+      "n": "14"
+    },
+    {
+      "kind": "CONTINUATION",
+      "user_id": "u_dan",
+      "n": "4"
+    },
+    {
+      "kind": "CONTINUATION",
+      "user_id": "u_arjun",
+      "n": "4"
+    },
+    {
+      "kind": "OFFER_ROLLOVER",
+      "user_id": "u_arjun",
+      "n": "7"
+    },
+    {
+      "kind": "OFFER_ROLLOVER",
+      "user_id": "u_dan",
+      "n": "7"
+    },
+    {
+      "kind": "WARN",
+      "user_id": "u_arjun",
+      "n": "8"
+    },
+    {
+      "kind": "WARN",
+      "user_id": "u_dan",
+      "n": "8"
+    }
+  ],
+  "evNotices": [
+    {
+      "kind": "APPROVED",
+      "to_user_id": "u_arjun",
+      "to_role": null,
+      "n": "39"
+    },
+    {
+      "kind": "EVIDENCE_SUBMITTED",
+      "to_user_id": "u_dan",
+      "to_role": null,
+      "n": "39"
+    }
+  ],
+  "audit": [
+    {
+      "action": "auth.demo_sign_in",
+      "n": "60"
+    },
+    {
+      "action": "sandbox.time_travel",
+      "n": "46"
+    },
+    {
+      "action": "evidence.approve",
+      "n": "39"
+    },
+    {
+      "action": "evidence.submit",
+      "n": "39"
+    },
+    {
+      "action": "money.release",
+      "n": "39"
+    },
+    {
+      "action": "contract.change",
+      "n": "38"
+    },
+    {
+      "action": "contract.sign",
+      "n": "18"
+    },
+    {
+      "action": "contract.change_order_signed",
+      "n": "12"
+    },
+    {
+      "action": "money.reauthorized",
+      "n": "11"
+    },
+    {
+      "action": "money.confirm_requested",
+      "n": "11"
+    },
+    {
+      "action": "money.hold_confirmed",
+      "n": "11"
+    },
+    {
+      "action": "money.fund_requested",
+      "n": "11"
+    },
+    {
+      "action": "money.fund",
+      "n": "11"
+    },
+    {
+      "action": "contract.locked",
+      "n": "9"
+    },
+    {
+      "action": "contract.sealed",
+      "n": "9"
+    },
+    {
+      "action": "contract.continuation_created",
+      "n": "8"
+    },
+    {
+      "action": "money.watchdog_warn",
+      "n": "8"
+    },
+    {
+      "action": "money.rollover_offered",
+      "n": "7"
+    },
+    {
+      "action": "contract.change_order_applied",
+      "n": "6"
+    },
+    {
+      "action": "contract.change_order_proposed",
+      "n": "6"
+    },
+    {
+      "action": "money.change_order_settled",
+      "n": "6"
+    },
+    {
+      "action": "ai.agent_token.mint",
+      "n": "4"
+    },
+    {
+      "action": "recon.run",
+      "n": "4"
+    },
+    {
+      "action": "money.return",
+      "n": "4"
+    },
+    {
+      "action": "audit.verified",
+      "n": "3"
+    },
+    {
+      "action": "ai.agent_approval.request",
+      "n": "1"
+    },
+    {
+      "action": "ai.mcp.submit_evidence",
+      "n": "1"
+    },
+    {
+      "action": "contract.create",
+      "n": "1"
+    }
+  ],
+  "reviews": [
+    {
+      "decision": "APPROVE",
+      "mfa": "sandbox-skip",
+      "n": "39"
+    }
+  ],
+  "disputes": [
+    {
+      "n": "0"
+    }
+  ]
+}

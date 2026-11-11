@@ -1,0 +1,10 @@
+import { launch, as, close, loadState, room, shot, mainText, dumpForms } from "./lib.mjs";
+import { submitEvidence } from "./evidence.mjs";
+const b = await launch();
+const st = loadState();
+const p = await as("arjun");
+await room(p, st.p1);
+const h = await p.locator(`a[href*="/m/"]`).nth(0).getAttribute("href");
+const r = await submitEvidence(p, b, h, "p1m01", { shotName: "w01-provider-submit-evidence-m01" });
+console.log(r.files, r.ok); console.log(r.txt.slice(0, 2500));
+await close(); process.exit(0);
