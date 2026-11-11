@@ -10,7 +10,7 @@
  */
 import { feeBpsFor } from "@/server/control";
 import { createHmac } from "node:crypto";
-import { and, asc, desc, eq, inArray, isNull, or } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, isNull, or } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { z } from "zod";
 import { db, type Tx } from "@/db/client";
@@ -248,7 +248,7 @@ export async function getWorkspace(a: Actor, id: string): Promise<WorkspaceView>
  * The contracts a person can open. Playground simulations and test organisations are left out by default
  * (`sim: "exclude"`); the playground lists its own with `sim: "only"`. A viewer in a test org keeps their test rows.
  */
-export async function listWorkspaces(a: Actor, opts: { sim?: "exclude" | "only" | "include" } = {}): Promise<{ id: string; title: string; state: string; totalCents: number; counterpart: string; updatedAt: Date }[]> {
+export async function listWorkspaces(a: Actor, opts: { sim?: "exclude" | "only" | "include" } = {}): Promise<{ id: string; title: string; state: string; totalCents: number; counterpart: string; updatedAt: Date; periodNo: number; continues: boolean }[]> {
   const c = alias(users, "c"), p = alias(users, "p");
   const sel = db.select({ w: workspaces, cName: c.name, pName: p.name }).from(workspaces).innerJoin(c, eq(c.id, workspaces.clientId)).leftJoin(p, eq(p.id, workspaces.providerId));
   const [me] = await db.select({ orgId: users.orgId }).from(users).where(eq(users.id, a.id)).limit(1);
@@ -260,7 +260,7 @@ export async function listWorkspaces(a: Actor, opts: { sim?: "exclude" | "only" 
   else if (ORG_WIDE.includes(a.role)) { const u = await actorUser(db, a); rows = await sel.where(and(eq(workspaces.orgId, u.orgId), simCond)).orderBy(desc(workspaces.updatedAt)); }
   else return [];
   return rows.map(({ w, cName, pName }) => ({
-    id: w.id, title: w.title, state: w.state, totalCents: w.totalCents, updatedAt: w.updatedAt,
+    id: w.id, title: w.title, state: w.state, totalCents: w.totalCents, updatedAt: w.updatedAt, periodNo: w.periodNo, continues: Boolean(w.parentWorkspaceId),
     counterpart: a.role === "client" ? (pName ?? (w.inviteEmail ? `${w.inviteEmail} (invited)` : "No provider yet"))
       : a.role === "provider" ? cName : `${cName} ↔ ${pName ?? w.inviteEmail ?? "no provider"}`,
   }));
@@ -399,6 +399,8 @@ export async function sign(a: Actor, id: string, revNo: number, hash: string, mf
     const ms = await loadMs(tx, id), cl = await loadCl(tx, id);
     const facts = await providerFacts(tx, w.providerId);
     const ev = evaluate(head(w), ms, cl, facts.payable, facts.tier);
+    const carry = await carryBlock(tx, w);
+    if (carry) throw new DomainError("CARRY_PENDING", carry);
     if (ev.violations.length) throw new DomainError("POLICY_BLOCKED", `This revision cannot be signed yet: ${ev.violations.map((v) => `${v.rule} ${v.message}`).join(" ")}`);
     let state = w.state as Parameters<typeof workspaceMachine.next>[0];
     if (state === "DRAFT") state = workspaceMachine.next(state, "gate_pass");
@@ -438,6 +440,21 @@ export async function sign(a: Actor, id: string, revNo: number, hash: string, mf
     await lockTx(tx, a, { ...w, riskScore: ev.risk.score }, now);
   });
   return getWorkspace(a, id);
+}
+
+/**
+ * F2.13 signing gate for a continuation: when the draft carries milestones from its parent, the parent's change order
+ * that removes them must be applied first, so no milestone is ever paid twice. Returns a message, or null to go ahead.
+ */
+async function carryBlock(q: Q, w: WsRow): Promise<string | null> {
+  if (!w.parentWorkspaceId) return null;
+  const carried = await q.select({ code: wsMilestones.code }).from(wsMilestones).where(and(eq(wsMilestones.workspaceId, w.id), eq(wsMilestones.active, true), isNotNull(wsMilestones.carriedFrom)));
+  if (!carried.length) return null;
+  const [co] = await q.select().from(changeOrders).where(and(eq(changeOrders.workspaceId, w.parentWorkspaceId), eq(changeOrders.continuationId, w.id))).orderBy(desc(changeOrders.no)).limit(1);
+  if (co?.state === "APPLIED") return null;
+  const codes = carried.map((r) => r.code).join(", "), one = carried.length === 1;
+  if (co && (co.state === "PROPOSED" || co.state === "AWAITING_OPS")) return `This period carries ${codes} over from the previous contract. Both parties sign change order ${co.no} there first (it removes ${one ? "it" : "them"} from that contract), so nothing is paid twice.`;
+  return `${codes} ${one ? "was" : "were"} carried over from the previous contract, but the change order that removes ${one ? "it" : "them"} there is ${co ? co.state.toLowerCase() : "missing"}. Prune ${one ? "it" : "them"} here before signing, so nothing is paid twice.`;
 }
 
 /* ───────────── ops clearance (F2.11) ───────────── */
