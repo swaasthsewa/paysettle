@@ -1,16 +1,14 @@
 {
-  "at": "2026-11-07T23:00:45.950Z",
+  "at": "2026-11-11T04:02:29.746Z",
   "model": null,
   "protocol": "anthropic",
   "compile": {
     "rules": {
       "n": 60,
       "precisionVague": 1,
-      "recallVague": 0.967,
-      "agreement": 0.983,
-      "misses": [
-        "C49 \"Roughly 10 pages of documentation, more if needed.\" labelled vague"
-      ],
+      "recallVague": 1,
+      "agreement": 1,
+      "misses": [],
       "target": 0.9,
       "pass": true
     }

@@ -33,7 +33,7 @@ export const VAGUE_TERMS = [
 const GENERIC = new Set("work works job jobs project everything things thing stuff task tasks it done complete completed finished delivered ready time ok okay fine item items deliverable deliverables as agreed expected requirements requirement scope spec specification milestone phase whole entire properly all".split(" "));
 /** Open-ended hedges: never verifiable, even with a number. */
 export const HEDGES = [
-  "as needed", "as required", "as appropriate", "as necessary", "where possible", "if possible", "when possible", "asap", "as soon as possible",
+  "as needed", "as required", "as appropriate", "as necessary", "if needed", "where possible", "if possible", "when possible", "asap", "as soon as possible",
   "etc", "and so on", "and more", "to the client's satisfaction", "to the satisfaction of", "at the provider's discretion", "at provider's discretion",
   "sole discretion", "if time permits", "time permitting", "where applicable", "and similar", "or similar", "tbd", "to be decided", "to be agreed",
 ];

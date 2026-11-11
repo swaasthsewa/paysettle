@@ -30,6 +30,7 @@ describe("A2 rule-based criteria linter", () => {
     const h = lintCriterion("Fix bugs as needed within 10 days");
     expect(h.verifiable).toBe(false);
     expect(h.hedges).toContain("as needed");
+    expect(lintCriterion("Roughly 10 pages of documentation, more if needed.").hedges).toContain("if needed");
     expect(lintCriterion("Robust backend").rewrite).toMatch(/≥ 95%/);
     expect(lintCriterion("Work is done").verifiable).toBe(false);
   });
