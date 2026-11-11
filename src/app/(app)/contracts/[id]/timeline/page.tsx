@@ -63,6 +63,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   const pay = signedPlan.tasks.flatMap((t) => t.children ?? []).filter((t) => t.kind === "pay");
   const sum = (tone: MsTone) => pay.filter((t) => t.tone === tone).reduce((s, t) => s + t.amountCents, 0);
   const tones: MsTone[] = ["held", "released", "disputed", "refunded", "draft", "gate"];
+  const changeSummary = proposed ? changeKinds.filter((k) => proposed.changes[k] > 0).map((k) => `${CHANGE_LABEL[k]}: ${proposed.changes[k]}`).join(" · ") : "";
 
   return (
     <>
@@ -102,7 +103,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
         {proposed && coOpen && (
           <div className="tl-note" role="note" data-testid="co-timeline-note">
             <p><b>Nothing changes until both parties sign the change order.</b> The upper bars show change order #{coOpen.no} as proposed; the thin bars under them show the signed plan.</p>
-            <p className="small">{changeKinds.filter((k) => proposed.changes[k] > 0).map((k) => `${CHANGE_LABEL[k]}: ${proposed.changes[k]}`).join(" · ") || "No dates change."}{" "}
+            <p className="small">{changeSummary ? `${changeSummary}.` : "No dates change."}{" "}
               {coOpen.signedBy.length ? `Signed so far by the ${coOpen.signedBy.join(" and the ")}.` : "No one has signed it yet."} {coOpen.lines.join(" ")}</p>
             <p><Link href={`/contracts/${id}#co`}>Review change order #{coOpen.no} in the contract room</Link></p>
           </div>

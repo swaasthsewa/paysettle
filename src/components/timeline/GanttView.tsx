@@ -50,8 +50,20 @@ export default function GanttView({ plan, mode = "plan" }: { plan: ContractPlan;
   /* the proposed view is about the shift: show the whole contract at once so every moved bar is on screen */
   useEffect(() => {
     if (!proposed && !chain) return;
-    const t = setTimeout(() => ref.current?.instance?.zoomToFit({ leftMargin: 40, rightMargin: 60 }), 300);
-    return () => clearTimeout(t);
+    /* a fixed delay could run before the project data was loaded on a slow first load, leaving the last bars off screen:
+       wait for the instance and its project's commit, then fit once the layout has settled */
+    let stop = false;
+    let tries = 0;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const fit = () => { const g = ref.current?.instance; if (!stop && g && !g.isDestroyed) g.zoomToFit({ leftMargin: 40, rightMargin: 60 }); };
+    const wait = () => {
+      const g = ref.current?.instance;
+      if (stop) return;
+      if (!g) { if (++tries < 100) timer = setTimeout(wait, 100); return; }
+      void g.project.commitAsync().then(() => requestAnimationFrame(fit));
+    };
+    wait();
+    return () => { stop = true; clearTimeout(timer); };
   }, [proposed, chain]);
 
   return (
