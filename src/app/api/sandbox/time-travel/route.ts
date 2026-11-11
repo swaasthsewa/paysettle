@@ -5,6 +5,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getSim, hoursToDay, playgroundState, timeTravel } from "@/server/playground";
+import { assertOwnSim } from "@/server/playground/owner";
 import { body, fail, guard } from "../_guard";
 
 export const dynamic = "force-dynamic";
@@ -15,6 +16,7 @@ export async function POST(req: Request) {
   const j = await guard(); if (j instanceof NextResponse) return j;
   const b = await body(req, Body); if (b instanceof NextResponse) return b;
   try {
+    await assertOwnSim(b.simId);
     const hours = b.hours ?? hoursToDay(await getSim(b.simId), b.toDay!);
     const result = await timeTravel(j, b.simId, hours);
     return NextResponse.json({ result, state: await playgroundState(b.simId) });

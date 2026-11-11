@@ -1,6 +1,7 @@
 /**
  * F1.2 MFA enforcer · F1.3 profile (currency, time zone, billing) · F1.5 PayPal buyer link · sessions · password.
  * /account for every role. Real data: users, sessions, recovery_codes, paypal_links.
+ * P9: a shared demo person (persona picker, sandbox) sees the settings with a read-only note instead of the forms.
  */
 import Link from "next/link";
 import { cookies } from "next/headers";
@@ -14,7 +15,7 @@ import { ThemeChoice } from "@/components/shell/theme";
 import { common } from "@/copy/common";
 import { sandboxMode } from "@/lib/clock";
 import { sha256 } from "@/lib/ids";
-import { COOKIE, requireViewer } from "@/lib/session";
+import { COOKIE, SHARED_DEMO_READ_ONLY, requireViewer, sharedDemo } from "@/lib/session";
 import { beginEnrolment, mfaRequired } from "@/lib/identity/mfa";
 import { PASSWORD_MIN } from "@/lib/identity/policy";
 import { CURRENCIES, profileGaps, timeZones, type StoredProfile } from "@/lib/identity/profile";
@@ -40,6 +41,8 @@ export default async function AccountPage() {
   const needs = mfaRequired(v.role);
   const isClient = v.role === "client" || v.role === "judge";
   const zones = timeZones();
+  const ro = sharedDemo(v);
+  const roNote = <p className="small muted" role="note">{SHARED_DEMO_READ_ONLY}</p>;
 
   return (
     <>
@@ -59,6 +62,12 @@ export default async function AccountPage() {
         {v.role === "provider" && <Link className="btn btn-sm" href="/provider/onboarding">Onboarding &amp; PayPal</Link>}
       </nav>
 
+      {ro && (
+        <p className="notice" role="note">
+          <b>{SHARED_DEMO_READ_ONLY}</b> Every judge signs in as the same demo people, so the profile, PayPal e-mail, authenticator, password and other sessions of this person stay as they are.
+        </p>
+      )}
+
       {needs && !mfaOn && (
         <p className="notice" data-b="warn" role="note">
           <b>Your role needs an authenticator app.</b> {sandboxMode() ? "In the sandbox the persona picker counts as a second factor, so you can explore now; set the app up below before production." : "Set it up below; sign-in with a password asks for it."}
@@ -70,7 +79,7 @@ export default async function AccountPage() {
         <section className="c id-6" aria-labelledby="profile-h">
           <div className="c-head"><h2 id="profile-h">Profile</h2><span className="r">{gaps.length ? <span className="chip" data-b="warn">Missing: {gaps.join(", ")}</span> : <span className="chip" data-b="ok">Complete</span>}</span></div>
           <p className="small muted">Contracts show amounts in your currency and deadlines in your time zone. Clients need a complete profile before funding a tranche (ERR_103).</p>
-          <ActionForm action={saveProfile} submit="Save profile" variant="btn btn-d">
+          {ro ? roNote : <ActionForm action={saveProfile} submit="Save profile" variant="btn btn-d">
             <div className="id-form">
               <div className="field id-wide"><label htmlFor="p-name">Name on contracts</label><input id="p-name" name="name" type="text" defaultValue={u?.name ?? ""} required maxLength={80} autoComplete="name" /></div>
               <div className="field"><label htmlFor="p-cur">Currency</label>
@@ -80,7 +89,7 @@ export default async function AccountPage() {
               <div className="field"><label htmlFor="p-bn">Billing name or company <span className="muted">(optional)</span></label><input id="p-bn" name="billingName" type="text" defaultValue={profile.billingName ?? ""} maxLength={120} autoComplete="organization" /></div>
               <div className="field"><label htmlFor="p-bc">Billing country</label><input id="p-bc" name="billingCountry" type="text" defaultValue={profile.billingCountry ?? ""} maxLength={2} placeholder="US" autoComplete="country" style={{ textTransform: "uppercase" }} /></div>
             </div>
-          </ActionForm>
+          </ActionForm>}
           <div className="row small"><span className="muted">Appearance</span><ThemeChoice /></div>
         </section>
 
@@ -90,9 +99,9 @@ export default async function AccountPage() {
             <div className="c-head"><h2 id="buyer-h">PayPal for paying</h2><span className="r">{buyer?.email ? <span className="chip" data-b="ok">Linked</span> : <span className="chip" data-b="plain">Optional</span>}</span></div>
             <p className="small muted">You approve every hold inside PayPal itself, so this link is optional. Saving your PayPal e-mail here pre-fills checkout and lets Support find a payment faster.{sandboxMode() ? " In the sandbox, use a PayPal Sandbox personal account." : ""}</p>
             {buyer?.email && <dl className="kv"><div><dt>Linked e-mail</dt><dd>{buyer.email}<small>{buyer.emailConfirmed ? "Confirmed by PayPal" : "Confirmed at your first approval"}</small></dd></div></dl>}
-            <ActionForm action={saveBuyerLink} submit={buyer?.email ? "Update" : "Link PayPal e-mail"}>
+            {ro ? roNote : <ActionForm action={saveBuyerLink} submit={buyer?.email ? "Update" : "Link PayPal e-mail"}>
               <div className="field"><label htmlFor="b-email">PayPal e-mail</label><input id="b-email" name="email" type="email" defaultValue={buyer?.email ?? ""} maxLength={254} autoComplete="email" placeholder="you@example.com" /><span className="small muted">Leave empty and save to remove the link.</span></div>
-            </ActionForm>
+            </ActionForm>}
           </section>
         ) : v.role === "provider" ? (
           <section className="c id-6" aria-labelledby="merch-h">
@@ -139,7 +148,7 @@ export default async function AccountPage() {
           ) : (
             <>
               <p className="small muted">A second factor protects signatures and releases. After you turn it on you get ten one-time recovery codes, shown once.</p>
-              <ActionForm action={startMfa} submit="Set up an authenticator app" variant="btn btn-d" />
+              {ro ? roNote : <ActionForm action={startMfa} submit="Set up an authenticator app" variant="btn btn-d" />}
             </>
           )}
         </section>
@@ -148,19 +157,19 @@ export default async function AccountPage() {
         <section className="c id-6" aria-labelledby="pw-h">
           <div className="c-head"><h2 id="pw-h">Password</h2></div>
           <p className="small muted">At least {PASSWORD_MIN} characters, without your e-mail name or your own name. A few unrelated words work well. Changing it signs out every other session.</p>
-          <ActionForm action={changePassword} submit="Change password" resetOnOk>
+          {ro ? roNote : <ActionForm action={changePassword} submit="Change password" resetOnOk>
             <div className="id-form">
               {u?.passwordHash && <div className="field id-wide"><label htmlFor="pw-cur">Current password</label><input id="pw-cur" name="current" type="password" autoComplete="current-password" required /></div>}
               <div className="field"><label htmlFor="pw-new">New password</label><input id="pw-new" name="next" type="password" autoComplete="new-password" minLength={PASSWORD_MIN} maxLength={128} required /></div>
               <div className="field"><label htmlFor="pw-again">New password again</label><input id="pw-again" name="again" type="password" autoComplete="new-password" minLength={PASSWORD_MIN} maxLength={128} required /></div>
             </div>
-          </ActionForm>
+          </ActionForm>}
         </section>
 
         {/* ── sessions ── */}
         <section className="c id-12" aria-labelledby="ses-h">
           <div className="c-head"><h2 id="ses-h">Active sessions</h2>
-            {list.length > 1 && <span className="r"><form action={endOtherSessions}><button className="btn btn-sm" type="submit">End all other sessions</button></form></span>}
+            {list.length > 1 && !ro && <span className="r"><form action={endOtherSessions}><button className="btn btn-sm" type="submit">End all other sessions</button></form></span>}
           </div>
           <p className="small muted">A session ends after 60 minutes without activity, and always after 12 hours. Times in {tz.replace(/_/g, " ")}.</p>
           <ul className="id-list">
@@ -174,7 +183,7 @@ export default async function AccountPage() {
                   </div>
                   {s.demo && <span className="chip" data-b="plain">Sandbox persona</span>}
                   <span className="chip" data-b={s.mfa ? "ok" : "none"}>{s.mfa ? "Second factor" : "Password only"}</span>
-                  {here ? <Link className="btn btn-sm" href="/logout">Sign out</Link> : (
+                  {here ? <Link className="btn btn-sm" href="/logout">Sign out</Link> : ro ? null : (
                     <form action={endOneSession}><input type="hidden" name="ref" value={ref} /><button className="btn btn-sm" type="submit" aria-label={`End session ${ref.slice(0, 6)}`}>End session</button></form>
                   )}
                 </li>

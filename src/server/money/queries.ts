@@ -100,8 +100,9 @@ async function contractsWithMoney(ws: (typeof workspaces.$inferSelect)[]) {
   return out;
 }
 
+/** The person's latest money notices, without Judge Playground simulations (P9: every judge's runs act as the seeded people). */
 export async function noticesFor(userId: string, limit = 8) {
-  return db.select().from(moneyNotices).where(eq(moneyNotices.userId, userId)).orderBy(desc(moneyNotices.createdAt)).limit(limit);
+  return db.select().from(moneyNotices).where(and(eq(moneyNotices.userId, userId), excludeSim(moneyNotices.workspaceId))).orderBy(desc(moneyNotices.createdAt)).limit(limit);
 }
 
 /* ── finance ledger ── */

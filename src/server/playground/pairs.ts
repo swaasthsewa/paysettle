@@ -64,7 +64,7 @@ export async function pairResult(judge: { id: string }, pairId: string): Promise
   return { id: p.id, createdAt: p.createdAt.toISOString(), revisions: { A: va.revision, B: vb.revision }, diff: diffPairs(bp, va, vb, tiers) };
 }
 
-/** This judge's latest pair, or null (used by the playground page on load). */
+/** This judge account's latest pair, or null. The page does not use it: judges share the account, so it reads the pair id from this browser's cookie (owner.ts). */
 export async function latestPairFor(judge: { id: string }): Promise<PairResult | null> {
   assertSandbox();
   const [p] = await db.select({ id: playgroundPairs.id }).from(playgroundPairs).where(eq(playgroundPairs.judgeId, judge.id)).orderBy(desc(playgroundPairs.createdAt)).limit(1);

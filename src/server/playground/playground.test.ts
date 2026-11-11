@@ -8,12 +8,16 @@ import { db } from "@/db/client";
 import { releases, simSessions, wsMilestones } from "@/db/schema";
 import { simEvents } from "@/db/schema-playground";
 import { simWorkspaces } from "@/db/schema-sim";
+import { MockRail, mockControl } from "@/lib/rails/mock";
 import { NotBuilt } from "../types";
 import * as contracts from "../contracts";
 import * as money from "../money";
 import * as evidence from "../evidence";
 import { SCENARIOS, SCENARIO_IDS, injectFault, runAll, runNext } from "./scenarios";
-import { MAX_OFFSET_HOURS, SandboxOnly, checkTravel, createSim, getSim, resetSim, timeTravel } from "./session";
+import { MAX_OFFSET_HOURS, SandboxOnly, checkTravel, createSim, getSim, resetSim, timeTravel, withSimLock } from "./session";
+import { ownsRun } from "./owner";
+import { PLAYGROUND_BLUEPRINTS } from "./blueprints";
+import { PAIR_BLUEPRINT } from "./pairs-diff";
 import { playgroundState, scenarioFromQuery, scenarioList } from "./state";
 import { SITE, SPOOF_POINT, VALID_POINT, haversineM, jpegWithGps, minimalPdf, readJpegGps } from "./fixtures";
 
@@ -86,6 +90,42 @@ describe("F5.07 time machine bounds", () => {
     const [old] = await db.select().from(simSessions).where(eq(simSessions.id, sim.id));
     expect(old.clockOffsetHours).toBe(24);
   });
+
+  it("F5.08: a reset leaves the shared mock rail alone, so another judge's armed fault still fires on their own run", async () => {
+    mockControl.inject("fund_503", "tr_other_judge_run");
+    const sim = await createSim(JUDGE, "S1", "MOCK");
+    await resetSim(JUDGE, sim.id);
+    const fund = () => new MockRail().fund({ trancheId: "tr_other_judge_run", amountCents: 100, currency: "USD", description: "t", returnUrl: "http://x/r", cancelUrl: "http://x/c", idemKey: `fund-other-${sim.id}` });
+    await expect(fund()).rejects.toMatchObject({ kind: "TRANSIENT" });
+    await expect(fund()).resolves.toBeTruthy();
+  });
+});
+
+describe("F5.06 P9 judges sharing one account: runs per browser, one action at a time", () => {
+  it("F5.06 a browser may act only on the run it holds", () => {
+    expect(ownsRun("sim_a1", "sim_a1")).toBe(true);
+    expect(ownsRun("sim_a1", "sim_b2")).toBe(false);
+    expect(ownsRun(null, "sim_a1")).toBe(false);
+    expect(ownsRun("sim_a1", null)).toBe(false);
+    expect(ownsRun("sim a1;", "sim a1;")).toBe(false);
+  });
+
+  it("F5.06 a second action on a busy run answers SIM_BUSY; other runs are not blocked", async () => {
+    let done!: () => void;
+    const first = withSimLock("sim_lock_t1", () => new Promise<void>((r) => { done = r; }));
+    await expect(withSimLock("sim_lock_t1", async () => 1)).rejects.toMatchObject({ code: "SIM_BUSY", message: "This run is busy with a step; try again in a moment." });
+    expect(await withSimLock("sim_lock_t2", async () => 2)).toBe(2);
+    done(); await first;
+    expect(await withSimLock("sim_lock_t1", async () => 3)).toBe(3);
+  });
+
+  it("F5.07 two time jumps on the same run at once: one runs, the other is refused, the clock moves once", async () => {
+    const sim = await createSim(JUDGE, "S3", "MOCK");
+    const [a, b] = await Promise.allSettled([timeTravel(JUDGE, sim.id, 24), timeTravel(JUDGE, sim.id, 24)]);
+    expect([a.status, b.status].sort()).toEqual(["fulfilled", "rejected"]);
+    expect(((a.status === "rejected" ? a : b) as PromiseRejectedResult).reason).toMatchObject({ code: "SIM_BUSY" });
+    expect((await getSim(sim.id)).clockOffsetHours).toBe(24);
+  });
 });
 
 describe("F5.08 chaos fixtures", () => {
@@ -121,6 +161,11 @@ describe("F5.06 scenario engine", () => {
       expect(new Set(s.steps.map((x) => x.id)).size).toBe(s.steps.length);
       for (const st of s.steps) { expect(st.label.length).toBeGreaterThan(3); expect(st.explain.length).toBeGreaterThanOrEqual(10); }
     }
+  });
+
+  it("P9: every blueprint a scenario or Pair A vs Pair B builds from is on the protected list (control/dual.ts)", () => {
+    for (const id of SCENARIO_IDS) for (const code of SCENARIOS[id].blueprints) expect(PLAYGROUND_BLUEPRINTS).toContain(code);
+    expect(PLAYGROUND_BLUEPRINTS).toContain(PAIR_BLUEPRINT);
   });
 
   it("F5.06: the playground's scenario list is data-driven — every defined scenario is listed, in order (S7 appears once added)", () => {

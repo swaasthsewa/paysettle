@@ -16,6 +16,13 @@ export const COOKIE = "ps_session";
 const IDLE_MS = 60 * 60_000, ABS_MS = 12 * 60 * 60_000;
 export interface Viewer { id: string; orgId: string; name: string; email: string; role: Role; persona: string | null; demo: boolean; mfa: boolean; tier: string }
 
+/*
+ * P9 shared demo: in the sandbox, a persona-picker session is one of many judges signed in as the same seeded person, so
+ * it may use the person but not change their settings (profile, PayPal links, authenticator, password, other sessions).
+ */
+export const SHARED_DEMO_READ_ONLY = "Shared demo person: settings are read-only.";
+export const sharedDemo = (v: Pick<Viewer, "demo">): boolean => v.demo && sandboxMode();
+
 export async function startSession(userId: string, p: { mfa: boolean; demo: boolean }) {
   if (p.demo && !sandboxMode()) throw new Error("demo sign-in is sandbox-only (P9)");
   const token = randomBytes(32).toString("base64url");

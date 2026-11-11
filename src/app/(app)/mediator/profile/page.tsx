@@ -1,11 +1,12 @@
 /**
  * F4.05 F4.06 — /mediator/profile: the mediator's own network profile, scorecard, availability, credentials
  * (file hash only; bytes in the evidence store), calibration on three sealed sample cases, and fees paid by PaySettle.
+ * P9: a shared demo mediator (persona picker, sandbox) sees profile and availability with a read-only note instead of the forms.
  */
 import Link from "next/link";
 import "@/styles/disputes.css";
 import "@/styles/mediators.css";
-import { requireViewer } from "@/lib/session";
+import { SHARED_DEMO_READ_ONLY, requireViewer, sharedDemo } from "@/lib/session";
 import { myProfile } from "@/server/mediators";
 import { availabilityAction, calibrationAction, credentialAction, updateProfileAction } from "@/server/mediators/actions";
 import { CALIBRATION_MAX_ATTEMPTS, COSIGN_FEE_CENTS, LANGUAGES, MEDIATOR_FEE_CENTS, PROBATION_COSIGNS, STATUS_CHIP, STATUS_LABEL } from "@/server/mediators/rules";
@@ -22,6 +23,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 export default async function Page({ searchParams }: { searchParams: Promise<{ ok?: string; error?: string }> }) {
   const v = await requireViewer(["mediator"]);
   const q = await searchParams;
+  const ro = sharedDemo(v);
   const m = await myProfile(v.id, v.orgId);
   if (!m) {
     return (
@@ -58,7 +60,11 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ o
       <div className="bento">
         <section className="c span7" aria-labelledby="mp-prof">
           <div className="c-head"><h2 id="mp-prof">Profile</h2></div>
-          <form action={updateProfileAction} className="stack">
+          {ro ? <div className="stack">
+              <p className="small">{p.bio || "No description yet."}</p>
+              <p className="small muted">Languages: {p.languages.map((k) => LANGUAGES[k as keyof typeof LANGUAGES] ?? k).join(", ")} · time zone {p.timezone} · at most {p.maxOpen} open cases.</p>
+              <p className="small muted" role="note">{SHARED_DEMO_READ_ONLY}</p>
+            </div> : <form action={updateProfileAction} className="stack">
             <div className="field"><label htmlFor="mp-bio">About you (shown to Ops and to parties on your cases)</label><textarea id="mp-bio" name="bio" maxLength={1200} defaultValue={p.bio} /></div>
             <fieldset className="md-checks"><legend>Languages you mediate in</legend>
               {Object.entries(LANGUAGES).map(([k, l]) => <label key={k}><input type="checkbox" name="languages" value={k} defaultChecked={p.languages.includes(k)} /> {l}</label>)}
@@ -70,12 +76,12 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ o
             <div className="field"><label htmlFor="mp-coi">Declared conflicts, one per line (people, e-mails or companies you must not judge)</label><textarea id="mp-coi" name="declaredConflicts" defaultValue={p.declaredConflicts.join("\n")} /></div>
             <p className="small muted">Domains ({p.domains.map((d) => domainLabel(d)).join(", ") || "none"}) and firm ({p.firm ?? "independent"}) are set by Ops, because they decide which cases and co-signatures you can take.</p>
             <div className="row"><button className="btn" type="submit">Save profile</button></div>
-          </form>
+          </form>}
         </section>
 
         <section className="c span5" aria-labelledby="mp-av">
           <div className="c-head"><h2 id="mp-av">Availability</h2></div>
-          <form action={availabilityAction} className="stack">
+          {ro ? <p className="small muted" role="note">{SHARED_DEMO_READ_ONLY} {av?.paused ? "New offers are paused." : `${av?.weeklyHours ?? 10} hours a week for PaySettle cases.`}</p> : <form action={availabilityAction} className="stack">
             <div className="field"><label htmlFor="mp-wh">Hours a week for PaySettle cases</label><input id="mp-wh" name="weeklyHours" type="number" min={0} max={60} defaultValue={av?.weeklyHours ?? 10} /></div>
             <div className="md-grid2">
               <div className="field"><label htmlFor="mp-lf">Leave from</label><input id="mp-lf" name="leaveFrom" type="date" defaultValue={av?.leaveFrom ?? ""} /></div>
@@ -83,7 +89,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ o
             </div>
             <label className="row small"><input type="checkbox" name="paused" defaultChecked={av?.paused ?? false} /> Pause new offers (cases you hold stay with you)</label>
             <div className="row"><button className="btn" type="submit">Save availability</button></div>
-          </form>
+          </form>}
           <dl className="kv">
             <div><dt>Open cases</dt><dd className="tnum">{m.card.open} of {p.maxOpen}</dd></div>
             <div><dt>Second reviews agreed</dt><dd>{m.card.agreePct === null ? "—" : `${m.card.agreePct}%`}</dd></div>

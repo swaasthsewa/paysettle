@@ -10,6 +10,8 @@
  * Ops console). A tax id changed after validation sends the provider back to SUBMITTED for a fresh review.
  * Merchant link: in the sandbox the business account e-mail is saved with receivable = true; production uses PayPal
  * partner onboarding (Partner Referrals), which confirms the account can receive before payouts switch on (ERR_106).
+ * P9: a shared demo provider (persona picker, sandbox) is read-only here; the seeded providers' payout accounts are real
+ * PayPal Sandbox business accounts, and a changed tax id would send them back to review for every judge.
  */
 import { revalidatePath } from "next/cache";
 import { and, eq, ne, sql } from "drizzle-orm";
@@ -18,7 +20,7 @@ import { paypalLinks, users } from "@/db/schema";
 import { audit } from "@/lib/audit";
 import { sandboxMode } from "@/lib/clock";
 import { newId } from "@/lib/ids";
-import { requireViewer, type Viewer } from "@/lib/session";
+import { SHARED_DEMO_READ_ONLY, requireViewer, sharedDemo, type Viewer } from "@/lib/session";
 import { paypalEmailSchema } from "@/lib/identity/profile";
 import { businessSchema, isValidated, licenceSchema, maskTaxId, merchantLink, missingCredentials, taxIdFingerprint, type LicenceRecord, type ProviderProfile } from "@/lib/identity/provider";
 import { suggestLicenceFields } from "@/server/identity/ocr";
@@ -27,6 +29,7 @@ import type { ActionAnswer } from "@/components/identity/action-form";
 const str = (f: FormData, k: string) => { const x = f.get(k); return typeof x === "string" ? x : ""; };
 const actor = (v: Viewer) => ({ id: v.id, role: v.role });
 const MAX_LICENCES = 10;
+const readOnly: ActionAnswer = { ok: false, message: SHARED_DEMO_READ_ONLY };
 
 async function load(v: Viewer) {
   const [u] = await db.select().from(users).where(eq(users.id, v.id)).limit(1);
@@ -56,6 +59,7 @@ const stateLine = (s: { state: string; missing: string[] }) =>
 
 export async function saveBusiness(_p: ActionAnswer | null, f: FormData): Promise<ActionAnswer> {
   const v = await requireViewer(["provider"]);
+  if (sharedDemo(v)) return readOnly;
   const r = businessSchema.safeParse({ businessName: str(f, "businessName"), category: str(f, "category"), country: str(f, "country"), taxId: str(f, "taxId") || undefined });
   if (!r.success) return { ok: false, message: "ERR_104 · Some details are missing or not in the expected form.", problems: [...new Set(r.error.issues.map((i) => i.message))] };
   const { p } = await load(v);
@@ -80,6 +84,7 @@ export async function saveBusiness(_p: ActionAnswer | null, f: FormData): Promis
 
 export async function addLicence(_p: ActionAnswer | null, f: FormData): Promise<ActionAnswer> {
   const v = await requireViewer(["provider"]);
+  if (sharedDemo(v)) return readOnly;
   const allowRead = str(f, "ocr") === "on";
   const r = licenceSchema.safeParse({ name: str(f, "name"), kind: str(f, "kind"), size: Number(str(f, "size")), sha256: str(f, "sha256").toLowerCase(), text: allowRead ? str(f, "text") || undefined : undefined });
   if (!r.success) return { ok: false, message: "That file was not added.", problems: [...new Set(r.error.issues.map((i) => i.message))] };
@@ -97,6 +102,7 @@ export async function addLicence(_p: ActionAnswer | null, f: FormData): Promise<
 
 export async function removeLicence(f: FormData): Promise<void> {
   const v = await requireViewer(["provider"]);
+  if (sharedDemo(v)) return;
   const id = str(f, "id");
   const { p } = await load(v);
   const list = p.licences ?? [];
@@ -107,6 +113,7 @@ export async function removeLicence(f: FormData): Promise<void> {
 
 export async function saveMerchant(_p: ActionAnswer | null, f: FormData): Promise<ActionAnswer> {
   const v = await requireViewer(["provider"]);
+  if (sharedDemo(v)) return readOnly;
   const r = paypalEmailSchema.safeParse(str(f, "email"));
   if (!r.success) return { ok: false, message: r.error.issues[0]?.message ?? "Check the e-mail address." };
   const sandbox = sandboxMode();

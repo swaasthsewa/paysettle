@@ -25,7 +25,7 @@ export async function body<T extends z.ZodType>(req: Request, schema: T): Promis
 }
 
 export function fail(e: unknown): NextResponse {
-  if (e instanceof DomainError) return NextResponse.json({ error: e.code, message: e.message }, { status: e.code === "SANDBOX_ONLY" ? 404 : e.code === "SIM_NOT_FOUND" ? 404 : 400 });
+  if (e instanceof DomainError) return NextResponse.json({ error: e.code, message: e.message }, { status: e.code === "SANDBOX_ONLY" ? 404 : e.code === "SIM_NOT_FOUND" ? 404 : e.code === "SIM_BUSY" ? 409 : 400 });
   console.error("[sandbox]", e);
   return NextResponse.json({ error: "INTERNAL", message: "The playground hit an unexpected error. Nothing real moved; try Reset." }, { status: 500 });
 }

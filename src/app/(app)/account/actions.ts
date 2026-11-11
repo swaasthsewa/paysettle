@@ -4,6 +4,7 @@
  * Every input is checked with zod or the identity rules (src/lib/identity); every change writes an audit row.
  * Secrets: the pending authenticator secret waits in users.profile.mfaPending until the first right code moves it to
  * users.mfa_secret; recovery codes are stored only as hashes and returned to the browser once.
+ * P9: a shared demo person (persona picker, sandbox) gets SHARED_DEMO_READ_ONLY from every action that would change them.
  */
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
@@ -13,7 +14,7 @@ import { paypalLinks, recoveryCodes, sessions, users } from "@/db/schema";
 import { audit } from "@/lib/audit";
 import { sandboxMode } from "@/lib/clock";
 import { newId, sha256 } from "@/lib/ids";
-import { COOKIE, requireViewer, type Viewer } from "@/lib/session";
+import { COOKIE, SHARED_DEMO_READ_ONLY, requireViewer, sharedDemo, type Viewer } from "@/lib/session";
 import { beginEnrolment, confirmEnrolment, MFA_MAX_ATTEMPTS, mfaRequired } from "@/lib/identity/mfa";
 import { hashPasswordStrong, verifyPasswordAny } from "@/lib/identity/password";
 import { passwordProblems } from "@/lib/identity/policy";
@@ -26,6 +27,7 @@ type Pending = { secret: string; attempts: number; at: string };
 const actor = (v: Viewer) => ({ id: v.id, role: v.role });
 const str = (f: FormData, k: string) => { const x = f.get(k); return typeof x === "string" ? x : ""; };
 const done = (a: ActionAnswer) => { revalidatePath("/account"); return a; };
+const readOnly: ActionAnswer = { ok: false, message: SHARED_DEMO_READ_ONLY };
 
 async function row(id: string) {
   const [u] = await db.select().from(users).where(eq(users.id, id)).limit(1);
@@ -38,6 +40,7 @@ const dropPending = sql`${users.profile} - 'mfaPending'`;
 /* ── F1.3 profile ── */
 export async function saveProfile(_p: ActionAnswer | null, f: FormData): Promise<ActionAnswer> {
   const v = await requireViewer();
+  if (sharedDemo(v)) return readOnly;
   const r = profileSchema.safeParse({ name: str(f, "name"), currency: str(f, "currency"), timezone: str(f, "timezone"), billingName: str(f, "billingName"), billingCountry: str(f, "billingCountry") });
   if (!r.success) return { ok: false, message: "ERR_103 · The profile is not complete yet, so it was not saved.", problems: [...new Set(r.error.issues.map((i) => i.message))] };
   const { name, ...rest } = r.data;
@@ -49,6 +52,7 @@ export async function saveProfile(_p: ActionAnswer | null, f: FormData): Promise
 /* ── F1.5 PayPal buyer link (optional: checkout happens in PayPal anyway) ── */
 export async function saveBuyerLink(_p: ActionAnswer | null, f: FormData): Promise<ActionAnswer> {
   const v = await requireViewer(["client", "judge"]);
+  if (sharedDemo(v)) return readOnly;
   const raw = str(f, "email").trim();
   const [existing] = await db.select().from(paypalLinks).where(and(eq(paypalLinks.userId, v.id), eq(paypalLinks.kind, "buyer"))).limit(1);
   if (!raw) {
@@ -67,6 +71,7 @@ export async function saveBuyerLink(_p: ActionAnswer | null, f: FormData): Promi
 /* ── F1.2 authenticator enrolment ── */
 export async function startMfa(): Promise<ActionAnswer> {
   const v = await requireViewer();
+  if (sharedDemo(v)) return readOnly; /* an authenticator on a shared person would lock every other judge out of signing */
   const u = await row(v.id);
   if (u.mfaSecret) return { ok: false, message: "An authenticator app is already on for this account." };
   const e = beginEnrolment(u.email);
@@ -78,6 +83,7 @@ export async function startMfa(): Promise<ActionAnswer> {
 
 export async function cancelMfa(): Promise<void> {
   const v = await requireViewer();
+  if (sharedDemo(v)) return;
   await db.update(users).set({ profile: dropPending }).where(eq(users.id, v.id));
   await audit(db, actor(v), "identity.mfa_enrol_cancelled", v.id);
   revalidatePath("/account");
@@ -85,6 +91,7 @@ export async function cancelMfa(): Promise<void> {
 
 export async function confirmMfa(_p: ActionAnswer | null, f: FormData): Promise<ActionAnswer> {
   const v = await requireViewer();
+  if (sharedDemo(v)) return readOnly;
   const u = await row(v.id);
   const pending = (u.profile as { mfaPending?: Pending }).mfaPending;
   if (!pending?.secret) return { ok: false, message: "Start again: there is no authenticator waiting to be confirmed." };
@@ -128,6 +135,7 @@ async function secondFactor(v: Viewer, code: string, allowRecovery: boolean): Pr
 
 export async function regenerateCodes(_p: ActionAnswer | null, f: FormData): Promise<ActionAnswer> {
   const v = await requireViewer();
+  if (sharedDemo(v)) return readOnly;
   const problem = await secondFactor(v, str(f, "code"), false);
   if (problem) return { ok: false, message: problem };
   const codes = await issueRecoveryCodes(dbRecoveryStore(db), v.id);
@@ -137,6 +145,7 @@ export async function regenerateCodes(_p: ActionAnswer | null, f: FormData): Pro
 
 export async function disableMfa(_p: ActionAnswer | null, f: FormData): Promise<ActionAnswer> {
   const v = await requireViewer();
+  if (sharedDemo(v)) return readOnly;
   if (mfaRequired(v.role) && !sandboxMode()) return { ok: false, message: "Your role needs an authenticator app, so it cannot be switched off. Make new recovery codes instead, or ask an administrator." };
   const problem = await secondFactor(v, str(f, "code"), true);
   if (problem) return { ok: false, message: problem };
@@ -153,6 +162,7 @@ async function currentHash() { const t = (await cookies()).get(COOKIE)?.value; r
 
 export async function endOneSession(f: FormData): Promise<void> {
   const v = await requireViewer();
+  if (sharedDemo(v)) return; /* the other sessions of a shared person are other judges */
   const ref = str(f, "ref");
   if (!/^[a-f0-9]{16}$/.test(ref)) return;
   const mine = await currentHash();
@@ -164,6 +174,7 @@ export async function endOneSession(f: FormData): Promise<void> {
 
 export async function endOtherSessions(): Promise<void> {
   const v = await requireViewer();
+  if (sharedDemo(v)) return;
   const mine = await currentHash();
   if (!mine) return;
   const gone = await db.delete(sessions).where(and(eq(sessions.userId, v.id), ne(sessions.tokenHash, mine))).returning({ h: sessions.tokenHash });
@@ -174,6 +185,7 @@ export async function endOtherSessions(): Promise<void> {
 /* ── password ── */
 export async function changePassword(_p: ActionAnswer | null, f: FormData): Promise<ActionAnswer> {
   const v = await requireViewer();
+  if (sharedDemo(v)) return readOnly;
   const u = await row(v.id);
   const current = str(f, "current"), next = str(f, "next"), again = str(f, "again");
   if (u.passwordHash && !(await verifyPasswordAny(current, u.passwordHash))) {

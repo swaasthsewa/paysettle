@@ -23,7 +23,7 @@ import * as control from "../control";
 import { SITE, SPOOF_POINT, VALID_POINT, filesForSpec, haversineM, noteForSpec, photo, type SimFile } from "./fixtures";
 import {
   WaitingFor, actorFor, addFault, assertSandbox, getSim, hoursToDay, logDiff, logEvent, progressOf, railSnapshot, saveProgress,
-  setSimWorkspace, simDay, simNow, timeTravel, moduleCall, type Sim,
+  setSimWorkspace, simDay, simNow, travelInRun, withSimLock, moduleCall, type Sim,
 } from "./session";
 import { httpCall } from "./transport";
 
@@ -491,7 +491,7 @@ async function jumpTo(ctx: StepCtx, day: number): Promise<StepOutcome> {
   const sim = await ctx.refreshSim();
   const h = hoursToDay(sim, day);
   if (h <= 0) return skipped(`Already at simulated day ${simDay(sim)}.`);
-  const r = await timeTravel(ctx.judge, sim.id, h, ctx.stepId);
+  const r = await travelInRun(ctx.judge, sim.id, h, ctx.stepId);
   ctx.sim = await ctx.refreshSim();
   const acts = r.watchdog.map((a) => a.action).join(", ") || "no watchdog action";
   const timers = r.reviewTimers.map((a) => a.action).join(", ");
@@ -586,7 +586,7 @@ async function stImpasse(ctx: StepCtx): Promise<StepOutcome> {
   const sim = await ctx.refreshSim();
   const now = simNow(sim);
   const h = Math.max(1, Math.ceil((d.tier1Until.getTime() - now.getTime()) / 3_600_000) + 1);
-  const r = await timeTravel(ctx.judge, sim.id, h, ctx.stepId);
+  const r = await travelInRun(ctx.judge, sim.id, h, ctx.stepId);
   ctx.sim = await ctx.refreshSim();
   d = await disputeRow(ctx);
   if (d.state === "TIER1") { await moduleCall("disputes", () => disputesSvc.advanceDispute(d.id)); d = await disputeRow(ctx); }
@@ -672,12 +672,25 @@ const S5: Scenario = {
   ],
 };
 
+/**
+ * F5.08 the ids a PayPal fault of this run is scoped to: its tranches, orders, authorizations and captures. The mock
+ * rail is shared by every judge's run, so a fault fires only on a call about one of these ids (src/lib/rails/mock.ts).
+ */
+async function railScope(workspaceId: string | undefined): Promise<string[]> {
+  if (!workspaceId) return [];
+  const ts = await db.select({ id: tranches.id, o: tranches.paypalOrderId, a: tranches.authorizationId, c: tranches.captureId }).from(tranches).where(eq(tranches.workspaceId, workspaceId));
+  return ts.flatMap((t) => [t.id, t.o, t.a, t.c]).filter((x): x is string => Boolean(x));
+}
+const NO_SCOPE = "No tranche yet. A PayPal 503 is armed only on this run's own tranches, so lock the contract first.";
+
 async function stInject503(ctx: StepCtx): Promise<StepOutcome> {
   if (ctx.sim.mode === "LIVE") return skipped("Fault injection works on the mock rail only; the live PayPal Sandbox is never sabotaged.");
-  mockControl.inject("release_503");
+  const scope = await railScope(ctx.bag.workspaceId);
+  if (!scope.length) return failed(NO_SCOPE);
+  mockControl.inject("release_503", scope);
   await addFault(ctx.sim.id, "release_503");
-  await ctx.log("fault", "mockControl.inject('release_503')", "next capture on the mock rail answers 503 once (simulated)");
-  return done("Armed: the next capture on the mock rail answers a transient PayPal 503 once.");
+  await ctx.log("fault", "mockControl.inject('release_503', this run's tranche)", "next capture on this run's authorization answers 503 once (simulated)");
+  return done("Armed: the next capture on this run's tranche answers a transient PayPal 503 once.");
 }
 async function stReleaseUnderFault(ctx: StepCtx): Promise<StepOutcome> {
   const r = await stApprove(ctx, "M02");
@@ -723,7 +736,10 @@ async function stDrift(ctx: StepCtx): Promise<StepOutcome> {
 }
 async function stRecon(ctx: StepCtx): Promise<StepOutcome> {
   const fin = await ctx.as("finance");
-  const r = await moduleCall("control", () => control.reconcile(fin));
+  // only this run's tranches: a run over every tranche would check (and could pause) other judges' runs too
+  const trancheIds = (await view(ctx)).tranches.map((t) => t.id);
+  if (!trancheIds.length) return failed("No tranche to reconcile yet.");
+  const r = await moduleCall("control", () => control.reconcile(fin, undefined, { trancheIds }));
   const v = await view(ctx);
   const t = trancheOf(v, 1);
   await ctx.log("state", `reconcile → run ${r.runId}`, `verdict ${r.verdict}; tranche 1 ${t?.state}`, r.verdict === "DRIFT");
@@ -914,7 +930,7 @@ async function travelTo(ctx: StepCtx, targetMs: number): Promise<string> {
   const sim = await ctx.refreshSim();
   const h = Math.ceil((targetMs - simNow(sim).getTime()) / 3_600_000);
   if (h <= 0) return `Clock already at simulated day ${simDay(sim)}.`;
-  const r = await timeTravel(ctx.judge, sim.id, h, ctx.stepId);
+  const r = await travelInRun(ctx.judge, sim.id, h, ctx.stepId);
   ctx.sim = await ctx.refreshSim();
   return `Simulated clock +${h} h to day ${r.day}.`;
 }
@@ -1005,9 +1021,13 @@ async function runOne(judge: { id: string; role: string }, sim: Sim, scenario: S
   return { stepId: step.id, label: step.label, outcome, ms: Date.now() - started };
 }
 
-/** Runs the next unfinished step (or `stepId`) of a sim. */
+/** Runs the next unfinished step (or `stepId`) of a sim. One action at a time per run (withSimLock). */
 export async function runNext(judge: { id: string; role: string }, simId: string, opts: { baseUrl?: string; stepId?: string } = {}): Promise<RunResult | null> {
   assertSandbox();
+  return withSimLock(simId, () => stepOnce(judge, simId, opts));
+}
+
+async function stepOnce(judge: { id: string; role: string }, simId: string, opts: { baseUrl?: string; stepId?: string }): Promise<RunResult | null> {
   const sim = await getSim(simId);
   const scenario = scenarioOf(sim.scenario);
   const prog = await progressOf(simId);
@@ -1026,15 +1046,17 @@ export async function runNext(judge: { id: string; role: string }, simId: string
 /** Runs steps until one waits or fails, the scenario ends, or the time budget is spent. */
 export async function runAll(judge: { id: string; role: string }, simId: string, opts: { baseUrl?: string; budgetMs?: number } = {}): Promise<RunResult[]> {
   assertSandbox();
-  const out: RunResult[] = [];
-  const until = Date.now() + (opts.budgetMs ?? 45_000);
-  while (Date.now() < until) {
-    const r = await runNext(judge, simId, { baseUrl: opts.baseUrl });
-    if (!r) break;
-    out.push(r);
-    if (r.outcome.status === "waiting" || r.outcome.status === "error") break;
-  }
-  return out;
+  return withSimLock(simId, async () => {
+    const out: RunResult[] = [];
+    const until = Date.now() + (opts.budgetMs ?? 45_000);
+    while (Date.now() < until) {
+      const r = await stepOnce(judge, simId, { baseUrl: opts.baseUrl });
+      if (!r) break;
+      out.push(r);
+      if (r.outcome.status === "waiting" || r.outcome.status === "error") break;
+    }
+    return out;
+  });
 }
 
 
@@ -1045,6 +1067,10 @@ export type Fault = (typeof FAULTS)[number];
 
 export async function injectFault(judge: { id: string; role: string }, simId: string, fault: Fault, opts: { baseUrl?: string } = {}): Promise<StepOutcome> {
   assertSandbox();
+  return withSimLock(simId, () => injectOnce(judge, simId, fault, opts));
+}
+
+async function injectOnce(judge: { id: string; role: string }, simId: string, fault: Fault, opts: { baseUrl?: string }): Promise<StepOutcome> {
   const sim = await getSim(simId);
   const scenario = scenarioOf(sim.scenario);
   const prog = await progressOf(simId);
@@ -1055,12 +1081,15 @@ export async function injectFault(judge: { id: string; role: string }, simId: st
   let out: StepOutcome;
   try {
     switch (fault) {
-      case "release_503": case "fund_503": case "refund_503":
+      case "release_503": case "fund_503": case "refund_503": {
         if (sim.mode === "LIVE") { out = skipped("Faults are injected on the mock rail only; the live PayPal Sandbox is never sabotaged."); break; }
-        mockControl.inject(fault); await addFault(simId, fault);
-        await ctx.log("fault", `mockControl.inject('${fault}')`, "the next matching rail call answers a transient 503 once (simulated)");
-        out = done(`Armed ${fault}: the next ${fault.split("_")[0]} call on the mock rail answers 503 once; the money module retries with the same idempotency key.`);
+        const scope = await railScope(bag.workspaceId);
+        if (!scope.length) { out = failed(NO_SCOPE); break; }
+        mockControl.inject(fault, scope); await addFault(simId, fault);
+        await ctx.log("fault", `mockControl.inject('${fault}', this run's tranches)`, "the next matching rail call on this run answers a transient 503 once (simulated)");
+        out = done(`Armed ${fault}: the next ${fault.split("_")[0]} call on this run's tranches answers 503 once; the money module retries with the same idempotency key.`);
         break;
+      }
       case "duplicate_webhook": out = bag.workspaceId ? await stDupWebhook(ctx) : failed("Start the scenario first: no contract yet."); break;
       case "chargeback_webhook": {
         if (!bag.workspaceId) { out = failed("Start the scenario first: no contract yet."); break; }
