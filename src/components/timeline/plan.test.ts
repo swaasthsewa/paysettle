@@ -1,6 +1,6 @@
 /** F2.04 F3.03 F3.11 F4.01 — Bryntum timeline builders (contract Gantt, mediator schedule). */
 import { describe, expect, it } from "vitest";
-import { buildCaseEvent, buildContractPlan, buildProposedPlan, msTone, verdictDue, type CoDocMilestone, type PlanInput } from "./plan";
+import { buildCaseEvent, buildChainPlan, buildContractPlan, buildProposedPlan, msTone, verdictDue, type CoDocMilestone, type PlanInput } from "./plan";
 
 const H = 3_600_000, D = 24 * H;
 const held = new Date("2026-10-29T00:00:00Z");
@@ -94,6 +94,36 @@ describe("F2.13 proposed change order on the Gantt", () => {
     expect(row("C01")).toMatchObject({ change: "Added", signedDue: null, state: "PROPOSED", open: { href: "/contracts/ws_1#co", label: "Change order" } });
     expect(row("M03").change).toBe("Removed");
     expect(Date.parse(p.endDate)).toBeGreaterThan(held.getTime() + 40 * D);
+  });
+});
+
+describe("F2.14 contract chain on one calendar", () => {
+  const now = new Date(held.getTime() + 9 * D);
+  const p2: PlanInput = {
+    id: "ws_2", title: "Booking app · period 2", currency: "USD", state: "READY_TO_SIGN",
+    milestones: [
+      { id: "n1", seq: 10, code: "M01", title: "Kick-off", type: "GATE", active: true, targetDay: 2, amountCents: 0, dependsOn: [], trancheIdx: 1, state: "DRAFT" },
+      { id: "n2", seq: 20, code: "M02", title: "Design", type: "PAY", active: true, targetDay: 6, amountCents: 100000, dependsOn: [], trancheIdx: 1, state: "DRAFT" },
+    ],
+    tranches: [], signatures: [],
+  };
+  /* given out of order on purpose: the builder sorts by period number */
+  const c = buildChainPlan([{ input: p2, periodNo: 2, state: "READY_TO_SIGN", totalCents: 100000 }, { input: ws, periodNo: 1, state: "LOCKED", totalCents: 350000 }], now);
+  it("F2.14 one summary row per period with its milestones, linked to its contract", () => {
+    expect(c.tasks.map((t) => [t.name, t.code, t.stateLabel, t.amountLabel, t.href])).toEqual([
+      ["Period 1 · Booking app", "P1", "Locked", "$3,500.00", "/contracts/ws_1"],
+      ["Period 2 · Booking app · period 2", "P2", "Ready to sign (dates projected)", "$1,000.00", "/contracts/ws_2"],
+    ]);
+    expect(c.tasks[0].children!.map((k) => k.code)).toEqual(["M01", "M02", "M03", "M05"]);
+    expect(c.tasks[0].children![0].id).toBe("ws_1:m1"); // ids stay unique across periods
+    expect(c.rows.map((r) => `${r.tranche} ${r.code}`)).toEqual(["Period 1 M01", "Period 1 M02", "Period 1 M03", "Period 1 M05", "Period 2 M01", "Period 2 M02"]);
+  });
+  it("F2.14 an unsigned period starts where the one before it ends, and an arrow runs from period N to N+1", () => {
+    const end1 = Date.parse(c.tasks[0].endDate);
+    expect(end1).toBe(held.getTime() + 30 * D);
+    expect(Date.parse(c.tasks[1].children![0].endDate)).toBe(end1 + 2 * D);
+    expect(c.dependencies).toEqual([{ id: "chain-period-ws_1-period-ws_2", from: "period-ws_1", to: "period-ws_2", implicit: false, cls: "ps-dep ps-dep-chain" }]);
+    expect(Date.parse(c.endDate)).toBeGreaterThan(end1 + 6 * D);
   });
 });
 

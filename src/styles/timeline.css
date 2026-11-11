@@ -92,3 +92,6 @@
 .tl-views a[aria-current="page"] { background: var(--ink); color: var(--card); border-color: var(--ink); }
 .tl-note { border: 1px solid var(--line-2); border-left: 4px solid var(--g2); border-radius: var(--r-md); padding: 10px 14px; background: var(--sunken); display: flex; flex-direction: column; gap: 4px; }
 .tl-note p { margin: 0; }
+/* F2.14 contract chain */
+.ps-bry .b-sch-dependency.ps-dep-chain { stroke-width: 2; }
+.tl-chain-list { margin: 0 0 12px; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }

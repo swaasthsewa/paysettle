@@ -1,5 +1,5 @@
 /**
- * F2.04 F2.13 F3.03 F3.11 F4.01 — pure builders for the Bryntum timelines (no React, no Bryntum import: runs in tests and on the
+ * F2.04 F2.13 F2.14 F3.03 F3.11 F4.01 — pure builders for the Bryntum timelines (no React, no Bryntum import: runs in tests and on the
  * server, and returns only plain, serialisable data for the client components).
  *  - Contract Gantt: milestones as bars from the previous milestone's day to their own target day, tranches as summary
  *    rows and shaded bands (the PayPal hold window once funded), dependencies (explicit, else the sequence), now line.
@@ -7,6 +7,8 @@
  *    deadline, with the sealed-offer, vault and verdict phases inside it.
  *  - F2.13 proposed change order: the change order's milestones as bars, the signed plan as Bryntum baselines, and each
  *    row marked added, removed, re-dated or unchanged (read from the stored change order; nothing changes until both sign).
+ *  - F2.14 contract chain: one summary row per period of a continuation chain, its milestones as children, arrows from
+ *    each period to the next, all on one calendar.
  * Contract day N is N days after the anchor: the first tranche's hold in PayPal (as the ops radar counts days), else the
  * signing, else now (a projection for contracts that are not signed yet).
  */
@@ -49,6 +51,8 @@ export interface PlanTask {
   dayFrom: number; dayTo: number; href: string | null; eventColor: string; cls: string; children?: PlanTask[];
   /** F2.13 proposed change order view: what the change order does to this row, and the signed bar as a baseline. */
   change?: CoChange; changeLabel?: string; baselines?: { startDate: string; endDate: string }[];
+  /** F2.14 contract chain view: the target date shown in the Gantt's date column. */
+  dueLabel?: string;
 }
 export interface PlanDep { id: string; from: string; to: string; implicit: boolean; cls: string }
 export interface PlanBand { id: string; name: string; startDate: string; endDate?: string; cls: string }
@@ -222,6 +226,58 @@ export function buildProposedPlan(v: PlanInput, co: ProposedInput, now: Date, vi
   }));
   const ends = [Date.parse(p.startDate), Date.parse(p.endDate), Date.parse(signed.startDate), Date.parse(signed.endDate)];
   return { ...p, startDate: new Date(Math.min(...ends)).toISOString(), endDate: new Date(Math.max(...ends)).toISOString(), changes };
+}
+
+/* ── F2.14 contract chain: every period the viewer may see, on one calendar ── */
+export interface ChainPeriod { input: PlanInput; periodNo: number; state: string; totalCents: number }
+/* same words as the contract state chips (src/components/contracts/chips.tsx, which this pure module cannot import) */
+const WS_LABEL: Record<string, string> = { DRAFT: "Draft", READY_TO_SIGN: "Ready to sign", PARTIALLY_SIGNED: "Signed by one party", SIGNED: "Signed by both", PENDING_OPS: "With Operations", LOCKED: "Locked", ABANDONED: "Abandoned" };
+export const wsStateLabel = (s: string) => WS_LABEL[s] ?? s.replace(/_/g, " ").toLowerCase().replace(/^./, (c) => c.toUpperCase());
+
+/**
+ * One summary row per period (title, period number, state, total) with its milestones as children, dated on each
+ * period's own day 0. A period that is not signed yet is projected to start where the period before it ends. Arrows
+ * run from each period to the next.
+ */
+export function buildChainPlan(periods: ChainPeriod[], now: Date): ContractPlan {
+  const sorted = [...periods].sort((a, b) => a.periodNo - b.periodNo);
+  const tasks: PlanTask[] = [];
+  const deps: PlanDep[] = [];
+  const rows: ContractPlan["rows"] = [];
+  const counts: Record<MsTone, number> = { held: 0, released: 0, disputed: 0, refunded: 0, draft: 0, gate: 0 };
+  let prevEnd: number | null = null;
+  for (const per of sorted) {
+    const signedOrFunded = per.input.tranches.some((t) => t.heldAt) || per.input.signatures.some((s) => !s.voided);
+    const at0 = !signedOrFunded && prevEnd !== null ? new Date(Math.max(prevEnd, now.getTime())) : now;
+    const p = buildContractPlan(per.input, at0);
+    const kids = p.tasks.flatMap((t) => t.children ?? []).map((k) => ({ ...k, id: `${per.input.id}:${k.id}`, dueLabel: k.endDate.slice(0, 10) }));
+    for (const t of Object.keys(counts) as MsTone[]) counts[t] += p.counts[t];
+    const start = kids.length ? Math.min(...kids.map((k) => Date.parse(k.startDate))) : Date.parse(p.anchor);
+    const end = kids.length ? Math.max(...kids.map((k) => Date.parse(k.endDate))) : start + DAY;
+    const id = `period-${per.input.id}`;
+    const money = formatCents(per.totalCents, per.input.currency);
+    tasks.push({
+      id, name: `Period ${per.periodNo} · ${per.input.title}`, startDate: new Date(start).toISOString(), endDate: new Date(Math.max(end, start + DAY)).toISOString(), manuallyScheduled: true, expanded: true,
+      kind: "tranche", code: `P${per.periodNo}`, state: per.state, stateLabel: wsStateLabel(per.state) + (p.anchorKind === "projected" ? " (dates projected)" : ""), tone: per.state === "LOCKED" ? "held" : "draft",
+      amountCents: per.totalCents, amountLabel: money, dayFrom: 0, dayTo: Math.round((end - start) / DAY), href: `/contracts/${per.input.id}`,
+      eventColor: TONE_COLOR[per.state === "LOCKED" ? "held" : "draft"], cls: "ps-tranche ps-period", children: kids, dueLabel: new Date(end).toISOString().slice(0, 10),
+    });
+    const prev = tasks[tasks.length - 2];
+    if (prev) deps.push({ id: `chain-${prev.id}-${id}`, from: prev.id, to: id, implicit: false, cls: "ps-dep ps-dep-chain" });
+    for (const k of kids) rows.push({
+      id: k.id, tranche: `Period ${per.periodNo}`, code: k.code, title: k.name.replace(/^[^·]+· /, ""), type: k.kind === "gate" ? "Gate" : "Payment", from: k.dayFrom, to: k.dayTo,
+      due: k.endDate, amount: k.amountCents, state: k.state, where: TONE_LABEL[k.tone], open: { href: k.href ?? `/contracts/${per.input.id}`, label: "Open" },
+    });
+    prevEnd = end;
+  }
+  const nowIso = now.toISOString();
+  const all = [now.getTime(), ...tasks.flatMap((t) => [Date.parse(t.startDate), Date.parse(t.endDate)])];
+  const first = sorted[0]?.input;
+  return {
+    workspaceId: first?.id ?? "", title: first?.title ?? "", currency: first?.currency ?? "USD", anchor: tasks[0]?.startDate ?? nowIso, anchorKind: "signed", now: nowIso, virtual: false,
+    startDate: new Date(Math.min(...all) - 2 * DAY).toISOString(), endDate: new Date(Math.max(...all) + 3 * DAY).toISOString(),
+    tasks, dependencies: deps, timeRanges: [{ id: "now", name: "Now", startDate: nowIso, cls: "ps-now" }], rows, counts,
+  };
 }
 
 /* ── mediator schedule ── */

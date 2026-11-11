@@ -43,6 +43,31 @@ export async function periodChain(a: Actor, workspaceId: string): Promise<{ peri
   return { periodNo: w.periodNo, parent: parent ?? null, next: next ?? null };
 }
 
+/**
+ * F2.14 — every period of the chain around a contract that this person may see, oldest first (for the timeline's
+ * "Contract chain" view). Walks parent and next links with periodChain, so each period passes the same read check; the
+ * walk stops at the first period the person may not see. Capped at 36 periods each way.
+ */
+export async function contractChain(a: Actor, workspaceId: string): Promise<{ id: string; periodNo: number }[]> {
+  const start = await periodChain(a, workspaceId);
+  const out: { id: string; periodNo: number }[] = [{ id: workspaceId, periodNo: start.periodNo }];
+  const seen = new Set([workspaceId]);
+  const step = async (id: string) => { try { return await periodChain(a, id); } catch (e) { if (e instanceof DomainError) return null; throw e; } };
+  for (let p = start.parent, i = 0; p && !seen.has(p.id) && i < 36; i++) {
+    const c = await step(p.id);
+    if (!c) break;
+    seen.add(p.id); out.unshift({ id: p.id, periodNo: c.periodNo });
+    p = c.parent;
+  }
+  for (let n = start.next, i = 0; n && !seen.has(n.id) && i < 36; i++) {
+    const c = await step(n.id);
+    if (!c) break;
+    seen.add(n.id); out.push({ id: n.id, periodNo: c.periodNo });
+    n = c.next;
+  }
+  return out;
+}
+
 /** Milestones of a locked contract that can be carried into the next period (active, not started, no evidence). */
 export async function carryable(a: Actor, workspaceId: string): Promise<{ code: string; title: string; type: "GATE" | "PAY"; amountCents: number; day: number }[]> {
   const w = await loadWs(db, workspaceId);
