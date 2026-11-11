@@ -40,7 +40,12 @@ export interface McpServices {
 }
 
 class ToolError extends Error { constructor(readonly code: string, message: string) { super(message); } }
-const need = (a: Actor, p: Permission) => { if (!can(a.role, p)) throw new ToolError("PERMISSION_DENIED", `Your role (${a.role}) may not ${p.replace(".", " ")}.`); };
+/** What each permission lets a person do, in words, for the PERMISSION_DENIED message. */
+const DOES: Partial<Record<Permission, string>> = {
+  "contract.create": "draft a contract", "contract.negotiate": "propose contract changes", "hold.fund": "request funding",
+  "evidence.submit": "submit evidence (the provider does)", "release.approve": "approve a release (only the client does)", "dispute.open": "open a dispute",
+};
+const need = (a: Actor, p: Permission) => { if (!can(a.role, p)) throw new ToolError("PERMISSION_DENIED", `Your role (${a.role}) cannot ${DOES[p] ?? `use the ${p} permission`}.`); };
 const id = z.string().min(1).max(80);
 
 const changeSchema = z.union([
@@ -159,8 +164,8 @@ export const TOOLS = [
     },
   }),
   tool({
-    name: "approve_release", title: "Ask the client to approve a release",
-    description: "Request the release of a submitted milestone. HUMAN GATE: this moves no money. It records a pending request; the client confirms it in the app with MFA, which creates the signed approval.",
+    name: "approve_release", title: "Client: prepare my release approval",
+    description: "For the client's own agent only. Prepares the client's approval of a submitted milestone's release. HUMAN GATE: this moves no money. It records a pending approval; the client confirms it in the app with MFA, which creates the signed approval. A provider cannot use this tool.",
     input: z.object({ contractId: id, milestoneId: id, note: z.string().max(1_000).default("") }).strict(),
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     async run(a, ctx, svc) {

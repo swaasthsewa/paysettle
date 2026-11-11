@@ -128,6 +128,9 @@ describe("A5 MCP tools round trip (stubbed module services)", () => {
       expect(r.result.isError).toBe(true);
       expect(r.result.content[0].text).toMatch(/PERMISSION_DENIED/);
     }
+    const denied = (await handleMcp(call("approve_release", { contractId: "ws_1", milestoneId: "ms_2" }), ctx("provider"), svc)).body as R;
+    expect(denied.result.content[0].text).toContain("Your role (provider) cannot approve a release (only the client does).");
+    expect(toolList().find((t) => t.name === "approve_release")?.title).toMatch(/^Client:/);
     expect(svc.createApproval).not.toHaveBeenCalled();
     const ok = (await handleMcp(call("submit_evidence", { contractId: "ws_1", milestoneId: "ms_2", note: "Report attached", urls: ["https://example.com/report.pdf"] }), ctx("provider"), svc)).body as R;
     expect(ok.result.isError).toBe(false);
