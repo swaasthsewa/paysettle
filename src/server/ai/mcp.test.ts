@@ -2,6 +2,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { handleMcp, toolList, type McpContext, type McpServices } from "./mcp";
 import { NotBuilt, type WorkspaceView } from "../types";
+import { blocks, specSignals } from "../evidence/spec";
 
 const ws = (over: Partial<WorkspaceView> = {}): WorkspaceView => ({
   id: "ws_1", title: "ERP sprint", blueprintCode: "UC_CONSULTING_SPRINT", state: "LOCKED", revision: 3, rail: "MOCK", currency: "USD",
@@ -133,6 +134,24 @@ describe("A5 MCP tools round trip (stubbed module services)", () => {
     const files = (svc.submitEvidence as ReturnType<typeof vi.fn>).mock.calls[0][2] as { name: string; type: string; bytes: Buffer }[];
     expect(files).toHaveLength(1);
     expect(files[0]).toMatchObject({ name: "link-1.url", type: "text/uri-list" });
+  });
+
+  it("F3.04 A5 submit_evidence: URLs passed to the tool count as links in the spec check, like the upload form's confirmation", async () => {
+    const svc = services();
+    const proof = { artifacts: [{ kind: "LINK" as const, min: 1, note: "staging URL" }], criteria: [] };
+    // before the fix: a note without a link and no confirmation fails the link requirement
+    expect(blocks(specSignals(proof, [{ name: "link-1.url", type: "text/uri-list" }], "Staging is live"))).toBe(true);
+    const r = (await handleMcp(call("submit_evidence", { contractId: "ws_1", milestoneId: "ms_2", note: "Staging is live", urls: ["https://staging.example.com"] }), ctx("provider"), svc)).body as R;
+    expect(r.result.isError).toBe(false);
+    const [, , files, note] = (svc.submitEvidence as ReturnType<typeof vi.fn>).mock.calls[0] as [unknown, string, { name: string; type: string }[], string];
+    expect(note).toContain("Staging is live");
+    expect(note).toContain("[confirmed:LINK]");
+    const signals = specSignals(proof, files, note);
+    expect(blocks(signals)).toBe(false);
+    expect(signals.find((s) => s.code === "COUNT_LINK")?.level).toBe("ok");
+    // without urls the note is passed through unchanged
+    await handleMcp(call("submit_evidence", { contractId: "ws_1", milestoneId: "ms_2", note: "Staging is live" }), ctx("provider"), svc);
+    expect((svc.submitEvidence as ReturnType<typeof vi.fn>).mock.calls[1][3]).toBe("Staging is live");
   });
 
   it("A5 get_contract_status, propose_changes and open_dispute go through the module exports", async () => {

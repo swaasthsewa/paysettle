@@ -15,6 +15,7 @@ import { z } from "zod";
 import { can, type Permission } from "@/lib/rbac";
 import { formatCents } from "@/lib/money";
 import { proofSchema } from "@/lib/ai/schemas";
+import { buildNote, parseNote } from "@/server/evidence/spec";
 import { DomainError, NotBuilt, type Actor, type Change, type WorkspaceView } from "../types";
 import type { AiResult } from "./index";
 import type { DraftMilestone } from "@/lib/ai/rules";
@@ -148,7 +149,11 @@ export const TOOLS = [
     async run(a, ctx, svc) {
       need(ctx.actor, "evidence.submit");
       const files = a.urls.map((u, i) => ({ name: `link-${i + 1}.url`, type: "text/uri-list", bytes: Buffer.from(u + "\n", "utf8") }));
-      const r = await svc.submitEvidence(ctx.actor, a.milestoneId, files, a.note);
+      // F3.04 links passed in `urls` count toward the spec's link requirement, the same way the upload form's
+      // link confirmation box does: a [confirmed:LINK] marker in the note (src/server/evidence/spec.ts buildNote)
+      const p = parseNote(a.note);
+      const note = a.urls.length ? buildNote(a.note, [...p.confirmed, "LINK"], p.gpsWaiver) : a.note;
+      const r = await svc.submitEvidence(ctx.actor, a.milestoneId, files, note);
       await svc.audit(ctx.actor, "ai.mcp.submit_evidence", a.milestoneId, { tokenId: ctx.tokenId, packageId: r.packageId, links: files.length });
       return { packageId: r.packageId, rootHash: r.rootHash, signals: r.signals, next: "The client reviews the evidence in the app.", link: `${ctx.appUrl}/contracts/${a.contractId}/m/${a.milestoneId}` };
     },
