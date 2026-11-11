@@ -1,0 +1,15 @@
+import { launch, as, asEmail, shot, dump, sleep, errs } from "./lib.mjs";
+import fs from "node:fs";
+const b = await launch();
+const ju = await asEmail("Jules", "jules@mediator.demo");
+const mb = await as("Marcus");
+await mb.goto("/mediator/cases"); await shot(mb, "10-tier3-marcus-case-queue-not-routed");
+console.log((await mb.locator("main").innerText()).slice(0, 1500));
+await ju.goto("/mediator/cases"); await shot(ju, "10-tier3-mediator-case-queue");
+const link = ju.locator("a[href^='/mediator/cases/']", { hasText: /India|C02/ }).first();
+console.log("links", await ju.locator("a[href^='/mediator/cases/']").evaluateAll((a) => a.map((x) => x.textContent + " " + x.getAttribute("href"))));
+await link.click(); await ju.waitForURL(/\/mediator\/cases\/[^/]+$/);
+fs.writeFileSync("case.txt", ju.url());
+await dump(ju, "workbench");
+await shot(ju, "10-tier3-mediator-workbench");
+await b.close();

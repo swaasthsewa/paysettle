@@ -1,0 +1,8 @@
+SAMPLE DATA — SIMULATION ONLY (plain-text copy of C02-voucher-6-kochi.pdf)
+Hotel voucher — Sample Fort Kochi Bungalow + Sample Backwater Houseboat Co. (sample)
+Travellers: Ms Priya SHAH, Mr Rahul SHAH (sample names as in passports)
+Room category: Colonial Double 27 m² (3 nights) + Houseboat Deluxe cabin (1 night)
+Nights: 4 · Board: breakfast included · Guest rating at booking: 4.4/5
+Supplier confirmation no.: SMPH-4105
+Balance due: 0.00 (paid in full by the agency)
+Cancellation terms: free cancellation until 14 days before arrival; 1 night charged after that.

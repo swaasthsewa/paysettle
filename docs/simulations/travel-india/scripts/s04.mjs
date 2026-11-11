@@ -1,0 +1,21 @@
+import { launch, as, shot, shotEl, errs, dump } from "./lib.mjs";
+import fs from "node:fs";
+const ws = fs.readFileSync("ws.txt", "utf8");
+const b = await launch();
+const pr = await as("Priya"), ol = await as("Olivia");
+await pr.goto(`/contracts/${ws}`);
+await shotEl(pr.locator("section", { has: pr.getByRole("heading", { name: "Risk score" }) }).last(), "02-negotiation-client-risk-score-38");
+await ol.goto("/ops/clearance"); await dump(ol, "clearance");
+await shot(ol, "02-negotiation-ops-clearance-queue");
+// funding
+await pr.goto(`/contracts/${ws}`);
+const row = pr.locator("section[aria-labelledby=tr-h] li", { hasText: "Tranche 1" });
+await shotEl(pr.locator("section[aria-labelledby=tr-h]"), "03-funding-client-tranche-planned");
+await row.getByRole("link", { name: "Fund tranche" }).click();
+await pr.waitForURL(/\/fund\//);
+await dump(pr, "fund");
+await shot(pr, "03-funding-client-fund-page");
+await pr.getByRole("button", { name: /Fund with PayPal|Continue to PayPal/ }).click();
+for (let i = 0; i < 60 && /\/fund\/|paypal/.test(pr.url()); i++) await new Promise((r) => setTimeout(r, 500)); console.log("after fund url", pr.url());
+await errs(pr);
+await b.close();

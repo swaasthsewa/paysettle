@@ -1,0 +1,8 @@
+SAMPLE DATA — SIMULATION ONLY (plain-text copy of M02-eticket-2.pdf)
+E-ticket receipt — Sample Skyways SX 518 (sample)
+Travellers: Ms Priya SHAH, Mr Rahul SHAH (sample names as in passports)
+Route VNS→COK · Day 14 of the trip · Class: Economy (Y)
+Ticket numbers: 999-7123456710 and 999-7123456711 (13 digits)
+Booking reference (PNR): SMP1Q7
+Ticket status: ISSUED (not on hold)
+Baggage: 15 kg checked per traveller

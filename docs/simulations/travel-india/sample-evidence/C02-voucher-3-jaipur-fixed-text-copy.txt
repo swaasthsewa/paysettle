@@ -1,0 +1,8 @@
+SAMPLE DATA — SIMULATION ONLY (plain-text copy of C02-voucher-3-jaipur-fixed.pdf)
+Hotel voucher — Sample Heritage Haveli, Jaipur (sample, reissued)
+Travellers: Ms Priya SHAH, Mr Rahul SHAH (sample names as in passports)
+Room category: STANDARD ROOM, 18 m² — hotel states Heritage Deluxe Room sold out for nights 1–2; Heritage Deluxe Room for night 3 only
+Nights: 3 · Board: breakfast included · Guest rating at booking: 4.5/5
+Supplier confirmation no.: SMPH-4102-R1
+Balance due: 0.00
+Cancellation terms: free cancellation until 14 days before arrival.

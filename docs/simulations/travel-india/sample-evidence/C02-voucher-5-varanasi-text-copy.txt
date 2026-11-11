@@ -1,0 +1,8 @@
+SAMPLE DATA — SIMULATION ONLY (plain-text copy of C02-voucher-5-varanasi.pdf)
+Hotel voucher — Sample Ghat Heritage House, Varanasi (sample)
+Travellers: Ms Priya SHAH, Mr Rahul SHAH (sample names as in passports)
+Room category: Heritage Room, 26 m²
+Nights: 2 · Board: breakfast included · Guest rating at booking: 4.3/5
+Supplier confirmation no.: SMPH-4104
+Balance due: 0.00 (paid in full by the agency)
+Cancellation terms: free cancellation until 14 days before arrival; 1 night charged after that.

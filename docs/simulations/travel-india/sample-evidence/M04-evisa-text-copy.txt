@@ -1,0 +1,5 @@
+SAMPLE DATA — SIMULATION ONLY (plain-text copy of M04-evisa.pdf)
+E-visa approval confirmations (sample)
+Travellers: Ms Priya SHAH, Mr Rahul SHAH (sample names as in passports)
+E-visa status: GRANTED for both travellers (sample reference EV-SMP-1 and EV-SMP-2)
+Passports valid until 2032 (more than 6 months after return)

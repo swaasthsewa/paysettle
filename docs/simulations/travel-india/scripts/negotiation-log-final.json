@@ -1,0 +1,74 @@
+[
+  {
+    "who": "start",
+    "rev": 1,
+    "gate": "Policy gate / All rules pass / ",
+    "alloc": "100% of 100%"
+  },
+  {
+    "who": "Priya prunes M04 (car criteria without hours or vehicle class)",
+    "rev": 2,
+    "gate": "Policy gate / 1 to fix / R01 Payment milestones add up to 88.00% (844800 of 960000 cents). They must add up to exactly 100%.",
+    "alloc": "88% of 100%"
+  },
+  {
+    "who": "Priya appends measurable car milestone",
+    "rev": 3,
+    "gate": "Policy gate / All rules pass / ",
+    "alloc": "100% of 100%"
+  },
+  {
+    "who": "Priya prunes M03 (hotel criteria without rating or room size)",
+    "rev": 4,
+    "gate": "Policy gate / 1 to fix / R01 Payment milestones add up to 70.00% (672000 of 960000 cents). They must add up to exactly 100%.",
+    "alloc": "70% of 100%"
+  },
+  {
+    "who": "Priya appends measurable hotel milestone",
+    "rev": 5,
+    "gate": "Policy gate / All rules pass / ",
+    "alloc": "100% of 100%"
+  },
+  {
+    "who": "Priya appends cooking class + day trip",
+    "rev": 7,
+    "gate": "Policy gate / 1 to fix / R01 Payment milestones add up to 107.00% (1027200 of 960000 cents). They must add up to exactly 100%.",
+    "alloc": "107% of 100%"
+  },
+  {
+    "who": "Priya adds 2 clauses",
+    "rev": 9,
+    "gate": "Policy gate / 1 to fix / R01 Payment milestones add up to 107.00% (1027200 of 960000 cents). They must add up to exactly 100%.",
+    "alloc": "107% of 100%"
+  },
+  {
+    "who": "Priya sets late deduction on M02 (1%/day after 1 grace day, cap 10%)",
+    "rev": 10,
+    "gate": "Policy gate / 1 to fix / R01 Payment milestones add up to 107.00% (1027200 of 960000 cents). They must add up to exactly 100%.",
+    "alloc": "107% of 100%"
+  },
+  {
+    "who": "Meera opens",
+    "rev": 10,
+    "gate": "Policy gate / 1 to fix / R01 Payment milestones add up to 107.00% (1027200 of 960000 cents). They must add up to exactly 100%.",
+    "alloc": "107% of 100%"
+  },
+  {
+    "who": "Meera moves the travel pack M07 to day 21",
+    "rev": 11,
+    "gate": "Policy gate / 1 to fix / R01 Payment milestones add up to 107.00% (1027200 of 960000 cents). They must add up to exactly 100%.",
+    "alloc": "107% of 100%"
+  },
+  {
+    "who": "Meera M08 close-out 13%→6%",
+    "rev": 12,
+    "gate": "Policy gate / All rules pass / ",
+    "alloc": "100% of 100%"
+  },
+  {
+    "who": "Meera adds inclusions clause",
+    "rev": 13,
+    "gate": "Policy gate / All rules pass / ",
+    "alloc": "100% of 100%"
+  }
+]

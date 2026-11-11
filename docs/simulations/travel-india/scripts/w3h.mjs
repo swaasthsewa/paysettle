@@ -1,0 +1,15 @@
+import { launch, asEmail, as, shot, shotEl, dump, sleep, errs } from "./lib.mjs";
+const b = await launch();
+const ol = await as("Olivia");
+await ol.goto("/ops/mediators");
+const row = ol.locator("tr", { hasText: "C02 · Hotel vouchers" });
+const sel = row.locator("select");
+console.log("OPTIONS", await sel.locator("option").allTextContents());
+const opts = await sel.locator("option").evaluateAll((o) => o.map((x) => [x.value, x.textContent]));
+const jules = opts.find(([v, t]) => /Jules/.test(t));
+await sel.selectOption((jules ?? opts.find(([v]) => v))[0]);
+await shotEl(ol.locator("section", { has: ol.getByRole("heading", { name: /Ops lead queue/ }) }).first(), "10-tier3-ops-lead-queue-reassign");
+await row.getByRole("button").first().click(); await ol.waitForLoadState("networkidle"); await sleep(1500); await errs(ol);
+console.log("chosen", jules ? "Jules" : opts);
+await shot(ol, "10-tier3-ops-offered-again");
+await b.close();

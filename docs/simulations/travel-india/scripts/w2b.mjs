@@ -1,0 +1,64 @@
+import { launch, as, shot, shotEl, dump, msIds, sleep, errs, travel } from "./lib.mjs";
+import fs from "node:fs";
+const ws = fs.readFileSync("ws.txt", "utf8"); const M = msIds();
+const b = await launch();
+const me = await as("Meera"), pr = await as("Priya"), al = await as("Alex");
+const review = (p) => p.getByTestId("co-review");
+const open = async (p) => { await p.goto(`/contracts/${ws}`); await p.waitForLoadState("networkidle"); };
+await travel(al, 24); // day 9
+// CO1: Meera proposes the Udaipur upgrade at Priya's request
+await open(me);
+await me.getByTestId("co-propose").locator("summary").first().click();
+await me.getByLabel("Why the contract changes").fill("Priya asked to upgrade Udaipur to a lake-view suite for all 3 nights (sample hotel quote: +$480 for the stay).");
+await me.getByTestId("co-propose").locator("details", { hasText: "New milestone 1" }).locator("summary").click();
+await me.locator("#co-n1-title").fill("Udaipur upgrade: lake-view suite voucher (3 nights)");
+await me.locator("#co-n1-day").fill("12");
+await me.locator("#co-n1-amount").fill("480");
+await me.locator("#co-n1-crit").fill("Voucher from Sample Lakeside Palace Hotel, Udaipur shows a Lake-view Suite of at least 45 m² for all 3 nights\nBalance due is zero and breakfast is included\nThe original Deluxe Lake-facing booking is replaced, not added");
+await me.locator("#co-n1-lock").fill("Traveller approves the upgrade voucher.");
+await me.locator("#co-n1-disp").fill("If the suite cannot be confirmed, the $480 is returned to the traveller.");
+await shotEl(me.getByTestId("co-propose"), "06-change-order-1-provider-propose-upgrade");
+await me.getByTestId("co-propose").getByRole("button", { name: "Propose change order" }).click();
+await me.waitForLoadState("networkidle"); await sleep(1500); await errs(me);
+const no1 = Number(/Change order (\d+)/.exec((await review(me).locator("b").first().textContent()) ?? "")[1]);
+await review(me).getByRole("button", { name: `Sign change order ${no1}` }).click(); await sleep(2000); await errs(me);
+await shotEl(review(me), "06-change-order-1-provider-signed-waiting");
+await open(pr);
+await shotEl(review(pr), "06-change-order-1-client-review-money-impact");
+console.log("CO1 review:", (await review(pr).innerText()).slice(0, 1500));
+await review(pr).getByRole("button", { name: `Sign change order ${no1}` }).click(); await sleep(2500); await errs(pr);
+await open(pr);
+await shotEl(pr.locator("section#co"), "06-change-order-1-client-in-force");
+// fund tranche 2
+const row = pr.locator("section[aria-labelledby=tr-h] li", { hasText: "Tranche 2" });
+console.log("T2:", await row.innerText());
+await row.getByRole("link", { name: "Fund tranche" }).click();
+await pr.waitForURL(/\/fund\//); await shot(pr, "06-change-order-1-client-fund-tranche-2");
+await pr.getByRole("button", { name: /Fund with PayPal|Continue to PayPal/ }).click();
+for (let i = 0; i < 60 && /\/fund\/|paypal/.test(pr.url()); i++) await sleep(500);
+await open(pr); await shotEl(pr.locator("section[aria-labelledby=tr-h]"), "06-change-order-1-client-tranche-2-held");
+console.log("TR:", await pr.locator("section[aria-labelledby=tr-h]").innerText());
+// CO2: Priya drops the Udaipur day trip (C04)
+await travel(al, 24); // day 10
+await open(pr);
+await pr.getByTestId("co-propose").locator("summary").first().click();
+await pr.getByLabel("Why the contract changes").fill("We want a rest day in Udaipur instead of the Kumbhalgarh and Ranakpur day trip. Not booked yet, so its amount comes back to me.");
+const d = pr.getByTestId("co-propose").locator("details", { hasText: "C04" }).first();
+await d.locator("summary").click();
+await d.getByLabel(/Remove C04/).check();
+await shotEl(pr.getByTestId("co-propose"), "06-change-order-2-client-propose-drop-day-trip");
+await pr.getByTestId("co-propose").getByRole("button", { name: "Propose change order" }).click();
+await pr.waitForLoadState("networkidle"); await sleep(1500); await errs(pr);
+const no2 = Number(/Change order (\d+)/.exec((await review(pr).locator("b").first().textContent()) ?? "")[1]);
+await review(pr).getByRole("button", { name: `Sign change order ${no2}` }).click(); await sleep(2000); await errs(pr);
+await open(me);
+await shotEl(review(me), "06-change-order-2-provider-review-money-down");
+console.log("CO2 review:", (await review(me).innerText()).slice(0, 1500));
+await review(me).getByRole("button", { name: `Sign change order ${no2}` }).click(); await sleep(2500); await errs(me);
+await open(me); await shotEl(me.locator("section#co"), "06-change-order-2-provider-in-force");
+await open(pr);
+await shotEl(pr.locator("section[aria-labelledby=rev-h]"), "06-change-orders-client-revision-history");
+await shotEl(pr.locator("section[aria-labelledby=tr-h]"), "06-change-order-2-client-tranches-after-return");
+console.log("TR2:", await pr.locator("section[aria-labelledby=tr-h]").innerText());
+console.log("REV:", (await pr.locator("section[aria-labelledby=rev-h]").innerText()).slice(0, 2500));
+await b.close();

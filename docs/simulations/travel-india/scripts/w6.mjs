@@ -1,0 +1,13 @@
+import { launch, as, asEmail, shot, sleep } from "./lib.mjs";
+import fs from "node:fs";
+const C = fs.readFileSync("case.txt", "utf8"); const ws = fs.readFileSync("ws.txt", "utf8");
+const b = await launch();
+const ai = await asEmail("Aiko", "aiko@mediator.demo");
+await ai.goto(C); await shot(ai, "10-tier3-mediator-after-cosign-settled");
+await ai.goto("/mediator/cases"); await shot(ai, "10-tier3-mediator-resolved-queue");
+const pr = await as("Priya"), me = await as("Meera");
+await pr.goto(`/contracts/${ws}/timeline`); await shot(pr, "12-final-client-contract-timeline");
+await me.goto(`/provider/payouts`); const t = await me.locator("main").innerText(); const i = t.indexOf("21-day"); console.log(t.slice(i, i + 2500));
+const r = await pr.request.get(`/api/pdf/contract/${ws}`); console.log("PDF", r.status(), r.headers()["content-type"], (await r.body()).length);
+fs.writeFileSync("/home/user/paysettle/docs/simulations/travel-india/contract-final-sample.pdf", await r.body());
+await b.close();

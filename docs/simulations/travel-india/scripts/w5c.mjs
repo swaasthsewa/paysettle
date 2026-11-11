@@ -1,0 +1,12 @@
+import { launch, as, shot, shotEl, dump, sleep, errs } from "./lib.mjs";
+const b = await launch();
+const fa = await as("Farah"), al = await as("Alex");
+await fa.goto("/finance/ledger");
+await fa.locator("main select").first().selectOption({ label: "21-day India tour for 2 adults (booking project)" });
+await fa.getByRole("button", { name: "Apply" }).click(); await fa.waitForLoadState("networkidle"); await sleep(2000);
+await shot(fa, "13-finance-ledger-this-contract");
+const t = await fa.locator("main").innerText(); const i = t.indexOf("entries shown"); console.log(t.slice(i - 10, i + 200));
+await fa.goto("/finance/fees"); await shot(fa, "13-finance-fees"); console.log("FEES:", (await fa.locator("main").innerText()).slice(0, 1200));
+await al.goto("/admin/audit"); const a = await al.locator("main").innerText(); console.log("AUDIT:", a.slice(0, 1500));
+console.log(await al.evaluate(() => [...document.querySelectorAll("main button, main a.btn")].map((e) => e.innerText).join(" | ")));
+await b.close();

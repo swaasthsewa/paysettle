@@ -1,0 +1,14 @@
+import { launch, as, shot, shotEl } from "./lib.mjs";
+import fs from "node:fs";
+const ws = fs.readFileSync("ws.txt", "utf8");
+const b = await launch();
+const pr = await as("Priya"), me = await as("Meera");
+await pr.goto(`/contracts/${ws}`);
+await shot(pr, "03-funding-client-held");
+await shotEl(pr.locator("section[aria-labelledby=tr-h]"), "03-funding-client-tranche-held");
+console.log((await pr.locator("section[aria-labelledby=tr-h]").innerText()));
+const t = await pr.locator("main").innerText(); console.log(t.slice(0, 900));
+await me.goto(`/contracts/${ws}`); await shot(me, "03-funding-provider-sees-held");
+await me.goto(`/provider`); await shot(me, "03-funding-provider-home");
+await pr.goto(`/client`); await shot(pr, "03-funding-client-home");
+await b.close();

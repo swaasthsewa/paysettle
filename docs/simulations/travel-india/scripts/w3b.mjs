@@ -1,0 +1,26 @@
+import { launch, as, shot, shotEl, dump, msIds, sleep, errs, travel, submitEvidence, approve } from "./lib.mjs";
+import fs from "node:fs";
+const ws = fs.readFileSync("ws.txt", "utf8"); const M = msIds();
+const b = await launch();
+const me = await as("Meera"), pr = await as("Priya"), al = await as("Alex");
+await travel(al, 24); // day 16
+const V = [1, 2, 4, 5, 6, 7].map((i) => fs.readdirSync("/tmp/claude-0/sim/files").find((f) => f.startsWith(`C02-voucher-${i}-`) && f.endsWith(".pdf")));
+const files = [...V, "C02-voucher-3-jaipur-fixed.pdf", ...V.map((f) => f.replace(".pdf", "-text-copy.txt")), "C02-voucher-3-jaipur-fixed-text-copy.txt"];
+await submitEvidence(me, ws, M.C02, files, "Fix attempt: Sample Heritage Haveli says the Heritage Deluxe Room is sold out for Jaipur nights 1–2; reissued voucher gives Heritage Deluxe for night 3 only. This is the best the hotel can do on these dates; the room is a heritage room in the same property.", { shotName: "07-week3-provider-resubmit-vouchers" });
+await pr.goto(`/contracts/${ws}/m/${M.C02}`);
+const t = await pr.locator("main").innerText(); console.log(t.slice(t.indexOf("AI verifier"), t.indexOf("Your decision")).slice(0, 1500));
+await shot(pr, "07-week3-client-review-attempt-2");
+await pr.getByRole("link", { name: /Open a dispute/ }).click();
+await pr.waitForLoadState("networkidle");
+await dump(pr, "dispute new");
+await pr.locator("input[name=reason][value=NOT_AS_SPECIFIED]").check();
+await pr.locator("#dz-n").fill("The Jaipur voucher still shows a Standard Room (18 m²) for 2 of the 3 nights. The contract names the Heritage Deluxe Room of at least 25 m² for all 3 Jaipur nights. The other six vouchers are fine. I ask for a partial refund for the downgraded nights.");
+await shot(pr, "08-dispute-client-open-form");
+await pr.getByRole("button", { name: /^Open the dispute and freeze/ }).click();
+await pr.waitForURL(/\/disputes\//, { timeout: 30000 }).catch(() => {}); await sleep(1500); await errs(pr);
+fs.writeFileSync("dispute.txt", pr.url());
+await dump(pr, "dispute room client");
+await shot(pr, "08-dispute-client-room-tier1");
+await me.goto(pr.url()); await shot(me, "08-dispute-provider-room-tier1");
+await me.goto(`/contracts/${ws}`); await shot(me, "08-dispute-provider-contract-only-c02-frozen");
+await b.close();

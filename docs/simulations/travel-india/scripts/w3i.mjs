@@ -1,0 +1,23 @@
+import { launch, as, asEmail, shot, shotEl, dump, sleep, errs, msIds } from "./lib.mjs";
+import fs from "node:fs";
+const C = fs.readFileSync("case.txt", "utf8"); const D = fs.readFileSync("dispute.txt", "utf8"); const ws = fs.readFileSync("ws.txt", "utf8"); const M = msIds();
+const b = await launch();
+let co = await asEmail("Sofia", "sofia@mediator.demo");
+await co.goto("/mediator/cases");
+let lane = co.getByRole("region", { name: "Waiting for your co-signature" });
+let rowc = await lane.getByRole("row").filter({ hasText: "Hotel vouchers" }).count();
+console.log("Sofia sees co-sign rows:", rowc);
+if (!rowc) { co = await asEmail("Jules", "jules@mediator.demo"); await co.goto("/mediator/cases"); lane = co.getByRole("region", { name: "Waiting for your co-signature" }); rowc = await lane.getByRole("row").filter({ hasText: "Hotel vouchers" }).count(); console.log("Jules sees:", rowc); }
+await shot(co, "10-tier3-cosigner-queue");
+await lane.getByRole("row").filter({ hasText: "Hotel vouchers" }).getByRole("link").click();
+await co.waitForURL(/\/mediator\/cases\//);
+await shot(co, "10-tier3-cosigner-workbench");
+await co.getByRole("button", { name: "Co-sign verdict" }).click(); await co.waitForLoadState("networkidle"); await sleep(5000); await errs(co);
+await co.goto(C); await shot(co, "10-tier3-cosigner-cosigned-settled");
+const pr = await as("Priya"), me = await as("Meera");
+await pr.goto(D); await shot(pr, "10-settlement-client-view");
+await me.goto(D); await shot(me, "10-settlement-provider-view");
+const t = await pr.locator("main").innerText(); const k = t.indexOf("Verdict by"); console.log(t.slice(0, 300), "\n...", t.slice(k - 200, k + 2000));
+await pr.goto(`/contracts/${ws}/m/${M.C02}`); await shot(pr, "10-settlement-client-milestone-c02");
+await me.goto("/provider/payouts"); await shot(me, "10-settlement-provider-payouts");
+await b.close();

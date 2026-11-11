@@ -1,0 +1,8 @@
+SAMPLE DATA — SIMULATION ONLY (plain-text copy of C02-voucher-4-udaipur.pdf)
+Hotel voucher — Sample Lakeside Palace Hotel, Udaipur (sample)
+Travellers: Ms Priya SHAH, Mr Rahul SHAH (sample names as in passports)
+Room category: Deluxe Lake-facing, 32 m²
+Nights: 3 · Board: breakfast included · Guest rating at booking: 4.6/5
+Supplier confirmation no.: SMPH-4103
+Balance due: 0.00 (paid in full by the agency)
+Cancellation terms: free cancellation until 14 days before arrival; 1 night charged after that.

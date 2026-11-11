@@ -1,0 +1,9 @@
+SAMPLE DATA — SIMULATION ONLY (plain-text copy of C01-car-transfers.pdf)
+Private car and transfers — Sample Roadways Pvt Ltd (sample)
+Travellers: Ms Priya SHAH, Mr Rahul SHAH (sample names as in passports)
+Vehicle: air-conditioned mid-size SUV class, seats 2 adults + 2 large suitcases
+Driver: Mr Sample Driver, phone +91 00000 00000 (sample), on duty up to 10 h/day
+Road legs: Agra→Jaipur (day 6), Jaipur→Udaipur (day 9); city use Delhi, Jaipur, Udaipur
+Transfers: every airport and railway station on the itinerary incl. Goa departure (day 21, 3 h before departure)
+Pick-ups set 75 minutes after scheduled landing
+Confirmation no.: SRW-88213

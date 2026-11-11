@@ -1,0 +1,30 @@
+import { launch, as, shot, shotEl, dump, msIds, sleep, errs, travel, submitEvidence } from "./lib.mjs";
+import fs from "node:fs";
+const ws = fs.readFileSync("ws.txt", "utf8"); const M = msIds();
+const b = await launch();
+const me = await as("Meera"), pr = await as("Priya"), al = await as("Alex");
+await travel(al, 24); // day 1
+await submitEvidence(me, ws, M.M01, ["M01-itinerary.pdf", "M01-itinerary-text-copy.txt"], "Week 1: day-by-day itinerary attached (sample data, fictional suppliers). Passport numbers and expiry dates are in the traveller sheet shared by message. Priya confirmed both passport names in writing on day 1.", { shotName: "04-week1-provider-submit-itinerary" });
+await me.goto(`/contracts/${ws}/m/${M.M01}`); await shot(me, "04-week1-provider-itinerary-submitted");
+await pr.goto(`/contracts/${ws}/m/${M.M01}`);
+const t = await pr.locator("main").innerText(); console.log(t.slice(t.indexOf("Checks"), t.indexOf("Your decision")));
+await shot(pr, "04-week1-client-review-itinerary");
+await pr.getByRole("checkbox", { name: /I inspected the evidence/ }).check();
+await pr.getByRole("button", { name: /^Approve gate M01/ }).click();
+await pr.waitForLoadState("networkidle"); await sleep(2500); await errs(pr);
+await pr.reload(); await shot(pr, "04-week1-client-approved-itinerary-gate");
+await travel(al, 48); // day 3
+await me.goto(`/contracts/${ws}/m/${M.M02}`);
+await me.locator("#dl-days").fill("4");
+await me.locator("#dl-why").fill("The sample airline releases the economy fare class for the Kochi–Goa flight only on day 6; ticketing all three flights together avoids a reissue fee.");
+await shot(me, "04-week1-provider-ask-extension-form");
+await me.getByRole("button", { name: "Ask for an extension" }).click();
+await me.waitForLoadState("networkidle"); await sleep(1500); await errs(me);
+await pr.goto(`/contracts/${ws}/m/${M.M02}`);
+await shot(pr, "04-week1-client-extension-to-sign");
+await pr.getByRole("button", { name: /^Sign and accept 4 days/ }).click();
+await pr.waitForLoadState("networkidle"); await sleep(1500); await errs(pr);
+await pr.reload(); await shot(pr, "04-week1-client-extension-signed");
+await me.goto(`/contracts/${ws}/m/${M.M02}`); await shot(me, "04-week1-provider-extension-signed");
+const tt = await me.locator("main").innerText(); console.log(tt.slice(tt.indexOf("Deadline"), tt.indexOf("Deadline") + 1200));
+await b.close();

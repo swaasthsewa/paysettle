@@ -1,0 +1,6 @@
+SAMPLE DATA — SIMULATION ONLY (plain-text copy of M02-train-tickets.pdf)
+Train tickets — Sample Rail Express 12050 (sample)
+Travellers: Ms Priya SHAH, Mr Rahul SHAH (sample names as in passports)
+Delhi → Agra · Day 4 of the trip · 06:00 departure
+Class: AC chair car (CC) · Coach C3, seats 41 and 42
+Status: CONFIRMED

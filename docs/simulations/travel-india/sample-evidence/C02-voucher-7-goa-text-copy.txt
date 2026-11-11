@@ -1,0 +1,8 @@
+SAMPLE DATA — SIMULATION ONLY (plain-text copy of C02-voucher-7-goa.pdf)
+Hotel voucher — Sample Palm Beach Resort, Goa (sample)
+Travellers: Ms Priya SHAH, Mr Rahul SHAH (sample names as in passports)
+Room category: Garden Villa Room, 35 m²
+Nights: 3 · Board: breakfast included · Guest rating at booking: 4.3/5
+Supplier confirmation no.: SMPH-4106
+Balance due: 0.00 (paid in full by the agency)
+Cancellation terms: free cancellation until 14 days before arrival; 1 night charged after that.
