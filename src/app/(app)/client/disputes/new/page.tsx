@@ -60,10 +60,10 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ m
           <section className="c span5" aria-labelledby="dz-what">
             <div className="c-head"><h2 id="dz-what">What happens next</h2></div>
             <ol className="dz-events">
-              <li><b>Tier 1 · sealed offers</b> until {when(x.deadlines.tier1Until)}. Each of you names a share for the provider. If the two meet within 5 points, it settles at the midpoint. Free.</li>
-              <li><b>Tier 2 · evidence vault</b> until {when(x.deadlines.vaultUntil)}. Add notes, files and marked regions. Write-once. Free.</li>
-              <li><b>Tier 3 · mediator</b>, verdict by {when(x.deadlines.tier3Until)}. A flat mediation fee applies to the party at fault.</li>
-              <li><b>Settlement</b>: the refund leg first, then the release leg.</li>
+              <li><b>Tier 1 · sealed offers</b> Until {when(x.deadlines.tier1Until)}. Each of you names a share for the provider. If the two meet within 5 points, it settles at the midpoint. Free.</li>
+              <li><b>Tier 2 · evidence vault</b> Until {when(x.deadlines.vaultUntil)}. Add notes, files and marked regions. Write-once. Free.</li>
+              <li><b>Tier 3 · mediator</b> Verdict by {when(x.deadlines.tier3Until)}. A flat mediation fee applies to the party at fault.</li>
+              <li><b>Settlement</b> The refund leg first, then the release leg.</li>
             </ol>
             {x.deadlines.fastTrack && <p className="notice" data-b="warn">Fewer than 72 hours remain on this PayPal hold, so each tier is shortened to 24 hours.</p>}
             <p className="small muted">The dispute rule for this milestone: {m.disputeRule}</p>
