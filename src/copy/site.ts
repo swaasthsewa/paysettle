@@ -44,12 +44,30 @@ export const site = {
     hero: {
       line1: "Agree what done means.",
       line2: "Get paid when it is.",
-      lead: "PaySettle turns staged service work into a checkable contract. Both sides agree what proves each milestone, the money is held through PayPal, and it is released one milestone at a time when the evidence matches. Built for freelancers and small service businesses, and the clients who hire them, on staged projects of about $1,000 to $25,000.",
+      lead: "PaySettle is a contract compiler. A vague statement of work goes in. Criteria nobody could check are flagged with a measurable rewrite, both sides sign what proves each milestone, the money is held through PayPal, and each partial capture is tied to the evidence its clause names. Built for freelancers and small service businesses, and the clients who hire them, on staged projects of about $1,000 to $25,000.",
       demo: "Try the live demo",
       judge: "Judge playground",
       waitlist: "Join the waitlist",
       chips: { client: "Client: pays for verified progress", provider: "Provider: paid on delivery", both: "One agreement, settled" },
       art: "Two lines, one teal for the client and one amber for the provider, weave through the heading and leave as one line.",
+    },
+
+    compiler: {
+      kicker: "Contract compiler",
+      title: "Vague wording goes in. A checkable clause comes out.",
+      before: "The website should be fast and modern.",
+      rejected: "Rejected",
+      rewrite: "Suggested rewrite",
+      signed: "Clause in the blueprint both sides sign",
+      proof: "Proof it names",
+      steps: [
+        { head: "Compile", body: "Each acceptance criterion is checked. Taste words and open-ended wording with nothing to measure are rejected, with a measurable rewrite." },
+        { head: "Both sides sign", body: "Client and provider edit the rewrite into the clause they want and sign the same revision. The clause names the file that proves it." },
+        { head: "Evidence comes in", body: "The provider uploads that file. Rule checks and the AI verifier report what matches; the client reads them and approves." },
+        { head: "PayPal releases that share", body: "The approval triggers a partial capture of that milestone's share from the PayPal authorization. The rest stays held." },
+      ],
+      share: (pct: string, code: string) => `${code} is ${pct} of the contract.`,
+      note: "The reason and rewrite are the rule-based compiler's output for this sentence, worked out when this page loads. With an AI key, the AI proposes wording too; a taste word with nothing measurable is still rejected.",
     },
 
     problem: {

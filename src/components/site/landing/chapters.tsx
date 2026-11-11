@@ -6,6 +6,8 @@
  */
 import type { CSSProperties } from "react";
 import { site, siteMoney } from "@/copy/site";
+import { WEB_MVP } from "@/data/blueprints/digital";
+import { lintCriterion } from "@/lib/ai/rules";
 import type { LandingFacts } from "./facts";
 import { AMBER, TEAL } from "./hero";
 
@@ -22,6 +24,49 @@ function Head({ id, kicker, title, lead }: { id: string; kicker?: string; title:
 }
 
 const Tick = () => <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+
+/* ── the contract compiler: one vague criterion, rejected and rewritten by the real linter, then the signed clause ── */
+export function Compiler() {
+  const t = site.landing.compiler;
+  const verdict = lintCriterion(t.before);
+  const clause = WEB_MVP.milestones.find((m) => m.code === "M05");
+  return (
+    <section id="compiler" className="lp-scene lp-how" data-scene="compiler" aria-labelledby="lp-compiler-h">
+      <div className="lp-wrap lp-flow-split">
+        <div className="lp-flow-text">
+          <p className="lp-kicker" data-part>{t.kicker}</p>
+          <h2 id="lp-compiler-h" data-part>{t.title}</h2>
+          <ol className="lp-steps">
+            {t.steps.map((st, i) => (
+              <li key={st.head} data-part style={{ "--i": i } as CSSProperties}>
+                <span className="lp-step-n" aria-hidden="true">{i + 1}</span>
+                <div><b>{st.head}</b><p>{st.body}</p></div>
+              </li>
+            ))}
+          </ol>
+        </div>
+        <div className="lp-gatecard" data-part>
+          <div className="lp-compile" aria-label="Criteria Compiler: a vague criterion and its rewrite">
+            <p><s>{`“${t.before}”`}</s></p>
+            <p><span className="chip" data-b="danger">{verdict.verifiable ? "Checkable" : t.rejected}</span> {verdict.reason}</p>
+            <span aria-hidden="true">{"↓"}</span>
+            {verdict.rewrite && <p>{t.rewrite}: <b>{verdict.rewrite}</b></p>}
+          </div>
+          {clause && (
+            <div className="lp-gate-row">
+              <span className="lp-yes" aria-hidden="true"><Tick /></span>
+              <div>
+                <b>{t.signed}: {clause.proof.criteria[0]}</b>
+                <p>{t.proof}: {clause.proof.artifacts.map((a) => a.note ?? a.kind).join(", ")}. {t.share(pctOf(clause.bps), `${WEB_MVP.title}, ${clause.code}`)}</p>
+              </div>
+            </div>
+          )}
+          <p className="lp-caption" style={{ color: "#b4bac2", textAlign: "left", marginTop: 0 }}>{t.note}</p>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 /* ── the problem: two lines that run side by side and never meet ── */
 function wave(y: number, amp: number, phase: number) {
