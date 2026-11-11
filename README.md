@@ -1,11 +1,39 @@
 # PaySettle
 
-**Agree what “done” means. Get paid when it is.** PaySettle turns staged service work into checkable milestone contracts:
-the client's money is held through PayPal, the provider submits the evidence the contract names, AI checks it, the client
-approves, and the milestone is released. If they disagree, only that milestone is frozen and a structured process proposes
-a fair split.
+**A contract compiler for staged service work.** A vague statement of work goes in. Out comes a milestone contract in
+which every criterion either names a check a third person could make, or is flagged with a measurable rewrite, and every
+PayPal partial capture is tied to the evidence its clause names.
 
 Built for the PayPal AI Hackathon. **Sandbox only: no real money moves.**
+
+### One criterion, end to end
+
+| Step | What happens |
+|---|---|
+| **In** | “The website should be fast and modern.” |
+| **Rejected** | “Uses taste words (fast, modern) with no number, threshold or measurable target to check them against.” |
+| **Rewrite** | “The website should be fast and modern — measured as: pages load in ≤ 2 s on a mid-range phone (Lighthouse report attached); matches the approved design file screen by screen / room by room (dated photos or screenshots of each attached)” |
+| **Both sign** | The parties edit the suggestion into the clause they want. In the Web / SaaS MVP blueprint it reads “Lighthouse mobile performance ≥ 85 on staging”, and milestone M05 names its proof: a Lighthouse report (mobile ≥ 85), an accessibility scan and a dependency scan. Client and provider sign the same revision and hash. |
+| **Evidence** | The provider uploads those files. Rule checks and the AI verifier report what matches; the AI only advises. |
+| **Release** | The client confirms they inspected the evidence and approves (an authenticator code field is there; it is optional in the sandbox), and PaySettle makes a PayPal partial capture of that milestone's share (15%) against the authorization that holds the money. The rest stays held. |
+
+The rejection and rewrite above are the rule-based compiler's real output for that sentence (try it:
+`npm run eval:compare -- --text "The website should be fast and modern."`). With `AI_API_KEY` set, the AI proposes the
+wording; a taste word or hedge with nothing measurable is still rejected. The Judge Playground's **S1** runs the sign,
+evidence and partial-capture steps for milestones M02–M04 of the same blueprint. Where the compiler runs today: the
+signed-in endpoint `POST /api/ai/compile`, the eval harness, the landing page and the public AI scorecard at `/trust/ai`;
+the negotiation screen does not call it yet, and the policy gate checks that each paying milestone names its proof, not
+the wording of each criterion. Measured numbers and known misses: [`RESULTS.md`](RESULTS.md).
+
+### Payments that survive failure (Judge Playground S5)
+
+- **A PayPal 503 on a release** is retried with the same idempotency key (`PayPal-Request-Id`): one capture, one payout.
+- **The same webhook posted twice** is recognised by its transmission id; the second copy changes nothing.
+- **One cent of ledger drift** is found by three-way reconciliation (ledger, PayPal, contract), which trips the
+  tranche's circuit breaker.
+
+**Also:** agent-to-agent contracting over the MCP server at `/api/mcp`. Agents can draft, negotiate, request funding and
+submit evidence; a person approves the hold in PayPal and confirms every release in the app.
 
 ## For judges
 
@@ -41,10 +69,16 @@ and the rule-based checks still run. Keep `PAYSETTLE_ENV=sandbox` for the demo s
 ## Verify
 
 ```bash
-npm run verify      # typecheck · lint · unit tests · copy lint · name, vocabulary and secret checks · production build
-npm run hooks       # once per clone: turn on the pre-commit secret check
-npm run gate:trace  # every requirement id appears in code and in a test
+npm run db:reset:test  # once: the unit tests use their own database, paysettle_test (or TEST_DATABASE_URL)
+npm run verify         # typecheck · lint · unit tests · copy lint · name, vocabulary and secret checks · production build
+npm run hooks          # once per clone: turn on the pre-commit secret check
+npm run gate:trace     # every requirement id appears in code and in a test
+npm run eval           # golden sets; the AI sets are skipped without AI_API_KEY
+npm run eval:compare   # criteria compiler vs a plain LLM baseline (see evals/README.md)
 ```
+
+The production build uses Turbopack and needs a lot of memory: on a machine with a 16 GB limit it was stopped for lack
+of memory. `npx next build --webpack` builds the same app with far less. Results with dates: [`RESULTS.md`](RESULTS.md).
 
 After changing dependencies, rebuild the lock file in a folder with no `node_modules` (copy `package.json` there, run
 `npm install --package-lock-only`, copy `package-lock.json` back). An install over an existing `node_modules` can drop
