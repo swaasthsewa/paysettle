@@ -3,6 +3,7 @@
  * state, revision, signature and tranche is consistent. Idempotent: a contract with the same client and title is skipped.
  * Usage (after npm run db:seed): npx tsx --env-file-if-exists=.env.local scripts/seed-contracts.ts
  */
+import "./lib/demo-rail"; // first: demo seeds always use the mock rail
 import { and, eq } from "drizzle-orm";
 import { db, pool } from "../src/db/client";
 import { workspaces } from "../src/db/schema";

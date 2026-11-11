@@ -16,6 +16,7 @@
  * demo ("Booking web app MVP" M03) are never touched.
  * Usage: npx tsx --env-file-if-exists=.env.local scripts/seed-disputes.ts   (refused when PAYSETTLE_ENV=production)
  */
+import "./lib/demo-rail"; // first: demo seeds always use the mock rail
 import { and, desc, eq } from "drizzle-orm";
 import { db, pool } from "../src/db/client";
 import { bids, disputes, evidencePackages, rebuttals, verdicts, workspaces, wsClauses, wsMilestones } from "../src/db/schema";

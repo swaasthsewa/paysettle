@@ -5,6 +5,7 @@
  * mock rail. Re-running is a no-op (same transmission id → duplicate). Refused when PAYSETTLE_ENV=production.
  * Usage: npx tsx --env-file-if-exists=.env.local scripts/seed-chargeback.ts
  */
+import "./lib/demo-rail"; // first: demo seeds always use the mock rail
 import { eq } from "drizzle-orm";
 import { db, pool } from "../src/db/client";
 import { tranches } from "../src/db/schema";

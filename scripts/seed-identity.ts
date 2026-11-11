@@ -15,6 +15,7 @@
  *     module's approvalSignature, and each release row stores that same signature. risk_score is the policy risk score.
  * The waitlist is never seeded: its public count must only show real sign-ups.
  */
+import "./lib/demo-rail"; // first: demo seeds always use the mock rail
 import { and, eq, sql } from "drizzle-orm";
 import { db, pool } from "../src/db/client";
 import { blueprints, disputes, ledgerEntries, orgs, paypalLinks, refunds, releases, revisions, signatures, tranches, users, workspaces, wsClauses, wsMilestones } from "../src/db/schema";

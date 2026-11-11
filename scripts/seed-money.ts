@@ -7,6 +7,7 @@
  * A milestone left "in client review" has a real evidence package (submitEvidence), never a bare state change.
  * Usage: npx tsx --env-file-if-exists=.env.local scripts/seed-money.ts   (refused when PAYSETTLE_ENV=production)
  */
+import "./lib/demo-rail"; // first: demo seeds always use the mock rail
 import { and, eq } from "drizzle-orm";
 import { db, pool } from "../src/db/client";
 import { blueprints, tranches, workspaces, wsMilestones } from "../src/db/schema";
@@ -23,7 +24,7 @@ const DEMOS: Demo[] = [
   { id: "ws_money_demo1", title: "Clinic booking web app", blueprint: "UC_WEB_MVP", client: "u_priya", provider: "u_meera", totalCents: 1_200_000, rail: "MOCK", fund: true, heldDaysAgo: 9, release: ["M01", "M02", "M03"], submitted: ["M04"] },
   { id: "ws_money_demo3", title: "ERP planning sprint", blueprint: "UC_CONSULTING_SPRINT", client: "u_dan", provider: "u_arjun", totalCents: 600_000, rail: "MOCK", fund: true, heldDaysAgo: 23, release: ["M01", "M02", "M03", "M04", "M05"] },
   { id: "ws_money_demo4", title: "Data dashboard sprint", blueprint: "UC_CONSULTING_SPRINT", client: "u_dan", provider: "u_meera", totalCents: 250_000, rail: "MOCK", fund: true, heldDaysAgo: 20, release: ["M01", "M02", "M03", "M04", "M05", "M06", "M07", "M08", "M09"] },
-  { id: "ws_money_demo2", title: "Marketing site refresh", blueprint: "UC_WEB_MVP", client: "u_priya", provider: "u_arjun", totalCents: 480_000, rail: (process.env.PAYPAL_RAIL === "A1" ? "A1" : "MOCK"), fund: false, release: [] },
+  { id: "ws_money_demo2", title: "Marketing site refresh", blueprint: "UC_WEB_MVP", client: "u_priya", provider: "u_arjun", totalCents: 480_000, rail: "MOCK", fund: false, release: [] },
 ];
 
 async function ensure(d: Demo) {

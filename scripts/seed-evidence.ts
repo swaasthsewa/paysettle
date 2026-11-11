@@ -4,6 +4,7 @@
  * client review screen has content. Idempotent; skips quietly when the contract or its hold is not there.
  * Usage: npx tsx --env-file-if-exists=.env.local scripts/seed-evidence.ts
  */
+import "./lib/demo-rail"; // first: demo seeds always use the mock rail
 import { pool } from "../src/db/client";
 import { seedEvidence } from "../src/server/evidence/seed";
 

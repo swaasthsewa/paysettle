@@ -2,6 +2,7 @@
  * Demo seed: one demo org, a person for every role, PayPal links, all blueprints. Safe to re-run (upserts).
  * Usage: npm run db:seed   (refused when PAYSETTLE_ENV=production)
  */
+import "./lib/demo-rail"; // first: demo seeds always use the mock rail
 import { sql } from "drizzle-orm";
 import { db, pool } from "../src/db/client";
 import { blueprints, orgs, paypalLinks, users } from "../src/db/schema";

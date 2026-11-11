@@ -5,6 +5,7 @@
  *  2. The sandbox demo identity provider's signing key is created on first use, not here.
  * Run after scripts/seed.ts:  npx tsx scripts/seed-identity-gaps.ts
  */
+import "./lib/demo-rail"; // first: demo seeds always use the mock rail
 import { isNotNull } from "drizzle-orm";
 import { db, pool } from "../src/db/client";
 import { users } from "../src/db/schema";

@@ -7,6 +7,7 @@
  *     same rule reader the upload uses (no AI needed) — what Ops sees in the identity auditor.
  * Run after scripts/seed.ts:  npx tsx scripts/seed-reg.ts
  */
+import "./lib/demo-rail"; // first: demo seeds always use the mock rail
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { db, pool } from "../src/db/client";
 import { orgs, paypalLinks, users, workspaces } from "../src/db/schema";

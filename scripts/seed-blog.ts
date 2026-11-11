@@ -9,6 +9,7 @@
  *  - posts an editor archived are left archived; the built-in sample is archived once the real posts exist. Publication dates are spread three days apart, first post newest.
  * Acts as the seeded marketing persona (u_mkt, Maya Lopez). Refused when PAYSETTLE_ENV=production.
  */
+import "./lib/demo-rail"; // first: demo seeds always use the mock rail
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";

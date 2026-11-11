@@ -12,6 +12,7 @@
  * /ops/clearance shows). The two contracts waiting for Ops clearance carry the terms that make them high risk.
  * Usage: npx tsx --env-file-if-exists=.env.local scripts/seed-control.ts   (refused when PAYSETTLE_ENV=production)
  */
+import "./lib/demo-rail"; // first: demo seeds always use the mock rail
 import { and, eq } from "drizzle-orm";
 import { db, pool } from "../src/db/client";
 import { blueprints, disputes, dualControl, ledgerEntries, paypalLinks, releases, revisions, tranches, users, webhookEvents, workspaces, wsClauses, wsMilestones } from "../src/db/schema";

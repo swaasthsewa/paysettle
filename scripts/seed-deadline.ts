@@ -5,6 +5,7 @@
  * flow (pool, late deduction, early bonus, zero drift) is playground scenario S7.
  * Usage: npx tsx --env-file-if-exists=.env.local scripts/seed-deadline.ts   (refused when PAYSETTLE_ENV=production)
  */
+import "./lib/demo-rail"; // first: demo seeds always use the mock rail
 import { and, eq } from "drizzle-orm";
 import { db, pool } from "../src/db/client";
 import { workspaces } from "../src/db/schema";

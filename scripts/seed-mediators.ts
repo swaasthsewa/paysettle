@@ -10,6 +10,7 @@
  * Run before seed-disputes on a fresh database to route the demo cases through the network; after it, it backfills.
  * Usage: npx tsx --env-file-if-exists=.env.local scripts/seed-mediators.ts
  */
+import "./lib/demo-rail"; // first: demo seeds always use the mock rail
 import { and, asc, eq, inArray, isNotNull, sql } from "drizzle-orm";
 import { db, pool } from "../src/db/client";
 import { auditChain, disputes, users, verdicts, workspaces, wsMilestones } from "../src/db/schema";
