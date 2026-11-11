@@ -121,7 +121,8 @@ export function evaluateTranche(i: TrancheInput): Evaluation {
         if (g.last < i.windowFrom) { notes.push(`Ledger ref ${key} is older than the window and was not re-checked.`); continue; }
         const onlyHold = g.types.size === 1 && g.types.has("HOLD");
         if (onlyHold && i.rail.kind === "paypal") continue; /* authorizations are not part of the reporting feed */
-        if (g.types.size === 1 && g.types.has("FEE") && t.rail === "A1") { notes.push(`Fee ref ${key} is invoiced separately on Rail A1.`); continue; }
+        /* on Rail A1 PayPal never moves the fee (it is invoiced separately); a mock-funded tranche has no such invoice, so its fee rows are checked like any other */
+        if (g.types.size === 1 && g.types.has("FEE") && t.rail === "A1" && i.rail.kind === "paypal") { notes.push(`Fee ref ${key} is invoiced separately on Rail A1.`); continue; }
         const isVoid = key.startsWith("void:");
         const cands = txns.filter((x) => x.id === key || (onlyHold && x.type === "AUTHORIZATION" && x.ref === key) || (isVoid && x.type === "VOID" && x.ref === key.slice(5)));
         if (isVoid && cands.length === 0 && !i.ledger.some((e) => e.type === "VOID" && e.paypalRef === key)) { notes.push(`${formatCents(g.sum)} returned and recorded; PayPal voids it together with the last remainder.`); continue; }
