@@ -18,6 +18,9 @@ import { MsChip, TrancheChip, WsChip, artifactLabel, railLabel } from "@/compone
 import {
   appendClauseAction, appendMilestoneAction, editMilestoneAction, pruneAction, restoreAction, setDeadlineTermsAction, setTotalAction, signAction, toggleClauseAction,
 } from "./actions";
+import { ChangeOrders } from "@/components/contracts/ChangeOrders";
+import { changeOrderRoom, type ChangeOrderRoom } from "@/server/contracts/change-orders";
+import { declineChangeOrderAction, proposeChangeOrderAction, signChangeOrderAction } from "./change-order-actions";
 import "@/styles/contracts.css";
 
 export const metadata = { title: "Contract" };
@@ -28,6 +31,12 @@ type Ms = View["milestones"][number];
 const SIGNABLE = ["DRAFT", "READY_TO_SIGN", "PARTIALLY_SIGNED"];
 const fmt = (d: Date) => new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(d);
 const RISK_PARTS: [key: string, weight: number, label: string][] = RISK_FORMULA.map((f) => [f.key, f.weight, f.label]);
+const CO_OK: Record<string, string> = {
+  co_proposed: "Change order proposed. The other party reviews it; both sign before it takes effect.",
+  co_applied: "Both parties signed. The change order is now the contract's latest revision.",
+  co_awaiting_ops: "Both parties signed. Operations reviews the change order before it takes effect.",
+  co_closed: "The change order is closed. The contract stays on its current terms.",
+};
 
 export default async function Page({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ err?: string; ok?: string; note?: string }> }) {
   const { id } = await params;
@@ -37,6 +46,8 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   try { d = await getWorkspaceDetail(a, id); } catch (e) { domainMessage(e); notFound(); }
   const stamp = (await revisionStamp(a, id)).stamp;
   const v = d.view;
+  /* F2.12 change orders on a locked contract */
+  const coRoom: ChangeOrderRoom | null = v.state === "LOCKED" ? await changeOrderRoom(a, id) : null;
   const party = d.viewerRole;
   const editable = party !== null && SIGNABLE.includes(v.state);
   const active = v.milestones.filter((m) => m.active);
@@ -80,6 +91,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
 
       {sp.err && <div className="notice" data-b="danger" role="alert">{sp.err}</div>}
       {sp.ok === "signed" && <div className="notice" data-b="ok" role="status">Your signature on revision {v.revision} is recorded.</div>}
+      {sp.ok?.startsWith("co_") && <div className="notice" data-b="ok" role="status">{CO_OK[sp.ok] ?? "Done."}</div>}
       {sp.note && <div className="notice" role="status">{sp.note}</div>}
       {d.opsNotes[0]?.decision === "returned" && v.state === "DRAFT" && (
         <div className="notice" data-b="warn">Operations returned this contract ({d.opsNotes[0].by}, {fmt(d.opsNotes[0].at)}): “{d.opsNotes[0].note}” Both signatures were voided; change and sign again.</div>
@@ -138,6 +150,8 @@ export default async function Page({ params, searchParams }: { params: Promise<{
           </section>
           {v.state === "LOCKED" || v.tranches.length ? <Tranches v={v} party={party} /> : null}
         </div>
+
+        {coRoom && <ChangeOrders wsId={v.id} revision={v.revision} room={coRoom} party={party} proposeAction={proposeChangeOrderAction} signAction={signChangeOrderAction} declineAction={declineChangeOrderAction} />}
 
         <section className="c span12" id="deadline" aria-labelledby="dl-h">
           <div className="c-head"><h2 id="dl-h">Deadline terms</h2><span className="r"><DeadlineChip t={v.deadline ?? null} /></span></div>
@@ -211,7 +225,7 @@ function MilestoneItem({ m, v, editable }: { m: Ms; v: View; editable: boolean }
         <span className="ms-title">{v.state === "LOCKED" && m.active ? <Link href={`/contracts/${v.id}/m/${m.id}`}>{m.title}</Link> : m.title}</span>
         <span className="chip" data-b={m.type === "PAY" ? "plain" : "none"}>{m.type === "PAY" ? "Payment" : "Information step"}</span>
         <span className="chip" data-b={m.origin === "CUSTOM" ? "warn" : "plain"}>{m.origin === "CUSTOM" ? "Custom" : "Baseline"}</span>
-        {!m.active ? <span className="chip" data-b="none">Pruned</span> : v.state === "LOCKED" ? <MsChip state={m.state} /> : null}
+        {!m.active ? <span className="chip" data-b="none">{v.state === "LOCKED" && m.state !== "DRAFT" ? "Removed by change order" : "Pruned"}</span> : v.state === "LOCKED" ? <MsChip state={m.state} /> : null}
       </div>
       <div className="ms-nums">
         <span>Day <b>{m.targetDay}</b></span>
@@ -399,6 +413,7 @@ function changeLabel(r: RevisionRow, v: View): string {
     case "APPEND_CLAUSE": return `Added clause ${t} “${String(det.title ?? "")}”`;
     case "SET_TOTAL": return `Changed total to ${formatCents(Number(det.totalCents ?? 0))}`;
     case "ATTACH_PROVIDER": return "Provider joined from the e-mail invite";
+    case "CHANGE_ORDER": return `Change order ${String(det.no ?? t.replace(/^CO/, ""))} signed by both parties${det.note ? `: “${String(det.note)}”` : ""}`;
     case "SET_DEADLINE_TERMS": { const tm = det.terms as DeadlineTerms | null | undefined; return tm ? `Set deadline terms: ${[tm.late && `late ${pct(tm.late.rateBps)}/day after ${tm.late.graceDays} grace, cap ${pct(tm.late.capBps)}`, tm.early && `early ${pct(tm.early.rateBps)}/day, pool ${formatCents(tm.early.poolCents)}`].filter(Boolean).join("; ")}` : "Switched the deadline terms off"; }
     default: return r.change.action;
   }
