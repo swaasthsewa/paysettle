@@ -1,0 +1,38 @@
+name: ci
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env: { POSTGRES_PASSWORD: postgres }
+        ports: ["5432:5432"]
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/paysettle
+      TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/paysettle_test
+      PAYSETTLE_ENV: sandbox
+      NAME_GATE_EXTRA: ${{ secrets.NAME_GATE_EXTRA }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Secret scan (full history)
+        uses: gitleaks/gitleaks-action@v2
+        env: { GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm audit --omit=dev --audit-level=high
+      - run: npm run gate:secrets
+      - run: npm run gate:copy
+      - run: npm run gate:names
+      - run: npm run gate:vocab
+      - run: npm run typecheck
+      - run: npm run lint -- --max-warnings=0
+      - run: npx tsx tools/traceability.ts
+      - run: npx tsx scripts/reset-db.ts paysettle_test --base
+      - run: npm test
+      - run: npm run build

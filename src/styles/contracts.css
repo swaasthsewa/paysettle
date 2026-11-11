@@ -1,0 +1,67 @@
+/* F2.01 F2.03 F2.04 F2.05 F2.06 F2.11 — contracts module styles (blueprints, negotiation room, lists, clearance). Global classes first. */
+
+/* payout allocation bar: one segment per active payment milestone */
+.alloc { display: flex; flex-direction: column; gap: 6px; }
+.alloc-bar { display: flex; gap: 2px; height: 14px; border-radius: var(--r-pill); background: var(--sunken); border: 1px solid var(--line); overflow: hidden; }
+.alloc-bar i { display: block; height: 100%; background: var(--grad-fill); opacity: 0.85; }
+.alloc-bar i:nth-child(even) { opacity: 0.6; }
+.alloc[data-bad] .alloc-bar { border-color: var(--danger); }
+.alloc[data-bad] .alloc-bar i { background: var(--danger); }
+.alloc[data-bad] .alloc-sum { color: var(--danger); }
+.alloc-sum { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* tranche groups and milestones */
+.tr-group { display: flex; flex-direction: column; gap: 8px; }
+.tr-group > h3 { font-size: 13.5px; font-weight: 600; color: var(--ink-2); display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.ms-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.ms { border: 1px solid var(--line); border-radius: var(--r-md); background: var(--card); padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.ms[data-type="GATE"] { background: var(--sunken); }
+.ms[data-pruned] { border-style: dashed; opacity: 0.72; }
+.ms[data-pruned] .ms-title { text-decoration: line-through; }
+.ms-head { display: flex; align-items: center; gap: 8px 10px; flex-wrap: wrap; }
+.ms-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--ink-3); }
+.ms-title { font-weight: 600; font-size: 14.5px; flex: 1 1 220px; }
+.ms-nums { display: flex; gap: 14px; font-size: 13px; color: var(--ink-2); font-variant-numeric: tabular-nums; flex-wrap: wrap; }
+.ms-nums b { color: var(--ink); }
+.ms details > summary { cursor: pointer; font-size: 12.5px; color: var(--ink-2); }
+.ms-spec { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 8px 16px; font-size: 13px; padding-top: 6px; }
+.ms-spec h4 { font-size: 12px; font-weight: 600; color: var(--ink-3); margin-bottom: 3px; }
+.ms-spec ul { margin: 0; padding-left: 18px; }
+.ms-edit { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: 8px; }
+.ms-edit .field { flex: 0 0 auto; }
+.ms-edit .field input { width: 96px; }
+.ms-edit .sp { flex: 1; }
+
+/* clauses */
+.cl-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.cl { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: var(--r-sm); background: var(--sunken); }
+.cl[data-off] { opacity: 0.65; }
+.cl[data-off] .cl-title { text-decoration: line-through; }
+.cl-tx { flex: 1; min-width: 0; font-size: 13px; line-height: 1.45; }
+.cl-title { font-weight: 600; font-size: 13.5px; }
+.cl-h { font-size: 12.5px; font-weight: 600; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.04em; margin-top: 4px; }
+
+/* revisions, hashes, risk */
+.hash { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; background: var(--sunken); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; }
+.rev-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.rev-list li { display: flex; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 13px; align-items: baseline; flex-wrap: wrap; }
+.rev-list li:last-child { border-bottom: 0; }
+.rev-no { font-weight: 700; min-width: 34px; font-variant-numeric: tabular-nums; }
+.diff-list { margin: 0; padding-left: 18px; font-size: 13px; display: flex; flex-direction: column; gap: 3px; }
+.risk-parts { display: flex; flex-direction: column; gap: 7px; font-size: 13px; }
+.risk-part { display: grid; grid-template-columns: minmax(0, 1fr) 54px; gap: 4px 10px; align-items: center; }
+.risk-part .prog { grid-column: 1 / -1; height: 6px; }
+.risk-part b { text-align: right; font-variant-numeric: tabular-nums; }
+.risk-score { font-size: 30px; font-weight: 600; letter-spacing: -0.03em; line-height: 1; }
+.risk-score[data-high] { color: var(--risk); }
+
+/* forms in this module */
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 12px; }
+.form-grid .wide { grid-column: 1 / -1; }
+.live { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-3); }
+.live::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--ok); }
+.vio-list { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 5px; font-size: 13px; }
+.vio-list b { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+.bp-facets { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+.bp-facets .field { min-width: 160px; }
+.bp-facets .field:first-child { flex: 1 1 260px; }

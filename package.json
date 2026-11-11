@@ -1,0 +1,70 @@
+{
+  "name": "paysettle",
+  "version": "0.1.0",
+  "private": true,
+  "description": "PaySettle — checkable milestone contracts with funds held through PayPal.",
+  "license": "MIT",
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "db:push": "drizzle-kit push --force",
+    "db:seed": "tsx --env-file-if-exists=.env.local scripts/seed.ts && tsx --env-file-if-exists=.env.local scripts/seed-all.ts",
+    "gate:copy": "node tools/copy-lint.mjs",
+    "gate:names": "node tools/no-old-name.mjs",
+    "gate:vocab": "node tools/no-build-vocab.mjs",
+    "gate:secrets": "node tools/secret-scan.mjs",
+    "gate:trace": "tsx tools/traceability.ts",
+    "verify": "npm run typecheck && npm run lint && npm run test && npm run gate:copy && npm run gate:names && npm run gate:vocab && npm run gate:secrets && npm run build",
+    "db:guards": "tsx scripts/guards.ts",
+    "eval": "tsx evals/run.ts",
+    "db:reset": "tsx scripts/reset-db.ts",
+    "db:reset:test": "tsx scripts/reset-db.ts paysettle_test --base",
+    "demo:reset": "tsx scripts/demo-reset.ts",
+    "hooks": "git config core.hooksPath .githooks"
+  },
+  "dependencies": {
+    "@bryntum/gantt": "npm:@bryntum/gantt-trial@^7.3.8",
+    "@bryntum/gantt-react": "^7.3.8",
+    "@fontsource/outfit": "^5.3.0",
+    "ag-grid-community": "^36.3.0",
+    "ag-grid-react": "^36.3.0",
+    "drizzle-orm": "^0.45.3",
+    "jpeg-js": "^0.4.4",
+    "next": "16.4.6",
+    "pdfkit": "^0.20.2",
+    "pg": "^8.23.1",
+    "pngjs": "^7.0.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@playwright/test": "^1.49.0",
+    "@types/node": "^22.20.5",
+    "@types/pdfkit": "^0.17.7",
+    "@types/pg": "^8.23.1",
+    "@types/pngjs": "^6.0.5",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "drizzle-kit": "^0.31.11",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.6",
+    "tsx": "^4.23.15",
+    "typescript": "^5",
+    "vitest": "^5.0.3"
+  },
+  "overrides": {
+    "@esbuild-kit/core-utils": {
+      "esbuild": "^0.25.12"
+    },
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "^11.0.1"
+    }
+  }
+}

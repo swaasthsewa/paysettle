@@ -1,0 +1,32 @@
+# PaySettle as a container.
+#   docker build -t paysettle-web .               the web server (the last stage)
+#   docker build -t paysettle-ops --target ops .  database jobs: schema push and the demo seed
+# The server listens on $PORT (8080 unless set) and needs DATABASE_URL at run time.
+
+FROM node:22-slim AS deps
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+
+FROM deps AS builder
+COPY . .
+ENV NEXT_TELEMETRY_DISABLED=1 NEXT_OUTPUT=standalone
+RUN npm run build
+
+# Database jobs. Full dependencies and the source, no build: `npm run db:push` (the default), `npm run db:seed`.
+FROM deps AS ops
+COPY . .
+ENV NEXT_TELEMETRY_DISABLED=1
+USER node
+CMD ["npm", "run", "db:push"]
+
+# The web server: only what the build traced as needed.
+FROM node:22-slim AS runner
+WORKDIR /app
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=8080 HOSTNAME=0.0.0.0
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+USER node
+EXPOSE 8080
+CMD ["node", "server.js"]

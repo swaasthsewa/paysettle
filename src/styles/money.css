@@ -1,0 +1,45 @@
+/* Money screens (F3.10, F3.11). Money colours come from globals: held teal, released green, disputed amber, returned slate. */
+.money-big { font-size: 26px; letter-spacing: -0.03em; line-height: 1.1; }
+.money-figs { gap: 10px 32px; align-items: flex-end; }
+.money-bar { display: flex; height: 10px; border-radius: var(--r-pill); background: var(--sunken); overflow: hidden; border: 1px solid var(--line); }
+.money-bar i { display: block; height: 100%; }
+.seg-released { background: var(--released); }
+.seg-returned { background: var(--refunded); }
+.seg-held { background: var(--held); opacity: 0.85; }
+.money-key { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 16px; color: var(--ink-2); }
+.money-key li { display: inline-flex; align-items: center; gap: 6px; }
+.money-key .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.money-window { color: var(--ink-2); }
+.money-window[data-tone="warn"] { color: var(--warn); font-weight: 600; }
+.money-window[data-tone="danger"] { color: var(--danger); font-weight: 600; }
+.money-steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+.money-total td { font-weight: 600; border-top: 2px solid var(--line-2); }
+/* F3.11 ledger filter bar: one compact row (the .c card is a flex column, so the row direction needs .c.money-filter), wraps on small screens. */
+.c.money-filter { flex-direction: row; flex-wrap: wrap; align-items: flex-end; justify-content: flex-start; gap: 10px 14px; padding: 14px 16px; }
+.money-filter .field { flex: 0 1 170px; min-width: 140px; }
+.money-filter .field.mf-contract { flex: 1 1 220px; max-width: 280px; }
+.money-filter .field.mf-type { flex: 0 1 150px; }
+.money-filter .field select, .money-filter .field input[type="text"] { padding: 7px 10px; }
+.money-filter .mf-check { display: inline-flex; align-items: center; gap: 6px; padding-bottom: 9px; color: var(--ink-2); white-space: nowrap; }
+.money-filter .mf-actions { display: flex; gap: 8px; padding-bottom: 2px; margin-left: auto; }
+@media (max-width: 760px) {
+  .money-filter .field, .money-filter .field.mf-contract, .money-filter .field.mf-type { flex: 1 1 100%; max-width: none; }
+  .money-filter .mf-check { white-space: normal; }
+  .money-filter .mf-actions { margin-left: 0; }
+}
+/* Ledger grids stacked full width so every column has room. */
+.money-stack { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.inv-ok { color: var(--released); font-weight: 700; }
+.inv-bad { color: var(--danger); font-weight: 700; }
+.inv-checks { margin: 4px 0 0; padding-left: 18px; font-size: 12.5px; color: var(--ink-3); }
+.radar-row[data-u="warn"] { background: var(--warn-bg); }
+.radar-row[data-u="risk"] { background: var(--risk-bg); }
+.radar-row[data-u="danger"] { background: var(--danger-bg); }
+.radar-meter { width: 140px; height: 8px; border-radius: var(--r-pill); background: var(--sunken); border: 1px solid var(--line); overflow: hidden; }
+.radar-meter i { display: block; height: 100%; background: var(--held); }
+.radar-row[data-u="warn"] .radar-meter i { background: var(--warn); }
+.radar-row[data-u="risk"] .radar-meter i, .radar-row[data-u="danger"] .radar-meter i { background: var(--danger); }
+.ptable td.n, .ptable th.n { text-align: right; font-variant-numeric: tabular-nums; }
+.money-notices { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.money-notices li { font-size: 13.5px; padding: 10px 12px; border-radius: var(--r-sm); background: var(--sunken); border: 1px solid var(--line); }
+.money-notices time { display: block; font-size: 12px; color: var(--ink-3); margin-top: 2px; }

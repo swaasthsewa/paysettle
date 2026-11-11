@@ -1,0 +1,311 @@
+{
+ "set": "A2 vague vs measurable criteria",
+ "requirement": "A2, A6",
+ "target": {
+  "metric": "recall on vague (not verifiable) items",
+  "min": 0.9
+ },
+ "labels": "verifiable=true when a neutral third person could check it yes/no from evidence alone",
+ "items": [
+  {
+   "id": "C01",
+   "text": "The website should be fast and modern.",
+   "verifiable": false
+  },
+  {
+   "id": "C02",
+   "text": "Lighthouse mobile performance score ≥ 85 on the staging URL.",
+   "verifiable": true
+  },
+  {
+   "id": "C03",
+   "text": "User-friendly dashboard for the operations team.",
+   "verifiable": false
+  },
+  {
+   "id": "C04",
+   "text": "CI pipeline is green on the main branch with all 214 unit tests passing.",
+   "verifiable": true
+  },
+  {
+   "id": "C05",
+   "text": "Robust and scalable backend architecture.",
+   "verifiable": false
+  },
+  {
+   "id": "C06",
+   "text": "≥ 95% of integration test cases pass; defect log attached.",
+   "verifiable": true
+  },
+  {
+   "id": "C07",
+   "text": "High quality code.",
+   "verifiable": false
+  },
+  {
+   "id": "C08",
+   "text": "No open severity-1 defects at go-live.",
+   "verifiable": true
+  },
+  {
+   "id": "C09",
+   "text": "Deliver the design files ASAP.",
+   "verifiable": false
+  },
+  {
+   "id": "C10",
+   "text": "Every backlog feature has at least one screen in the prototype.",
+   "verifiable": true
+  },
+  {
+   "id": "C11",
+   "text": "Make changes as needed until the client is happy.",
+   "verifiable": false
+  },
+  {
+   "id": "C12",
+   "text": "Client signs the UAT sign-off sheet for all 12 scripts.",
+   "verifiable": true
+  },
+  {
+   "id": "C13",
+   "text": "Kitchen cabinets look nice and are well finished.",
+   "verifiable": false
+  },
+  {
+   "id": "C14",
+   "text": "Assessment report of at least 10 pages covering each process in scope.",
+   "verifiable": true
+  },
+  {
+   "id": "C15",
+   "text": "The car's paint job is excellent.",
+   "verifiable": false
+  },
+  {
+   "id": "C16",
+   "text": "Product is reachable at https://app.example.com and returns HTTP 200.",
+   "verifiable": true
+  },
+  {
+   "id": "C17",
+   "text": "Tour itinerary is engaging and well organised.",
+   "verifiable": false
+  },
+  {
+   "id": "C18",
+   "text": "API p95 response time under 300 ms at 200 concurrent users (load-test report attached).",
+   "verifiable": true
+  },
+  {
+   "id": "C19",
+   "text": "Provide reasonable support after go-live.",
+   "verifiable": false
+  },
+  {
+   "id": "C20",
+   "text": "Kitchen cabinets installed per drawing K-12; 6 dated photos, one per wall.",
+   "verifiable": true
+  },
+  {
+   "id": "C21",
+   "text": "Integration works properly with the existing ERP.",
+   "verifiable": false
+  },
+  {
+   "id": "C22",
+   "text": "Roof inspection certificate issued by the city inspector.",
+   "verifiable": true
+  },
+  {
+   "id": "C23",
+   "text": "Professional photos of the finished rooms.",
+   "verifiable": false
+  },
+  {
+   "id": "C24",
+   "text": "Paint thickness between 120 and 180 microns at 10 measured points (gauge readings attached).",
+   "verifiable": true
+  },
+  {
+   "id": "C25",
+   "text": "Seamless migration of customer data.",
+   "verifiable": false
+  },
+  {
+   "id": "C26",
+   "text": "GPS-tagged photos of the tower within 50 m of the site coordinates.",
+   "verifiable": true
+  },
+  {
+   "id": "C27",
+   "text": "Intuitive onboarding flow.",
+   "verifiable": false
+  },
+  {
+   "id": "C28",
+   "text": "Booking confirmations for all 7 hotel nights attached as PDF.",
+   "verifiable": true
+  },
+  {
+   "id": "C29",
+   "text": "Timely delivery of all materials.",
+   "verifiable": false
+  },
+  {
+   "id": "C30",
+   "text": "100% of 48,000 customer records loaded; reconciliation CSV shows 0 mismatches.",
+   "verifiable": true
+  },
+  {
+   "id": "C31",
+   "text": "Optimised database performance.",
+   "verifiable": false
+  },
+  {
+   "id": "C32",
+   "text": "Transport list exported from the system with every configuration item.",
+   "verifiable": true
+  },
+  {
+   "id": "C33",
+   "text": "The roof is watertight and durable.",
+   "verifiable": false
+  },
+  {
+   "id": "C34",
+   "text": "Knowledge-transfer recording of at least 2 hours uploaded.",
+   "verifiable": true
+  },
+  {
+   "id": "C35",
+   "text": "Secure login and data handling.",
+   "verifiable": false
+  },
+  {
+   "id": "C36",
+   "text": "WCAG 2.1 AA scan shows zero serious issues.",
+   "verifiable": true
+  },
+  {
+   "id": "C37",
+   "text": "Clean, polished UI that matches our brand.",
+   "verifiable": false
+  },
+  {
+   "id": "C38",
+   "text": "Delivered by day 14 with a timestamped handover email.",
+   "verifiable": true
+  },
+  {
+   "id": "C39",
+   "text": "Landscaping completed to the client's satisfaction.",
+   "verifiable": false
+  },
+  {
+   "id": "C40",
+   "text": "Solar array produces ≥ 4.2 kWh on the first sunny day (inverter log attached).",
+   "verifiable": true
+  },
+  {
+   "id": "C41",
+   "text": "Translations of good quality into several languages.",
+   "verifiable": false
+  },
+  {
+   "id": "C42",
+   "text": "Translation into 5 languages, each reviewed by a named native speaker.",
+   "verifiable": true
+  },
+  {
+   "id": "C43",
+   "text": "Use industry standard best practices for the configuration.",
+   "verifiable": false
+  },
+  {
+   "id": "C44",
+   "text": "Repository contains a README with deploy and rollback steps.",
+   "verifiable": true
+  },
+  {
+   "id": "C45",
+   "text": "Improve planning accuracy significantly.",
+   "verifiable": false
+  },
+  {
+   "id": "C46",
+   "text": "Load test shows 1,000 requests per second with an error rate below 0.1%.",
+   "verifiable": true
+  },
+  {
+   "id": "C47",
+   "text": "Engine runs better than before.",
+   "verifiable": false
+  },
+  {
+   "id": "C48",
+   "text": "All 23 punch-list items are checked off in the signed checklist.",
+   "verifiable": true
+  },
+  {
+   "id": "C49",
+   "text": "Roughly 10 pages of documentation, more if needed.",
+   "verifiable": false
+  },
+  {
+   "id": "C50",
+   "text": "Client marks the prototype approved in Figma.",
+   "verifiable": true
+  },
+  {
+   "id": "C51",
+   "text": "Marketing campaign gets great engagement.",
+   "verifiable": false
+  },
+  {
+   "id": "C52",
+   "text": "Engine dyno sheet shows ≥ 210 hp at the wheels.",
+   "verifiable": true
+  },
+  {
+   "id": "C53",
+   "text": "Provide training where possible.",
+   "verifiable": false
+  },
+  {
+   "id": "C54",
+   "text": "The client can log in with their existing Microsoft account.",
+   "verifiable": true
+  },
+  {
+   "id": "C55",
+   "text": "Solar system performs efficiently.",
+   "verifiable": false
+  },
+  {
+   "id": "C56",
+   "text": "Lawn area of 120 sqm re-turfed; before and after photos from the same 3 positions.",
+   "verifiable": true
+  },
+  {
+   "id": "C57",
+   "text": "Responsive layout on mobile devices.",
+   "verifiable": false
+  },
+  {
+   "id": "C58",
+   "text": "Fast checkout: payment completes in under 3 seconds in 95% of test runs.",
+   "verifiable": true
+  },
+  {
+   "id": "C59",
+   "text": "Work is done on time.",
+   "verifiable": false
+  },
+  {
+   "id": "C60",
+   "text": "Hypercare log shows every ticket closed or handed over with an owner.",
+   "verifiable": true
+  }
+ ]
+}

@@ -1,0 +1,24 @@
+# Keep the image to what git publishes: no local secrets, dependencies, build output or working notes.
+.git
+node_modules
+.next
+.env
+.env.*
+!.env.example
+*.tsbuildinfo
+uploads
+test-results
+playwright-report
+e2e/.results/
+e2e/.report/
+e2e/a11y-report.json
+plan/
+docs/submission/
+s.tmp.mjs
+.names.local
+src/components/evidence/MilestoneRow.tsx
+src/components/shell/tiles.tsx
+src/components/shell/trail.tsx
+src/components/shell/waiting.tsx
+src/components/tour/index.ts
+src/components/ui/pending.tsx

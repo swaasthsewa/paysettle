@@ -1,0 +1,110 @@
+/* /trust, /trust/ai and /judges. Prefix tr-. Built on the site's s- classes and the global tokens. */
+
+.tr [id], .tr-risk { scroll-margin-top: calc(var(--s-nav-h, 64px) + 16px); }
+
+/* hero summary */
+.tr-sum { list-style: none; margin: 26px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px 22px; }
+.tr-sum li { display: inline-flex; align-items: center; gap: 8px; }
+.tr-sum b { font-size: 30px; font-weight: 600; letter-spacing: -0.03em; line-height: 1; }
+.tr-sum .chip { font-size: 12.5px; }
+.tr-hero-links { margin-top: 22px; }
+
+/* legend and filter */
+.tr-legend { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 18px; margin: 0 0 18px; }
+.tr-legend > div { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.tr-legend dd { margin: 0; color: var(--ink-2); font-size: 14.5px; line-height: 1.45; }
+.tr-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 18px; }
+.tr-filter-l { font-size: 14px; color: var(--ink-3); margin-right: 4px; }
+.tr-pill { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 6px 14px; border-radius: var(--r-pill); border: 1px solid var(--line-2); background: var(--card); color: var(--ink-2); font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; }
+.tr-pill:hover { border-color: var(--ink-3); color: var(--ink); }
+.tr-pill[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--card); }
+.tr-pill-n { font-variant-numeric: tabular-nums; opacity: 0.8; }
+
+/* risk cards */
+.tr-risks { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.tr-risk article, .tr-tracked article { height: 100%; display: flex; flex-direction: column; gap: 10px; }
+.tr-risk article { background: var(--card); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--sh-card); padding: 20px 22px; }
+.tr-risk:target article { border-color: var(--g1); box-shadow: 0 0 0 3px color-mix(in srgb, var(--g1) 25%, transparent); }
+.tr-risk-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.tr-risk-top .chip { margin-left: auto; }
+.tr-n { flex: none; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--ink); color: var(--card); font-weight: 600; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+.tr-meta { font-size: 13px; color: var(--ink-3); min-width: 0; }
+.tr-risk h3 { font-size: 17.5px; line-height: 1.35; letter-spacing: -0.015em; }
+.tr-answer, .tr-next, .tr-risk-text { color: var(--ink-2); font-size: 15.5px; line-height: 1.55; }
+.tr-answer b, .tr-next b { color: var(--ink); font-weight: 600; }
+.tr-next { padding: 10px 12px; border-radius: var(--r-sm); background: var(--warn-bg); color: var(--ink); font-size: 14.5px; }
+.tr-check { margin-top: auto; padding-top: 10px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; }
+.tr-check-h { font-size: 13px; font-weight: 600; color: var(--ink-3); }
+.tr-links { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 14.5px; }
+.tr-links a { color: var(--ink); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--g1) 60%, transparent); text-underline-offset: 3px; font-weight: 500; }
+.tr-links a:hover { text-decoration-color: currentColor; }
+.tr-as { color: var(--ink-3); font-size: 13.5px; }
+
+/* what we do not do */
+.tr-not { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.tr-not h3 { display: flex; gap: 10px; align-items: center; font-size: 18px; }
+.tr-not p { color: var(--ink-2); font-size: 15px; line-height: 1.5; }
+.tr-ref { margin-top: 10px; font-size: 14px; }
+.tr-ref a { color: var(--ink); }
+.tr-no { --w: 2.5px; flex: none; position: relative; width: 20px; height: 20px; border-radius: 50%; border: var(--w) solid var(--ink); }
+.tr-no::after { content: ""; position: absolute; left: 50%; top: calc(var(--w) * -1); bottom: calc(var(--w) * -1); width: var(--w); margin-left: calc(var(--w) / -2); background: var(--ink); rotate: 45deg; }
+
+/* tables (risk formula, scorecard) */
+.tr-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--card); box-shadow: var(--sh-card); }
+.tr-table { width: 100%; border-collapse: collapse; font-size: 15px; }
+.tr-table th, .tr-table td { text-align: left; vertical-align: top; padding: 12px 16px; border-bottom: 1px solid var(--line); line-height: 1.45; }
+.tr-table thead th { font-size: 13px; font-weight: 600; color: var(--ink-3); background: var(--sunken); }
+.tr-table tbody th { font-weight: 600; }
+.tr-table td { color: var(--ink-2); }
+.tr-table tfoot th, .tr-table tfoot td { border-bottom: 0; font-weight: 600; color: var(--ink); }
+.tr-table .tnum { white-space: nowrap; }
+
+/* who it is for */
+.tr-for .s-ticks { max-width: 60ch; }
+.tr-notfor { margin-top: 18px; color: var(--ink-2); max-width: 64ch; }
+
+/* tracked risks */
+.tr-tracked { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.tr-tracked h3 { font-size: 18px; }
+
+/* /trust/ai */
+.tr-ai-state { margin-top: 22px; max-width: 70ch; }
+.tr-features { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.tr-features article { display: flex; flex-direction: column; gap: 10px; height: 100%; }
+.tr-features h3 { font-size: 19px; }
+.tr-features .tr-sub { color: var(--ink-2); font-size: 15px; line-height: 1.5; }
+.tr-mm { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.tr-mm h4 { font-size: 13.5px; font-weight: 600; color: var(--ink-3); margin-bottom: 6px; }
+.tr-mm ul { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 4px; color: var(--ink-2); font-size: 14.5px; line-height: 1.45; }
+.tr-fallback { font-size: 14.5px; color: var(--ink-2); padding: 10px 12px; border-radius: var(--r-sm); background: var(--sunken); border: 1px solid var(--line); }
+.tr-fallback b { color: var(--ink); }
+.tr-metric { display: flex; flex-direction: column; gap: 2px; }
+.tr-metric + .tr-metric { margin-top: 8px; }
+.tr-metric b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.tr-pass { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.tr-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.tr-two .s-card ul { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 6px; color: var(--ink-2); font-size: 15px; line-height: 1.5; }
+.tr-gov { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.tr-gov dl { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 16px; font-size: 15px; }
+.tr-gov dt { color: var(--ink-3); font-weight: 500; }
+.tr-gov dd { margin: 0; color: var(--ink-2); }
+.tr-gov p { color: var(--ink-2); font-size: 15px; line-height: 1.55; }
+.tr-gov p + p { margin-top: 8px; }
+.tr code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.92em; background: var(--sunken); border: 1px solid var(--line); border-radius: 6px; padding: 1px 5px; }
+
+/* /judges */
+.tr-judge-start { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+.tr-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; counter-reset: tr; }
+.tr-steps > li { display: flex; gap: 16px; background: var(--card); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--sh-card); padding: 20px 22px; }
+.tr-steps h3 { font-size: 18px; letter-spacing: -0.02em; }
+.tr-steps .tr-tag { font-size: 13px; font-weight: 600; color: var(--kicker); margin-bottom: 2px; }
+.tr-steps p { color: var(--ink-2); margin-top: 6px; line-height: 1.5; font-size: 15.5px; }
+.tr-steps ul { margin: 8px 0 0; padding-left: 1.1em; color: var(--ink-2); font-size: 14.5px; display: flex; flex-direction: column; gap: 3px; }
+.tr-steps .tr-go { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+
+@media (max-width: 1080px) { .tr-not { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 860px) {
+  .tr-risks, .tr-tracked, .tr-features, .tr-two, .tr-gov, .tr-steps, .tr-legend { grid-template-columns: minmax(0, 1fr); }
+  .tr-not { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 520px) { .tr-mm { grid-template-columns: minmax(0, 1fr); } .tr-gov dl { grid-template-columns: minmax(0, 1fr); } }

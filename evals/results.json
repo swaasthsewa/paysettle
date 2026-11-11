@@ -1,0 +1,36 @@
+{
+  "at": "2026-11-07T23:00:45.950Z",
+  "model": null,
+  "protocol": "anthropic",
+  "compile": {
+    "rules": {
+      "n": 60,
+      "precisionVague": 1,
+      "recallVague": 0.967,
+      "agreement": 0.983,
+      "misses": [
+        "C49 \"Roughly 10 pages of documentation, more if needed.\" labelled vague"
+      ],
+      "target": 0.9,
+      "pass": true
+    }
+  },
+  "evidence": {
+    "skipped": true,
+    "reason": "AI not configured (AI_API_KEY is empty): evidence, mediate, injection skipped. Nothing is estimated or faked for these sets."
+  },
+  "mediate": {
+    "skipped": true,
+    "reason": "AI not configured (AI_API_KEY is empty): evidence, mediate, injection skipped. Nothing is estimated or faked for these sets."
+  },
+  "injection": {
+    "skipped": true,
+    "reason": "AI not configured (AI_API_KEY is empty): evidence, mediate, injection skipped. Nothing is estimated or faked for these sets."
+  },
+  "cost": {
+    "calls": 0,
+    "tokens": 0,
+    "costMicros": 0,
+    "perCallMicros": 0
+  }
+}

@@ -1,0 +1,11 @@
+/* Small additions to the console styles (F2.10, F4.10, F5.03, F5.05, F5.09). Reuses global tokens only. */
+.cnx-pub { margin-top: 12px; }
+.cnx-h3 { font-size: 15px; margin: 18px 0 6px; }
+.cnx-hash { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; overflow-wrap: anywhere; }
+.cnx-meter { display: grid; grid-template-columns: minmax(120px, 200px) 1fr auto; gap: 10px; align-items: center; font-size: 13px; }
+.cnx-meter .track { height: 8px; border-radius: 999px; background: var(--sunken); border: 1px solid var(--line); overflow: hidden; }
+.cnx-meter .track i { display: block; height: 100%; background: var(--g1); }
+.cnx-meter .track i[data-b="warn"] { background: var(--disputed); }
+.cnx-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.cnx-yearform { display: flex; gap: 10px; align-items: end; flex-wrap: wrap; }
+.cnx-yearform .field { min-width: 140px; }

@@ -1,0 +1,53 @@
+/* F1.1 · registration, demo identity provider sign-up, authenticator step and welcome page.
+   Built on the tokens in app/globals.css. Every class is prefixed reg- because Next keeps the sheet loaded. */
+.reg-page { max-width: 760px; padding-top: 48px; }
+.reg-brand { text-decoration: none; gap: 10px; }
+.reg-h { font-size: 18px; }
+.reg-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; }
+.reg-wide { grid-column: 1 / -1; }
+@media (max-width: 620px) { .reg-grid { grid-template-columns: minmax(0, 1fr); } }
+.reg-err { color: var(--danger); font-size: 12.5px; font-weight: 500; }
+.reg-form [aria-invalid="true"] { border-color: var(--danger); box-shadow: 0 0 0 1px var(--danger); }
+.reg-summary-wrap:focus { outline: none; }
+.reg-summary-wrap:focus-visible > .notice { outline: 2px solid var(--g1); outline-offset: 2px; }
+.reg-summary { margin: 6px 0 0; padding-left: 1.2em; }
+.reg-summary a { color: inherit; font-weight: 500; }
+.reg-pw { display: flex; gap: 8px; align-items: center; }
+.reg-pw input { flex: 1; }
+.reg-live { display: block; margin-top: 3px; font-weight: 500; }
+.reg-live[data-b="ok"] { color: var(--ok); }
+.reg-live[data-b="warn"] { color: var(--warn); }
+.reg-roles { border: 0; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.reg-roles legend { font-size: 13px; color: var(--ink-2); font-weight: 500; margin-bottom: 6px; padding: 0; }
+.reg-roles legend:focus { outline: none; }
+.reg-roles .reg-err { grid-column: 1 / -1; }
+@media (max-width: 620px) { .reg-roles { grid-template-columns: minmax(0, 1fr); } }
+.reg-role { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border: 1px solid var(--line-2); border-radius: var(--r-md); background: var(--card); cursor: pointer; }
+.reg-role:has(input:checked) { border-color: var(--g1); box-shadow: 0 0 0 1px var(--g1); }
+.reg-role:has(input:focus-visible) { outline: 2px solid var(--g1); outline-offset: 2px; }
+.reg-role input { margin-top: 4px; }
+.reg-role b { display: block; font-size: 14px; }
+.reg-role small { color: var(--ink-3); font-size: 12.5px; }
+.reg-terms { border-top: 1px solid var(--line); padding-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+.reg-terms ul { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 4px; font-size: 13.5px; }
+.reg-check { align-items: flex-start; gap: 8px; font-size: 14px; }
+.reg-check input { margin-top: 4px; }
+/* the honeypot: off screen, out of the tab order and hidden from assistive technology */
+.reg-hp { position: absolute; left: -10000px; top: auto; width: 1px; height: 1px; overflow: hidden; }
+.reg-or { display: flex; align-items: center; gap: 12px; color: var(--ink-3); font-size: 13px; }
+.reg-or::before, .reg-or::after { content: ""; flex: 1; border-top: 1px solid var(--line); }
+.reg-idp { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: space-between; }
+.reg-steps { margin: 0; padding-left: 1.3em; display: flex; flex-direction: column; gap: 8px; }
+.reg-steps li::marker { font-weight: 600; color: var(--ink-2); }
+.reg-key { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 18px; letter-spacing: 0.06em; word-break: break-all; }
+.reg-uri { font-size: 12px; word-break: break-all; }
+.reg-outbox { border: 1px dashed var(--line-2); border-radius: var(--r-md); padding: 12px 14px; background: var(--sunken); display: flex; flex-direction: column; gap: 8px; }
+.reg-outbox a { word-break: break-all; font-size: 12.5px; }
+.reg-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.reg-list li { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r-md); }
+.reg-list li .sp { flex: 1; }
+/* OCR assist (F1.4): advisory fields read from a licence */
+.reg-ocr { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px 12px; margin: 6px 0 0; font-size: 12.5px; }
+.reg-ocr dt { color: var(--ink-3); }
+.reg-ocr dd { margin: 0; font-weight: 600; }
+@media (max-width: 620px) { .reg-ocr { grid-template-columns: minmax(0, 1fr); } }

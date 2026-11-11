@@ -1,0 +1,27 @@
+/* Deadline terms, on-time badges, adjustment lines, extensions. Global classes first; these add layout only. */
+.dl-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 12px 16px; }
+.dl-term { border: 1px solid var(--line); border-radius: var(--r-md); padding: 10px 14px 14px; margin: 0; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.dl-term > legend { padding: 0 6px; font-weight: 600; font-size: 14px; }
+.dl-term > legend label { display: inline-flex; gap: 8px; align-items: center; cursor: pointer; }
+.dl-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px 12px; }
+.dl-fields input:disabled { opacity: 0.55; }
+.dl-scope { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.dl-scope legend { font-size: 12px; font-weight: 600; color: var(--ink-3); margin-bottom: 2px; }
+.dl-scope label { display: inline-flex; gap: 6px; align-items: center; }
+.dl-codes { display: flex; flex-direction: column; gap: 3px; padding-left: 22px; }
+.dl-preview { border-radius: var(--r-md); background: var(--sunken); border: 1px solid var(--line); padding: 10px 14px; display: flex; flex-direction: column; gap: 6px; }
+.dl-lines, .dl-errs, .dl-hints { margin: 0; padding-left: 18px; font-size: 13px; display: flex; flex-direction: column; gap: 3px; font-variant-numeric: tabular-nums; }
+.dl-errs, .dl-hints { color: var(--danger); }
+.dl-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; padding: 2px 10px; border-radius: var(--r-pill); border: 1px solid var(--line); background: var(--card); }
+.dl-badge[data-t="LATE"] { color: var(--danger); border-color: var(--danger); }
+.dl-badge[data-t="EARLY"] { color: var(--released); border-color: var(--released); }
+.dl-badge[data-t="ON_TIME"] { color: var(--ink-2); }
+.dl-adj { font-size: 13px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.dl-adj b { color: var(--ink); }
+.dl-ext { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.dl-ext li { border: 1px solid var(--line); border-radius: var(--r-sm); padding: 8px 12px; font-size: 13px; display: flex; flex-direction: column; gap: 4px; }
+.dl-ext .row { gap: 8px; }
+.dl-sig { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; color: var(--ink-3); }
+.risk-formula summary { cursor: pointer; font-size: 12.5px; color: var(--ink-2); }
+.risk-formula ol { margin: 6px 0 0; padding-left: 18px; font-size: 12.5px; display: flex; flex-direction: column; gap: 3px; }
+.risk-formula code { font-size: 12px; }

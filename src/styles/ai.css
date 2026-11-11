@@ -1,0 +1,7 @@
+/* AI · A5 A7 · Account → AI & agents */
+.ai-form { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(200px, 100%), 1fr)); gap: 12px; }
+.ai-token { display: block; margin: 8px 0; padding: 8px 10px; background: var(--card); border: 1px solid var(--edge); border-radius: var(--r-sm); font-size: 13px; word-break: break-all; user-select: all; }
+.ai-meter { height: 8px; border-radius: var(--r-pill); background: var(--sunken); border: 1px solid var(--line); overflow: hidden; }
+.ai-meter > span { display: block; height: 100%; background: var(--grad-button); }
+.ai-list { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; }
+.ai-scroll { overflow-x: auto; }

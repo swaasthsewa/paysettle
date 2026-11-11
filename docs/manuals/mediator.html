@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mediator manual · PaySettle manual</title>
+<style>
+:root{--ink:#14161c;--muted:#5a6070;--line:#e2e4ea;--bg:#f6f7f9;--card:#fff;--accent:#0f766e;--warn:#8a5c05;--warn-bg:#fdf1dc}
+*{box-sizing:border-box}body{margin:0;font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg)}
+a{color:var(--accent)}a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.skip{position:absolute;left:-999px}.skip:focus{left:12px;top:12px;background:#fff;padding:8px 12px;z-index:2}
+header,main,footer{max-width:980px;margin:0 auto;padding:0 24px}
+header{padding-top:32px}header p.kicker{margin:0;color:var(--accent);font-weight:600}
+h1{font-size:34px;line-height:1.2;margin:6px 0 8px}h2{font-size:24px;margin:40px 0 12px;padding-top:8px;border-top:1px solid var(--line)}h3{font-size:18px;margin:24px 0 8px}
+.lead{font-size:18px;color:var(--muted);max-width:720px}
+nav.toc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 20px;margin:20px 0}
+nav.toc ul{margin:6px 0;padding-left:0;list-style:none;columns:2}nav.toc li{margin:2px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin:16px 0}
+.note{background:var(--warn-bg);border-left:4px solid var(--warn);border-radius:8px;padding:12px 16px;margin:16px 0}
+ol.steps>li{margin:6px 0}
+figure{margin:16px 0 24px}figure img{width:100%;height:auto;max-height:900px;object-fit:cover;object-position:top;border:1px solid var(--line);border-radius:10px;background:#fff}
+figcaption{color:var(--muted);font-size:14px;margin-top:6px}
+table{border-collapse:collapse;width:100%;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:15px}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}th{background:#eef0f4;font-weight:600}
+code{font:14px ui-monospace,SFMono-Regular,Menlo,monospace;background:#eef0f4;padding:1px 5px;border-radius:4px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.grid a.card{display:block;text-decoration:none;color:var(--ink)}.grid a.card:hover{border-color:var(--accent)}
+.grid a.card b{display:block;font-size:18px;color:var(--accent)}
+footer{color:var(--muted);font-size:14px;padding:40px 24px 56px}
+</style>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header>
+<p class="kicker">PaySettle · for mediators</p>
+<h1>Mediator manual</h1>
+<p class="lead">You decide disputes that the parties could not settle themselves, from a sealed dossier, and sign a verdict that splits the frozen amount.</p>
+<p><a href="index.html">All manuals</a></p>
+</header>
+<main id="content">
+<nav class="toc" aria-label="On this page"><b>On this page</b><ul><li><a href="#role">What this role does</a></li><li><a href="#signin">Signing in</a></li><li><a href="#t-mov">1. Read the overview</a></li><li><a href="#t-queue">2. Work the case queue</a></li><li><a href="#t-wb">3. Decide a case in the workbench</a></li><li><a href="#money">What the money states mean</a></li><li><a href="#limits">Limits of this demo</a></li></ul></nav>
+<h2 id="role">What this role does</h2><p>Mediators (demo: <b>Marcus Bell</b>, <b>Lena Park</b>) receive Tier 3 cases once the evidence vault is sealed. Cases are routed round-robin to mediators with no case involving either party in the last 180 days. Verdicts above $5,000 need a second mediator's co-signature.</p><h2 id="signin">Signing in</h2><p>Open the demo, choose <b>Try the live demo</b> (or go to <code>/login</code>) and pick <b>Marcus Bell</b> under “Explore the live demo”. No password is needed in the sandbox. You land on <code>/mediator</code>.</p><h2 id="tasks">Step by step</h2><section aria-labelledby="t-mov"><h3 id="t-mov">1. Read the overview</h3><p>Your cases, open cases you can take, co-signatures and anything past the service level.</p><ol class="steps"><li>Open <b>Overview</b>: counts, disputes by stage, average time to verdict and root causes.</li><li>The clause-feedback table flags blueprint milestones with a dispute rate over 8% so Growth can rework their criteria.</li></ol><figure><img src="../screens/40-mediator-overview.png" alt="Mediator overview" loading="lazy"><figcaption>Mediator overview — <a href="../screens/40-mediator-overview.png">open full size</a></figcaption></figure></section><section aria-labelledby="t-queue"><h3 id="t-queue">2. Work the case queue</h3><p>Verdicts are due 144 hours after a dispute opens (72 hours on fast track).</p><ol class="steps"><li>Open <b>Case queue</b>.</li><li>Sections: <b>Your cases</b>, <b>Waiting for your co-signature</b>, <b>Open — free of conflicts for you</b>, and <b>Coming up (Tier 1 and 2)</b> with deadlines and frozen amounts.</li></ol><figure><img src="../screens/41-mediator-case-queue.png" alt="Case queue" loading="lazy"><figcaption>Case queue — <a href="../screens/41-mediator-case-queue.png">open full size</a></figcaption></figure></section><section aria-labelledby="t-wb"><h3 id="t-wb">3. Decide a case in the workbench</h3><p>The workbench shows the contract, the sealed evidence and the timeline side by side.</p><ol class="steps"><li>Open a case. The stages bar shows Tier 1 (sealed offers), Tier 2 (evidence vault), Tier 3 (mediator) and Settlement.</li><li>Read the contract column: dispute rule, lock rule, proof asked for, acceptance criteria and clauses.</li><li>Read <b>Evidence and rebuttals</b>: the opening statement, each attempt with file hashes and checks, both parties' notes, and the dossier root hash. Sealed offers stay hidden.</li><li>The <b>Rule-based proposal</b> (and the AI proposal when AI is on) is marked “Advice — not a decision”. You decide and sign; the proposal is never carried out by itself.</li><li>Sign the verdict: the provider's share, fault and a reason. Settlement runs as two legs — a refund to the client, then a release to the provider — each with its own idempotency key.</li></ol><figure><img src="../screens/42-mediator-workbench.png" alt="Mediator workbench: contract, sealed evidence, proposal and verdict" loading="lazy"><figcaption>Mediator workbench: contract, sealed evidence, proposal and verdict — <a href="../screens/42-mediator-workbench.png">open full size</a></figcaption></figure></section>
+<h2 id="money">What the money states mean</h2>
+<p>PaySettle never keeps the client's money in its own account. Each <b>tranche</b> (a block of milestones that fits inside one PayPal hold window) is an authorization on the client's PayPal account; each approved milestone is a partial capture from it.</p>
+<table>
+<thead><tr><th scope="col">You see</th><th scope="col">Where the money is</th></tr></thead>
+<tbody>
+<tr><td>Planned — not funded</td><td>Nowhere yet. The contract is signed and locked; the client has not approved the PayPal hold.</td></tr>
+<tr><td>Waiting for PayPal approval</td><td>The order exists in PayPal; the client still has to approve it there. Nothing is reserved until they do.</td></tr>
+<tr><td>Held in PayPal</td><td>Reserved on the client's PayPal account (an authorization). Not paid to anyone yet.</td></tr>
+<tr><td>Partly released</td><td>Some milestones were approved and captured to the provider; the rest is still held.</td></tr>
+<tr><td>Released</td><td>That milestone's amount was captured to the provider's PayPal account, minus the platform fee (2.5% per release in the demo).</td></tr>
+<tr><td>Frozen: in dispute</td><td>Only the disputed milestone's amount is frozen; it stays held in PayPal while the dispute runs. Other milestones carry on.</td></tr>
+<tr><td>Returned to client</td><td>Released back to the client: the unused part of the hold is voided, or a captured amount is refunded after a verdict.</td></tr>
+<tr><td>Rolled over</td><td>The hold window was closing, so the unfinished remainder moved into a new tranche that the client funds again.</td></tr>
+<tr><td>Settling / Closed</td><td>The hold window is ending: approved work is paid and unstarted milestones go back to the client. Closed means nothing is left on that tranche.</td></tr>
+<tr><td>Paused for checks</td><td>Reconciliation found a difference between the contract, the ledger and PayPal. Releases on that tranche wait until Finance resolves it.</td></tr>
+</tbody></table>
+
+<h2 id="limits">Limits of this demo</h2>
+<ul>
+<li><b>Sandbox only.</b> Money is either PayPal Sandbox money or simulated by the mock rail (“Simulated PayPal (mock)”). Nothing real moves, and the yellow banner at the top of every app page says so.</li>
+<li><b>The mock rail keeps its records in memory.</b> After a server restart, Finance's reconciliation may show older tranches as “no PayPal data”; the ledger is still checked against the contract.</li>
+<li><b>AI is advisory.</b> The AI verifier, the mediation proposal and the drafting help only suggest. People approve, sign and decide; the rule-based checks run with or without AI. Without an AI key the panels say “AI unavailable”.</li>
+<li><b>Time can be simulated.</b> The Judge Playground moves a session's virtual clock only; deadlines you see on seeded data use each contract's own clock.</li>
+<li><b>Demo people are shared.</b> Everyone using the demo signs in as the same personas, and Playground scenarios add contracts to them, so lists grow over time.</li>
+<li>PaySettle is a hackathon build, not a licensed payment, escrow or legal service. Contract text and dispute outcomes are not legal advice.</li>
+</ul>
+
+</main>
+<footer>PaySettle — PayPal AI Hackathon build. Sandbox only: PayPal Sandbox or simulated money; nothing real moves. Screens were captured from the seeded demo with <code>node tools/screens.mjs</code>; your numbers will differ.</footer>
+</body>
+</html>

@@ -1,0 +1,63 @@
+/* Disputes: dispute room, vault annotation tool, mediator workbench. F4.01–F4.12. Reuses globals first. */
+
+.dz-tl { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.dz-tl li { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border-radius: var(--r-md); background: var(--sunken); border: 1px solid var(--line); position: relative; align-items: flex-start; }
+.dz-tl li[data-s="done"] { border-color: transparent; background: var(--ok-bg); }
+.dz-tl li[data-s="now"] { border-color: var(--g1); background: var(--card); box-shadow: 0 0 0 2px color-mix(in srgb, var(--g1) 20%, transparent); }
+.dz-tl li[data-skip] { opacity: 0.6; }
+.dz-tl li b { font-size: 14px; }
+@media (max-width: 760px) { .dz-tl { grid-template-columns: minmax(0, 1fr); } }
+
+tr[data-dz-on] td { background: var(--disputed-bg); }
+tr[data-dz-on] td:first-child { border-radius: var(--r-sm) 0 0 var(--r-sm); padding-left: 8px; }
+
+.dz-range { width: 100%; accent-color: var(--g1); min-height: 32px; }
+.dz-split { font-size: 14px; }
+.dz-num { max-width: 110px; }
+.dz-select { max-width: 360px; }
+.dz-pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+.dz-ann { border: 1px solid var(--line); border-radius: var(--r-md); padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; margin: 0; }
+.dz-ann legend { font-size: 13px; font-weight: 500; color: var(--ink-2); padding: 0 6px; }
+.dz-canvas { position: relative; width: 100%; max-width: 640px; aspect-ratio: 4 / 3; border-radius: var(--r-sm); overflow: hidden; background: var(--sunken); border: 1px solid var(--line-2); cursor: crosshair; touch-action: none; user-select: none; }
+.dz-canvas img { width: 100%; height: 100%; object-fit: contain; display: block; pointer-events: none; }
+.dz-ph { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; padding: 18px; color: var(--ink-3);
+  background: repeating-linear-gradient(135deg, var(--line) 0 6px, transparent 6px 14px); }
+.dz-ph b { color: var(--ink-2); background: var(--card); padding: 2px 8px; border-radius: 6px; }
+.dz-ph span { background: var(--card); padding: 2px 8px; border-radius: 6px; }
+.dz-box { position: absolute; border: 2px solid var(--disputed); background: color-mix(in srgb, var(--disputed) 14%, transparent); border-radius: 4px; pointer-events: none; }
+.dz-box span { position: absolute; left: -2px; top: -22px; background: var(--disputed); color: #fff; font-size: 11px; font-style: normal; font-weight: 700; padding: 1px 6px; border-radius: 4px; }
+.dz-draft { border-style: dashed; border-color: var(--g1); background: color-mix(in srgb, var(--g1) 12%, transparent); }
+.dz-markform { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 10px; align-items: end; }
+.dz-markform .row { grid-column: 1 / -1; }
+@media (max-width: 640px) { .dz-markform { grid-template-columns: minmax(0, 1fr); } }
+.dz-marks { margin: 0; padding-left: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; }
+.dz-marks li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+
+.dz-radios { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; }
+.dz-radios legend { font-size: 13px; font-weight: 500; color: var(--ink-2); margin-bottom: 4px; }
+.dz-radios label { display: flex; gap: 8px; align-items: center; min-height: 28px; }
+
+.dz-pkg, .dz-reb { border: 1px solid var(--line); border-radius: var(--r-md); padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; background: var(--card); }
+.dz-reb[data-role="client"] { border-left: 3px solid var(--g1); }
+.dz-reb[data-role="provider"] { border-left: 3px solid var(--g2); }
+.dz-files { margin: 0; padding-left: 18px; font-size: 13.5px; display: flex; flex-direction: column; gap: 2px; }
+.dz-events { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; }
+.dz-events li { display: flex; gap: 8px; flex-wrap: wrap; align-items: baseline; }
+
+/* three-pane workbench */
+.dz-bench { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 5fr) minmax(0, 4fr); gap: 16px; align-items: start; }
+.dz-bench > .c { max-height: none; }
+@media (max-width: 1180px) { .dz-bench { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .dz-bench > :last-child { grid-column: 1 / -1; } }
+@media (max-width: 760px) { .dz-bench { grid-template-columns: minmax(0, 1fr); } }
+.dz-clause { border-top: 1px solid var(--line); padding-top: 8px; font-size: 13.5px; display: flex; flex-direction: column; gap: 3px; }
+.dz-clause[data-off] { opacity: 0.6; }
+.dz-diff { margin: 0; padding-left: 18px; font-size: 13.5px; display: flex; flex-direction: column; gap: 3px; }
+.dz-ai { border: 1px dashed var(--line-2); border-radius: var(--r-md); padding: 12px 14px; background: var(--grad-soft); display: flex; flex-direction: column; gap: 8px; }
+.dz-ai ul { margin: 0; padding-left: 18px; font-size: 13.5px; }
+.dz-conf { height: 7px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.dz-conf i { display: block; height: 100%; background: var(--g1); }
+
+.dz-lanes { display: flex; flex-direction: column; gap: 16px; }
+.dz-bar { display: flex; height: 10px; border-radius: 99px; overflow: hidden; background: var(--sunken); }
+.dz-bar i { display: block; height: 100%; }

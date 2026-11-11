@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Platform admin manual · PaySettle manual</title>
+<style>
+:root{--ink:#14161c;--muted:#5a6070;--line:#e2e4ea;--bg:#f6f7f9;--card:#fff;--accent:#0f766e;--warn:#8a5c05;--warn-bg:#fdf1dc}
+*{box-sizing:border-box}body{margin:0;font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg)}
+a{color:var(--accent)}a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.skip{position:absolute;left:-999px}.skip:focus{left:12px;top:12px;background:#fff;padding:8px 12px;z-index:2}
+header,main,footer{max-width:980px;margin:0 auto;padding:0 24px}
+header{padding-top:32px}header p.kicker{margin:0;color:var(--accent);font-weight:600}
+h1{font-size:34px;line-height:1.2;margin:6px 0 8px}h2{font-size:24px;margin:40px 0 12px;padding-top:8px;border-top:1px solid var(--line)}h3{font-size:18px;margin:24px 0 8px}
+.lead{font-size:18px;color:var(--muted);max-width:720px}
+nav.toc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 20px;margin:20px 0}
+nav.toc ul{margin:6px 0;padding-left:0;list-style:none;columns:2}nav.toc li{margin:2px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin:16px 0}
+.note{background:var(--warn-bg);border-left:4px solid var(--warn);border-radius:8px;padding:12px 16px;margin:16px 0}
+ol.steps>li{margin:6px 0}
+figure{margin:16px 0 24px}figure img{width:100%;height:auto;max-height:900px;object-fit:cover;object-position:top;border:1px solid var(--line);border-radius:10px;background:#fff}
+figcaption{color:var(--muted);font-size:14px;margin-top:6px}
+table{border-collapse:collapse;width:100%;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:15px}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}th{background:#eef0f4;font-weight:600}
+code{font:14px ui-monospace,SFMono-Regular,Menlo,monospace;background:#eef0f4;padding:1px 5px;border-radius:4px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.grid a.card{display:block;text-decoration:none;color:var(--ink)}.grid a.card:hover{border-color:var(--accent)}
+.grid a.card b{display:block;font-size:18px;color:var(--accent)}
+footer{color:var(--muted);font-size:14px;padding:40px 24px 56px}
+</style>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header>
+<p class="kicker">PaySettle · for platform admins</p>
+<h1>Platform admin manual</h1>
+<p class="lead">You watch the health of everything PaySettle depends on, handle webhooks, verify the audit chain and propose switch changes.</p>
+<p><a href="index.html">All manuals</a></p>
+</header>
+<main id="content">
+<nav class="toc" aria-label="On this page"><b>On this page</b><ul><li><a href="#role">What this role does</a></li><li><a href="#signin">Signing in</a></li><li><a href="#t-health">1. Check platform health</a></li><li><a href="#t-wh">2. Handle webhooks and the dead-letter queue</a></li><li><a href="#t-audit">3. Explore the audit chain</a></li><li><a href="#t-flags">4. Propose a switch change</a></li><li><a href="#money">What the money states mean</a></li><li><a href="#limits">Limits of this demo</a></li></ul></nav>
+<h2 id="role">What this role does</h2><p>Admins (demo: <b>Alex Chen</b>) see platform health, the PayPal webhook log and dead-letter queue, the hash-chained audit log, the switchboard of platform flags, and the Judge Playground.</p><h2 id="signin">Signing in</h2><p>Open the demo, choose <b>Try the live demo</b> (or go to <code>/login</code>) and pick <b>Alex Chen</b> under “Explore the live demo”. No password is needed in the sandbox. You land on <code>/admin</code>.</p><h2 id="tasks">Step by step</h2><section aria-labelledby="t-health"><h3 id="t-health">1. Check platform health</h3><p>Database, PayPal mode, AI assistance, webhooks, reconciliation and the audit chain, checked when the page loads.</p><ol class="steps"><li>Open <b>Health</b>.</li><li>Use <b>Verify chain now</b> to recompute the audit chain, or <b>Run hourly checks now</b> to run the scheduled job (expire four-eyes requests, verify the chain, reconcile).</li></ol><figure><img src="../screens/60-admin-health.png" alt="Platform health" loading="lazy"><figcaption>Platform health — <a href="../screens/60-admin-health.png">open full size</a></figcaption></figure></section><section aria-labelledby="t-wh"><h3 id="t-wh">2. Handle webhooks and the dead-letter queue</h3><p>PayPal events are verified, de-duplicated on transmission id, then applied.</p><ol class="steps"><li>Open <b>Webhooks &amp; DLQ</b>: processed, duplicates ignored, quarantined (bad signature) and dead-lettered events.</li><li>Propose a replay of a dead-lettered event; a second person approves it in the four-eyes queue.</li></ol><figure><img src="../screens/61-admin-webhooks.png" alt="Webhooks and dead-letter queue" loading="lazy"><figcaption>Webhooks and dead-letter queue — <a href="../screens/61-admin-webhooks.png">open full size</a></figcaption></figure></section><section aria-labelledby="t-audit"><h3 id="t-audit">3. Explore the audit chain</h3><p>Every mutation writes an audit row; each row includes the hash of the previous one.</p><ol class="steps"><li>Open <b>Audit chain</b>, filter by actor, action or target, and verify the whole chain on demand.</li></ol><figure><img src="../screens/62-admin-audit-chain.png" alt="Audit chain explorer (long page, cut)" loading="lazy"><figcaption>Audit chain explorer (long page, cut) — <a href="../screens/62-admin-audit-chain.png">open full size</a></figcaption></figure></section><section aria-labelledby="t-flags"><h3 id="t-flags">4. Propose a switch change</h3><p>Platform switches (AI assistance, Rail B, live PayPal Sandbox for the playground, deemed approval) change only when a second person approves.</p><ol class="steps"><li>Open <b>Switchboard</b>, write a reason, and press <b>Propose turning on/off</b>.</li><li>Another admin, Ops or Finance person approves it in <b>Four-eyes queue</b>.</li></ol><figure><img src="../screens/63-admin-switchboard.png" alt="Switchboard" loading="lazy"><figcaption>Switchboard — <a href="../screens/63-admin-switchboard.png">open full size</a></figcaption></figure></section>
+<h2 id="money">What the money states mean</h2>
+<p>PaySettle never keeps the client's money in its own account. Each <b>tranche</b> (a block of milestones that fits inside one PayPal hold window) is an authorization on the client's PayPal account; each approved milestone is a partial capture from it.</p>
+<table>
+<thead><tr><th scope="col">You see</th><th scope="col">Where the money is</th></tr></thead>
+<tbody>
+<tr><td>Planned — not funded</td><td>Nowhere yet. The contract is signed and locked; the client has not approved the PayPal hold.</td></tr>
+<tr><td>Waiting for PayPal approval</td><td>The order exists in PayPal; the client still has to approve it there. Nothing is reserved until they do.</td></tr>
+<tr><td>Held in PayPal</td><td>Reserved on the client's PayPal account (an authorization). Not paid to anyone yet.</td></tr>
+<tr><td>Partly released</td><td>Some milestones were approved and captured to the provider; the rest is still held.</td></tr>
+<tr><td>Released</td><td>That milestone's amount was captured to the provider's PayPal account, minus the platform fee (2.5% per release in the demo).</td></tr>
+<tr><td>Frozen: in dispute</td><td>Only the disputed milestone's amount is frozen; it stays held in PayPal while the dispute runs. Other milestones carry on.</td></tr>
+<tr><td>Returned to client</td><td>Released back to the client: the unused part of the hold is voided, or a captured amount is refunded after a verdict.</td></tr>
+<tr><td>Rolled over</td><td>The hold window was closing, so the unfinished remainder moved into a new tranche that the client funds again.</td></tr>
+<tr><td>Settling / Closed</td><td>The hold window is ending: approved work is paid and unstarted milestones go back to the client. Closed means nothing is left on that tranche.</td></tr>
+<tr><td>Paused for checks</td><td>Reconciliation found a difference between the contract, the ledger and PayPal. Releases on that tranche wait until Finance resolves it.</td></tr>
+</tbody></table>
+
+<h2 id="limits">Limits of this demo</h2>
+<ul>
+<li><b>Sandbox only.</b> Money is either PayPal Sandbox money or simulated by the mock rail (“Simulated PayPal (mock)”). Nothing real moves, and the yellow banner at the top of every app page says so.</li>
+<li><b>The mock rail keeps its records in memory.</b> After a server restart, Finance's reconciliation may show older tranches as “no PayPal data”; the ledger is still checked against the contract.</li>
+<li><b>AI is advisory.</b> The AI verifier, the mediation proposal and the drafting help only suggest. People approve, sign and decide; the rule-based checks run with or without AI. Without an AI key the panels say “AI unavailable”.</li>
+<li><b>Time can be simulated.</b> The Judge Playground moves a session's virtual clock only; deadlines you see on seeded data use each contract's own clock.</li>
+<li><b>Demo people are shared.</b> Everyone using the demo signs in as the same personas, and Playground scenarios add contracts to them, so lists grow over time.</li>
+<li>PaySettle is a hackathon build, not a licensed payment, escrow or legal service. Contract text and dispute outcomes are not legal advice.</li>
+</ul>
+
+</main>
+<footer>PaySettle — PayPal AI Hackathon build. Sandbox only: PayPal Sandbox or simulated money; nothing real moves. Screens were captured from the seeded demo with <code>node tools/screens.mjs</code>; your numbers will differ.</footer>
+</body>
+</html>

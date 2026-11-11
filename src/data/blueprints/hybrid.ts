@@ -1,0 +1,66 @@
+// Requirements: F2.01 (blueprint library), F2.04 (3–50 milestones), F2.06 (bps sum 10,000),
+// F2.07 (one tranche ≤ 26 days; S3 window-pressure scenario), F2.08 (proof spec: counts, GPS radius, oracle), F2.09 (lock + dispute rule).
+import type { BlueprintDef } from "./digital";
+
+const P = (kind: "IMAGE" | "VIDEO" | "PDF" | "LOG" | "LINK" | "SIGNATURE" | "ORACLE", min: number, note?: string) => ({ kind, min, note });
+
+/** Travel and custom tour: bookings are proved by documents, on-trip services by traveller check-ins at the place. */
+export const TRAVEL_TOUR: BlueprintDef = {
+  code: "UC_TRAVEL_TOUR", title: "Travel and custom tour", vertical: "Travel and tourism", kind: "HYBRID", depth: "full", recommendedDays: 24,
+  summary: "A custom tour booked by an agency: flights, lodges, transfers and guided excursions, each paid when the traveller checks in on the spot.",
+  milestones: [
+    { code: "M01", title: "Itinerary and traveller details confirmed", type: "GATE", day: 1, bps: 0,
+      proof: { artifacts: [P("PDF", 1, "Day-by-day itinerary with every service named"), P("SIGNATURE", 1, "Traveller confirms names exactly as in passports")], criteria: ["Each night has a named lodge and room type", "Each transfer and excursion has a date, time and supplier"] },
+      lockRule: "Traveller signs the itinerary.", disputeRule: "Changes after signing are re-priced in writing before booking." },
+    { code: "M02", title: "Flights ticketed", type: "PAY", day: 4, bps: 2500, dependsOn: ["M01"],
+      proof: { artifacts: [P("PDF", 1, "E-tickets with 13-digit ticket numbers"), P("LINK", 1, "Airline booking reference (PNR) lookup")], oracle: "PNR_LOOKUP", criteria: ["Ticket status is issued, not on hold", "Passenger names match the passports exactly", "Routes and dates match the itinerary"] },
+      lockRule: "Traveller approves after the booking reference check.", disputeRule: "A ticket with a wrong name or date is reissued at the agency's cost within 48 hours; release waits." },
+    { code: "M03", title: "Hotel vouchers paid in full", type: "PAY", day: 6, bps: 2000, dependsOn: ["M01"],
+      proof: { artifacts: [P("PDF", 1, "Voucher per lodge showing zero balance due"), P("PDF", 1, "Supplier confirmation numbers")], criteria: ["Every night of the itinerary is covered", "Room type and board basis match the itinerary", "Each voucher states the lodge's cancellation terms"] },
+      lockRule: "Traveller approves.", disputeRule: "A voucher showing a balance due is settled by the agency before release; release is pro-rata by nights confirmed." },
+    { code: "M04", title: "Transfers and excursions booked", type: "PAY", day: 8, bps: 800, dependsOn: ["M01"],
+      proof: { artifacts: [P("PDF", 1, "Supplier confirmations for every transfer and excursion")], criteria: ["Vehicle class, group size and guide language match the itinerary", "Pick-up times allow at least 60 minutes after scheduled landing"] },
+      lockRule: "Traveller approves.", disputeRule: "Missing confirmations are deducted at the itinerary price until supplied." },
+    { code: "M05", title: "Insurance and entry documents checked", type: "GATE", day: 9, bps: 0, dependsOn: ["M02"],
+      proof: { artifacts: [P("PDF", 1, "Travel insurance certificate"), P("PDF", 1, "Visa or entry-permit confirmations where required")], criteria: ["Insurance covers every travel date", "Passports valid for at least 6 months after return"] },
+      lockRule: "Traveller confirms.", disputeRule: "Missing entry documents are the traveller's responsibility unless the agency agreed to obtain them." },
+    { code: "M06", title: "Travel pack delivered", type: "GATE", day: 11, bps: 0, dependsOn: ["M03", "M04"],
+      proof: { artifacts: [P("PDF", 1, "Travel pack: vouchers, contacts, emergency numbers"), P("LINK", 1, "Check-in QR codes in the traveller app")], criteria: ["Each on-trip milestone has a check-in QR or GPS check-in set up", "A 24-hour contact number is listed"] },
+      lockRule: "Traveller acknowledges receipt.", disputeRule: "Missing items are supplied within 24 hours." },
+    { code: "M07", title: "48-hour reconfirmation", type: "GATE", day: 12, bps: 0, dependsOn: ["M06"],
+      proof: { artifacts: [P("PDF", 1, "Reconfirmation emails from every supplier")], criteria: ["Every supplier reconfirms date, time and names within 48 hours of departure"] },
+      lockRule: "Agency uploads the reconfirmations.", disputeRule: "An unreconfirmed service is replaced with an equal or better one at the agency's cost." },
+    { code: "M08", title: "Airport pickup", type: "PAY", day: 14, bps: 600, dependsOn: ["M04", "M07"],
+      proof: { artifacts: [P("LOG", 1, "Traveller scans the driver's QR at arrivals"), P("IMAGE", 1, "Vehicle at arrivals")], gpsRadiusM: 500, criteria: ["Driver at arrivals within 30 minutes of actual landing", "Vehicle class as booked"] },
+      lockRule: "Released on the traveller's QR check-in and approval.", disputeRule: "A missed pickup is refunded at the transfer's itinerary price plus the traveller's taxi receipt." },
+    { code: "M09", title: "First lodge check-in", type: "PAY", day: 14, bps: 700, dependsOn: ["M03", "M08"],
+      proof: { artifacts: [P("LOG", 1, "Traveller GPS check-in in the app"), P("IMAGE", 2, "Room as given")], gpsRadiusM: 200, criteria: ["Room type and board basis as on the voucher", "No extra payment requested at the desk for prepaid items"] },
+      lockRule: "Released on the traveller's check-in and approval.", disputeRule: "A downgrade is refunded at the nightly price difference; charges at the desk for prepaid items are refunded in full on receipt." },
+    { code: "M10", title: "First guided excursion", type: "PAY", day: 16, bps: 800, dependsOn: ["M09"],
+      proof: { artifacts: [P("LOG", 1, "Traveller GPS check-in at the start point"), P("SIGNATURE", 1, "Guide sign-in"), P("IMAGE", 2, "Excursion photos")], gpsRadiusM: 300, criteria: ["Excursion runs at least the booked duration minus 30 minutes", "Guide speaks the booked language"] },
+      lockRule: "Released on check-in and traveller approval.", disputeRule: "A cut-short excursion is refunded pro-rata by time; a cancelled one in full unless replaced." },
+    { code: "M11", title: "Transfer and second lodge check-in", type: "PAY", day: 18, bps: 800, dependsOn: ["M10"],
+      proof: { artifacts: [P("LOG", 1, "Traveller GPS check-in at the second lodge"), P("IMAGE", 2, "Room as given")], gpsRadiusM: 200, criteria: ["Transfer departed within 30 minutes of the booked time", "Room type and board basis as on the voucher"] },
+      lockRule: "Released on check-in and traveller approval.", disputeRule: "A downgrade is refunded at the nightly price difference." },
+    { code: "M12", title: "Second excursion", type: "PAY", day: 20, bps: 600, dependsOn: ["M11"],
+      proof: { artifacts: [P("LOG", 1, "Traveller GPS check-in at the start point"), P("SIGNATURE", 1, "Guide sign-in")], gpsRadiusM: 300, criteria: ["Excursion runs at least the booked duration minus 30 minutes"] },
+      lockRule: "Released on check-in and traveller approval.", disputeRule: "Refunded pro-rata by time if cut short." },
+    { code: "M13", title: "Airport drop-off", type: "PAY", day: 22, bps: 500, dependsOn: ["M12"],
+      proof: { artifacts: [P("LOG", 1, "Traveller QR check-out at the departure terminal")], gpsRadiusM: 500, criteria: ["Arrival at the terminal at least 3 hours before an international departure (2 hours domestic)"] },
+      lockRule: "Released on the traveller's QR check-out.", disputeRule: "A late drop-off that causes a missed flight goes to a mediator with the transfer log." },
+    { code: "M14", title: "Return flight boarded", type: "GATE", day: 22, bps: 0, dependsOn: ["M13"],
+      proof: { artifacts: [P("IMAGE", 1, "Boarding pass")], criteria: ["Traveller boards the return flight on the ticketed date"] },
+      lockRule: "Traveller uploads the boarding pass.", disputeRule: "Airline schedule changes are handled under the supplier-changes clause." },
+    { code: "M15", title: "Trip close-out", type: "PAY", day: 24, bps: 700, dependsOn: ["M14"],
+      proof: { artifacts: [P("PDF", 1, "Final statement showing no supplier balances outstanding"), P("SIGNATURE", 1, "Traveller close-out")], criteria: ["Every supplier on the itinerary is paid in full", "Any on-trip refunds owed are listed and settled"] },
+      lockRule: "Traveller signs the close-out.", disputeRule: "Unsettled supplier balances are paid by the agency before release." },
+  ],
+  clauses: [
+    { code: "TPL_SUPPLIER_CHANGES", category: "BASELINE", title: "Supplier changes", body: "If a supplier cancels or changes a service, the agency offers an equal or better replacement at no extra cost, or that milestone's amount is returned to the traveller.", protective: true },
+    { code: "TPL_NOT_DELIVERED", category: "BASELINE", title: "Services not delivered", body: "On-trip milestones are released only after the traveller checks in at the place. A service that does not happen is returned at its milestone amount, less any non-refundable supplier cost shown on the voucher.", protective: true },
+    { code: "TPL_TRAVELLER_DUTIES", category: "BASELINE", title: "Traveller responsibilities", body: "The traveller keeps passports and visas valid and is on time for pickups. A service missed because the traveller was late counts as delivered.", protective: false },
+    { code: "TPL_INCIDENTALS", category: "BASELINE", title: "Costs not included", body: "Meals not in the itinerary, tips, and personal expenses are not part of this contract.", protective: false },
+  ],
+};
+
+export const HYBRID_BLUEPRINTS: BlueprintDef[] = [TRAVEL_TOUR];

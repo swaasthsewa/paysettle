@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PaySettle manuals · PaySettle manual</title>
+<style>
+:root{--ink:#14161c;--muted:#5a6070;--line:#e2e4ea;--bg:#f6f7f9;--card:#fff;--accent:#0f766e;--warn:#8a5c05;--warn-bg:#fdf1dc}
+*{box-sizing:border-box}body{margin:0;font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg)}
+a{color:var(--accent)}a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.skip{position:absolute;left:-999px}.skip:focus{left:12px;top:12px;background:#fff;padding:8px 12px;z-index:2}
+header,main,footer{max-width:980px;margin:0 auto;padding:0 24px}
+header{padding-top:32px}header p.kicker{margin:0;color:var(--accent);font-weight:600}
+h1{font-size:34px;line-height:1.2;margin:6px 0 8px}h2{font-size:24px;margin:40px 0 12px;padding-top:8px;border-top:1px solid var(--line)}h3{font-size:18px;margin:24px 0 8px}
+.lead{font-size:18px;color:var(--muted);max-width:720px}
+nav.toc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 20px;margin:20px 0}
+nav.toc ul{margin:6px 0;padding-left:0;list-style:none;columns:2}nav.toc li{margin:2px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin:16px 0}
+.note{background:var(--warn-bg);border-left:4px solid var(--warn);border-radius:8px;padding:12px 16px;margin:16px 0}
+ol.steps>li{margin:6px 0}
+figure{margin:16px 0 24px}figure img{width:100%;height:auto;max-height:900px;object-fit:cover;object-position:top;border:1px solid var(--line);border-radius:10px;background:#fff}
+figcaption{color:var(--muted);font-size:14px;margin-top:6px}
+table{border-collapse:collapse;width:100%;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:15px}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}th{background:#eef0f4;font-weight:600}
+code{font:14px ui-monospace,SFMono-Regular,Menlo,monospace;background:#eef0f4;padding:1px 5px;border-radius:4px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.grid a.card{display:block;text-decoration:none;color:var(--ink)}.grid a.card:hover{border-color:var(--accent)}
+.grid a.card b{display:block;font-size:18px;color:var(--accent)}
+footer{color:var(--muted);font-size:14px;padding:40px 24px 56px}
+</style>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header>
+<p class="kicker">PaySettle · user manuals</p>
+<h1>PaySettle manuals</h1>
+<p class="lead">One short manual per role. Each explains what the role does, the main tasks step by step with screenshots, what the money states mean, and the limits of this sandbox demo.</p>
+<p><a href="index.html">All manuals</a></p>
+</header>
+<main id="content">
+
+<h2 id="who">Choose your role</h2><div class="grid"><a class="card" href="client.html"><b>Client</b>Fund, review evidence, approve releases, open disputes.</a><a class="card" href="provider.html"><b>Provider</b>Onboard, connect PayPal, submit evidence, follow payouts.</a><a class="card" href="ops.html"><b>Operations</b>Clear risky contracts, watch hold windows, four-eyes.</a><a class="card" href="mediator.html"><b>Mediator</b>Decide sealed disputes and sign verdicts.</a><a class="card" href="finance.html"><b>Finance</b>Ledger, three-way reconciliation, fees.</a><a class="card" href="admin.html"><b>Platform admin</b>Health, webhooks, audit chain, switchboard.</a><a class="card" href="marketing.html"><b>Growth and marketing</b>Anonymous funnel and blueprint studio.</a><a class="card" href="judge.html"><b>Judge</b>Run the six scenarios in the Judge Playground.</a></div>
+<h2 id="idea">The idea in one paragraph</h2>
+<p>Client and provider agree, milestone by milestone, what evidence counts as “done”. The client's money for each tranche is held in the client's PayPal account. The provider submits that evidence; rule-based checks and an AI verifier comment on it; the client approves with a signed decision; PayPal captures that milestone's amount to the provider. If they disagree, only that milestone is frozen and a three-tier process (sealed offers, evidence vault, mediator) decides the split.</p>
+<h2 id="demo">Demo people</h2>
+<table><thead><tr><th scope="col">Person</th><th scope="col">Role</th><th scope="col">Lands on</th></tr></thead><tbody>
+<tr><td>Hackathon Judge</td><td>Judge</td><td><code>/playground</code></td></tr>
+<tr><td>Priya Shah, Dan Okafor</td><td>Client</td><td><code>/client</code></td></tr>
+<tr><td>Meera Iyer, Arjun Rao</td><td>Provider</td><td><code>/provider</code></td></tr>
+<tr><td>Olivia Grant</td><td>Operations</td><td><code>/ops</code></td></tr>
+<tr><td>Marcus Bell, Lena Park</td><td>Mediator</td><td><code>/mediator</code></td></tr>
+<tr><td>Farah Ali</td><td>Finance</td><td><code>/finance</code></td></tr>
+<tr><td>Alex Chen</td><td>Platform admin</td><td><code>/admin</code></td></tr>
+<tr><td>Maya Lopez</td><td>Growth and marketing</td><td><code>/marketing</code></td></tr>
+</tbody></table>
+<p>Sign in on <code>/login</code> under “Explore the live demo”. No password is needed in the sandbox.</p>
+<figure><img src="../screens/01-landing.png" alt="Landing page" loading="lazy"><figcaption>Landing page — <a href="../screens/01-landing.png">open full size</a></figcaption></figure><figure><img src="../screens/04-login.png" alt="Sign-in with the demo people" loading="lazy"><figcaption>Sign-in with the demo people — <a href="../screens/04-login.png">open full size</a></figcaption></figure>
+</main>
+<footer>PaySettle — PayPal AI Hackathon build. Sandbox only: PayPal Sandbox or simulated money; nothing real moves. Screens were captured from the seeded demo with <code>node tools/screens.mjs</code>; your numbers will differ.</footer>
+</body>
+</html>

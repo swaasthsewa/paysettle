@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 380" role="img" aria-labelledby="t d">
+  <title id="t">Three revisions of one contract</title>
+  <desc id="d">Revision 1 from the blueprint; revision 2 prunes M05 and is signed by the client; revision 3 appends C01, voids the earlier signature, and is signed by both parties, which locks the contract.</desc>
+  <rect width="880" height="380" rx="22" fill="#ffffff"/>
+  <g font-family="Outfit, Segoe UI, system-ui, sans-serif" fill="#111418">
+    <!-- column heads -->
+    <g font-size="17" font-weight="600">
+      <text x="40" y="52">Revision 1</text><text x="330" y="52">Revision 2</text><text x="620" y="52">Revision 3</text>
+    </g>
+    <g font-size="13" fill="#4e545c">
+      <text x="40" y="74">from the blueprint</text><text x="330" y="74">prune M05</text><text x="620" y="74">append C01</text>
+      <text x="40" y="316">hash 7f3a…e1</text><text x="330" y="316">hash 2c9d…40</text><text x="620" y="316">hash b81e…5a</text>
+    </g>
+    <!-- milestone stacks -->
+    <g font-size="13.5">
+      <!-- rev 1 -->
+      <rect x="40" y="92" width="220" height="30" rx="8" fill="#e0f2f0"/><text x="54" y="112">M03 Build spec · 5%</text>
+      <rect x="40" y="130" width="220" height="30" rx="8" fill="#e0f2f0"/><text x="54" y="150">M04 Teardown · 8%</text>
+      <rect x="40" y="168" width="220" height="30" rx="8" fill="#e0f2f0"/><text x="54" y="188">M05 Frame check · 7%</text>
+      <rect x="40" y="206" width="220" height="30" rx="8" fill="#e0f2f0"/><text x="54" y="226">M06 Parts · 10%</text>
+      <!-- rev 2 -->
+      <rect x="330" y="92" width="220" height="30" rx="8" fill="#e0f2f0"/><text x="344" y="112">M03 Build spec</text>
+      <rect x="330" y="130" width="220" height="30" rx="8" fill="#e0f2f0"/><text x="344" y="150">M04 Teardown</text>
+      <rect x="330" y="168" width="220" height="30" rx="8" fill="#f7f7fb" stroke="#858b94" stroke-dasharray="5 4"/><text x="344" y="188" fill="#61676f" text-decoration="line-through">M05 Frame check</text><text x="474" y="188" fill="#8a5c05" font-weight="600">pruned</text>
+      <rect x="330" y="206" width="220" height="30" rx="8" fill="#e0f2f0"/><text x="344" y="226">M06 Parts</text>
+      <!-- rev 3 -->
+      <rect x="620" y="92" width="220" height="30" rx="8" fill="#e0f2f0"/><text x="634" y="112">M03 Build spec</text>
+      <rect x="620" y="130" width="220" height="30" rx="8" fill="#e0f2f0"/><text x="634" y="150">M04 Teardown</text>
+      <rect x="620" y="168" width="220" height="30" rx="8" fill="#f7f7fb" stroke="#858b94" stroke-dasharray="5 4"/><text x="634" y="188" fill="#61676f" text-decoration="line-through">M05 Frame check</text>
+      <rect x="620" y="206" width="220" height="30" rx="8" fill="#fdf1dc" stroke="#b45309"/><text x="634" y="226">C01 Dyno pre-check</text><text x="770" y="226" fill="#8a5c05" font-weight="600">added</text>
+      <rect x="620" y="244" width="220" height="30" rx="8" fill="#e0f2f0"/><text x="634" y="264">M06 Parts</text>
+    </g>
+    <!-- arrows -->
+    <g stroke="#111418" stroke-width="2.4" fill="none" stroke-linecap="round">
+      <path d="M272 165 H316"/><path d="M308 158 L318 165 L308 172"/>
+      <path d="M562 165 H606"/><path d="M598 158 L608 165 L598 172"/>
+    </g>
+    <!-- signatures -->
+    <g font-size="13">
+      <rect x="330" y="330" width="176" height="30" rx="15" fill="#fce8e9"/><text x="344" y="350" fill="#c5282f">client · voided at rev 3</text>
+      <rect x="620" y="330" width="108" height="30" rx="15" fill="#e4f6ef"/><text x="634" y="350" fill="#0f7a59">client signed</text>
+      <rect x="734" y="330" width="116" height="30" rx="15" fill="#e4f6ef"/><text x="746" y="350" fill="#0f7a59">provider signed</text>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Judge manual · PaySettle manual</title>
+<style>
+:root{--ink:#14161c;--muted:#5a6070;--line:#e2e4ea;--bg:#f6f7f9;--card:#fff;--accent:#0f766e;--warn:#8a5c05;--warn-bg:#fdf1dc}
+*{box-sizing:border-box}body{margin:0;font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg)}
+a{color:var(--accent)}a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.skip{position:absolute;left:-999px}.skip:focus{left:12px;top:12px;background:#fff;padding:8px 12px;z-index:2}
+header,main,footer{max-width:980px;margin:0 auto;padding:0 24px}
+header{padding-top:32px}header p.kicker{margin:0;color:var(--accent);font-weight:600}
+h1{font-size:34px;line-height:1.2;margin:6px 0 8px}h2{font-size:24px;margin:40px 0 12px;padding-top:8px;border-top:1px solid var(--line)}h3{font-size:18px;margin:24px 0 8px}
+.lead{font-size:18px;color:var(--muted);max-width:720px}
+nav.toc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 20px;margin:20px 0}
+nav.toc ul{margin:6px 0;padding-left:0;list-style:none;columns:2}nav.toc li{margin:2px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin:16px 0}
+.note{background:var(--warn-bg);border-left:4px solid var(--warn);border-radius:8px;padding:12px 16px;margin:16px 0}
+ol.steps>li{margin:6px 0}
+figure{margin:16px 0 24px}figure img{width:100%;height:auto;max-height:900px;object-fit:cover;object-position:top;border:1px solid var(--line);border-radius:10px;background:#fff}
+figcaption{color:var(--muted);font-size:14px;margin-top:6px}
+table{border-collapse:collapse;width:100%;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:15px}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}th{background:#eef0f4;font-weight:600}
+code{font:14px ui-monospace,SFMono-Regular,Menlo,monospace;background:#eef0f4;padding:1px 5px;border-radius:4px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.grid a.card{display:block;text-decoration:none;color:var(--ink)}.grid a.card:hover{border-color:var(--accent)}
+.grid a.card b{display:block;font-size:18px;color:var(--accent)}
+footer{color:var(--muted);font-size:14px;padding:40px 24px 56px}
+</style>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header>
+<p class="kicker">PaySettle · for hackathon judges</p>
+<h1>Judge manual</h1>
+<p class="lead">The Judge Playground drives the real application through six scripted scenarios, so you can see contracts, PayPal holds, evidence, disputes and reconciliation in a few minutes.</p>
+<p><a href="index.html">All manuals</a></p>
+</header>
+<main id="content">
+<nav class="toc" aria-label="On this page"><b>On this page</b><ul><li><a href="#role">What this role does</a></li><li><a href="#signin">Signing in</a></li><li><a href="#t-pick">1. Pick a scenario and a mode</a></li><li><a href="#t-run">2. Run the steps</a></li><li><a href="#t-time">3. Use the time machine and the chaos injector</a></li><li><a href="#t-agents">4. Look at AI and agents</a></li><li><a href="#money">What the money states mean</a></li><li><a href="#limits">Limits of this demo</a></li></ul></nav>
+<h2 id="role">What this role does</h2><p>The judge persona (<b>Hackathon Judge</b>) opens the Judge Playground. Each scenario acts as the seeded people (client, provider, Ops, mediator, Finance) through the same server code the screens use. You can also switch person on <code>/login</code> to look at any role's screens.</p><h2 id="signin">Signing in</h2><p>Open the demo, choose <b>Try the live demo</b> (or go to <code>/login</code>) and pick <b>Hackathon Judge</b> under “Explore the live demo”. No password is needed in the sandbox. You land on <code>/playground</code>.</p><h2 id="tasks">Step by step</h2><section aria-labelledby="t-pick"><h3 id="t-pick">1. Pick a scenario and a mode</h3><p>Fast mock is deterministic and takes a few seconds; Live PayPal Sandbox needs sandbox credentials on the server.</p><ol class="steps"><li>Under <b>Mode</b>, choose <b>Fast mock</b> (or <b>Live PayPal Sandbox</b> when it is available).</li><li>Press <b>Start</b> on a scenario card. A fresh session starts at simulated day 0.</li></ol><figure><img src="../screens/80-playground-start.png" alt="Judge Playground before a scenario runs" loading="lazy"><figcaption>Judge Playground before a scenario runs — <a href="../screens/80-playground-start.png">open full size</a></figcaption></figure></section><section aria-labelledby="t-run"><h3 id="t-run">2. Run the steps</h3><p>Each step says who acts, what it proves, and the result.</p><ol class="steps"><li>Press <b>Run next step</b> to go one at a time, or <b>Run all</b>.</li><li>A ✓ means done (or not needed). In live mode a step may wait for you to approve the hold in PayPal: use <b>Open PayPal approval</b>; the page continues by itself once PayPal confirms.</li><li>Read the four views below: <b>Q1 Client</b> (contract, signatures, money per tranche), <b>Q2 Provider</b> (milestones and payouts), <b>Q3 Ledger and reconciliation</b>, <b>Q4 Wire log</b> (rail calls, webhooks, MCP calls).</li></ol><figure><img src="../screens/81-playground-s1-done.png" alt="S1 after Run all: every step done and the four views filled" loading="lazy"><figcaption>S1 after Run all: every step done and the four views filled — <a href="../screens/81-playground-s1-done.png">open full size</a></figcaption></figure><figure><img src="../screens/82-playground-s4-dispute.png" alt="S4 dispute: sealed offers, vault, verdict and the two settlement legs" loading="lazy"><figcaption>S4 dispute: sealed offers, vault, verdict and the two settlement legs — <a href="../screens/82-playground-s4-dispute.png">open full size</a></figcaption></figure></section><section aria-labelledby="t-time"><h3 id="t-time">3. Use the time machine and the chaos injector</h3><p>Both are labelled as simulated and act on this session only.</p><ol class="steps"><li><b>Time machine</b>: travel to day 22, 25 or 27, or +48 h. The hold watchdog and review timers run, and the message lists what they did.</li><li><b>Chaos injector</b>: valid or spoofed photo, PayPal 503 on release or funding (mock only), duplicate or chargeback webhook, one cent of ledger drift.</li><li><b>Reset to day 0</b> starts a fresh session; the old contract and audit rows are kept.</li></ol></section><section aria-labelledby="t-agents"><h3 id="t-agents">4. Look at AI and agents</h3><p>The account pages show AI status and agent tokens.</p><ol class="steps"><li>Open <b>AI &amp; agents</b> to see whether AI is available, the daily token cap, and the scoped agent tokens used by the MCP server.</li></ol><figure><img src="../screens/83-account-ai-agents.png" alt="AI &amp; agents" loading="lazy"><figcaption>AI &amp; agents — <a href="../screens/83-account-ai-agents.png">open full size</a></figcaption></figure></section>
+<h2 id="scenarios">The six scenarios</h2>
+<table><thead><tr><th scope="col">Scenario</th><th scope="col">What it shows</th></tr></thead><tbody>
+<tr><td>S1 Happy path — Web MVP $6,000</td><td>Blueprint → negotiation → both sign → lock → PayPal hold → three milestones released from one authorization → ledger check.</td></tr>
+<tr><td>S2 Spoofed evidence — photo 85 km away</td><td>EXIF GPS distance flags a photo taken far from the site; the client asks for a fix; a valid photo is approved; the AI verifier only advises.</td></tr>
+<tr><td>S3 Window pressure — Travel</td><td>The hold-expiry watchdog warns at simulated day 22, offers a rollover at day 25, and the remainder moves into a new hold.</td></tr>
+<tr><td>S4 Dispute — about $2,000</td><td>Only one milestone freezes; sealed offers miss; the vault seals; a proposal is advisory; a 75/25 verdict executes as two legs.</td></tr>
+<tr><td>S5 Chaos — 503, duplicate webhook, ledger drift</td><td>A retried release with the same idempotency key gives one payout; a duplicate webhook is ignored; one cent of drift trips the breaker.</td></tr>
+<tr><td>S6 Agentic — Consulting sprint over MCP</td><td>Agents draft, negotiate, request funding and submit evidence through the MCP server; only people approve holds and releases.</td></tr>
+</tbody></table>
+
+<h2 id="money">What the money states mean</h2>
+<p>PaySettle never keeps the client's money in its own account. Each <b>tranche</b> (a block of milestones that fits inside one PayPal hold window) is an authorization on the client's PayPal account; each approved milestone is a partial capture from it.</p>
+<table>
+<thead><tr><th scope="col">You see</th><th scope="col">Where the money is</th></tr></thead>
+<tbody>
+<tr><td>Planned — not funded</td><td>Nowhere yet. The contract is signed and locked; the client has not approved the PayPal hold.</td></tr>
+<tr><td>Waiting for PayPal approval</td><td>The order exists in PayPal; the client still has to approve it there. Nothing is reserved until they do.</td></tr>
+<tr><td>Held in PayPal</td><td>Reserved on the client's PayPal account (an authorization). Not paid to anyone yet.</td></tr>
+<tr><td>Partly released</td><td>Some milestones were approved and captured to the provider; the rest is still held.</td></tr>
+<tr><td>Released</td><td>That milestone's amount was captured to the provider's PayPal account, minus the platform fee (2.5% per release in the demo).</td></tr>
+<tr><td>Frozen: in dispute</td><td>Only the disputed milestone's amount is frozen; it stays held in PayPal while the dispute runs. Other milestones carry on.</td></tr>
+<tr><td>Returned to client</td><td>Released back to the client: the unused part of the hold is voided, or a captured amount is refunded after a verdict.</td></tr>
+<tr><td>Rolled over</td><td>The hold window was closing, so the unfinished remainder moved into a new tranche that the client funds again.</td></tr>
+<tr><td>Settling / Closed</td><td>The hold window is ending: approved work is paid and unstarted milestones go back to the client. Closed means nothing is left on that tranche.</td></tr>
+<tr><td>Paused for checks</td><td>Reconciliation found a difference between the contract, the ledger and PayPal. Releases on that tranche wait until Finance resolves it.</td></tr>
+</tbody></table>
+
+<h2 id="limits">Limits of this demo</h2>
+<ul>
+<li><b>Sandbox only.</b> Money is either PayPal Sandbox money or simulated by the mock rail (“Simulated PayPal (mock)”). Nothing real moves, and the yellow banner at the top of every app page says so.</li>
+<li><b>The mock rail keeps its records in memory.</b> After a server restart, Finance's reconciliation may show older tranches as “no PayPal data”; the ledger is still checked against the contract.</li>
+<li><b>AI is advisory.</b> The AI verifier, the mediation proposal and the drafting help only suggest. People approve, sign and decide; the rule-based checks run with or without AI. Without an AI key the panels say “AI unavailable”.</li>
+<li><b>Time can be simulated.</b> The Judge Playground moves a session's virtual clock only; deadlines you see on seeded data use each contract's own clock.</li>
+<li><b>Demo people are shared.</b> Everyone using the demo signs in as the same personas, and Playground scenarios add contracts to them, so lists grow over time.</li>
+<li>PaySettle is a hackathon build, not a licensed payment, escrow or legal service. Contract text and dispute outcomes are not legal advice.</li>
+</ul>
+
+</main>
+<footer>PaySettle — PayPal AI Hackathon build. Sandbox only: PayPal Sandbox or simulated money; nothing real moves. Screens were captured from the seeded demo with <code>node tools/screens.mjs</code>; your numbers will differ.</footer>
+</body>
+</html>

@@ -1,0 +1,296 @@
+{
+ "set": "A4 mediator splits",
+ "requirement": "A4, A6",
+ "target": {
+  "metric": "share of cases within 10 points of the reference split",
+  "min": 0.8
+ },
+ "note": "PRD 1.0's remediation matrix is not in the repository; cases are built from the dispute rules of the shipped blueprints and the playground scenarios S2 and S4.",
+ "cases": [
+  {
+   "id": "M01",
+   "source": "Consulting M07 · Partial UAT: pro-rata by scripts passed",
+   "referenceShareBps": 7500,
+   "input": {
+    "disputeRule": "Partial UAT: pro-rata by scripts passed.",
+    "clauses": [
+     "Work outside the signed design is a change request with its own price and milestone."
+    ],
+    "evidence": [
+     "UAT sign-off sheet: 12 scripts in scope; key users signed 9 of 12 scripts as passed. Scripts 10–12 (intercompany billing) failed."
+    ],
+    "rebuttals": [
+     "Provider: scripts 10–12 failed because the client's test data was not loaded on time.",
+     "Client: test data was loaded on day 18 as agreed in the kickoff minutes."
+    ],
+    "bids": [
+     {
+      "role": "client",
+      "shareBps": 5000
+     },
+     {
+      "role": "provider",
+      "shareBps": 10000
+     }
+    ],
+    "amountCents": 180000
+   }
+  },
+  {
+   "id": "M02",
+   "source": "Consulting M09 · Unclosed tickets: per-ticket deduction",
+   "referenceShareBps": 8000,
+   "input": {
+    "disputeRule": "Unclosed tickets: per-ticket deduction (each unclosed ticket deducts an equal share of 10 planned tickets).",
+    "clauses": [],
+    "evidence": [
+     "Hypercare log: 10 tickets raised; 8 of 10 closed, 2 open (both severity 3) at handover."
+    ],
+    "rebuttals": [
+     "Client: the two open tickets block month-end reporting.",
+     "Provider: both are cosmetic report-layout issues; workaround documented."
+    ],
+    "bids": [
+     {
+      "role": "client",
+      "shareBps": 6000
+     },
+     {
+      "role": "provider",
+      "shareBps": 9500
+     }
+    ],
+    "amountCents": 120000
+   }
+  },
+  {
+   "id": "M03",
+   "source": "Web M04 · Per-feature pro-rata if some features are missing",
+   "referenceShareBps": 7500,
+   "input": {
+    "disputeRule": "Per-feature pro-rata if some features are missing.",
+    "clauses": [
+     "New features after M01 are priced as change requests and added to a later tranche."
+    ],
+    "evidence": [
+     "Walkthrough video shows 6 of 8 backlog features working on staging.",
+     "Backlog (signed at M01) lists 8 features."
+    ],
+    "rebuttals": [
+     "Client: payments and notifications are the two missing features and they matter most.",
+     "Provider: notifications was redefined by the client on day 12 (change request CR-3 not yet signed)."
+    ],
+    "bids": [
+     {
+      "role": "client",
+      "shareBps": 4000
+     },
+     {
+      "role": "provider",
+      "shareBps": 9000
+     }
+    ],
+    "amountCents": 250000
+   }
+  },
+  {
+   "id": "M04",
+   "source": "Interior M03 (Playground S4) · Millwork partly installed",
+   "referenceShareBps": 7500,
+   "input": {
+    "disputeRule": "Pro-rata by installed units against the signed drawing set.",
+    "clauses": [
+     "Materials ordered under M02 remain the client's property."
+    ],
+    "evidence": [
+     "Site photos with GPS within 30 m: 3 of 4 units installed per drawing M-04 (wardrobe, shelving, desk). The kitchen island unit is not installed.",
+     "Supplier note: island worktop delayed by the supplier, 2 weeks."
+    ],
+    "rebuttals": [
+     "Client: I want 50% back because the room is unusable without the island.",
+     "Provider: three quarters of the work is done and photographed."
+    ],
+    "bids": [
+     {
+      "role": "client",
+      "shareBps": 5000
+     },
+     {
+      "role": "provider",
+      "shareBps": 9000
+     }
+    ],
+    "amountCents": 200000
+   }
+  },
+  {
+   "id": "M05",
+   "source": "Web M05 · Each failed check listed; fix within 72 hours (not fixed)",
+   "referenceShareBps": 3300,
+   "input": {
+    "disputeRule": "Each failed check listed; fix within 72 hours. Pro-rata by checks passed if not fixed.",
+    "clauses": [],
+    "evidence": [
+     "Quality pass reports: 1 of 3 checks passed (dependency scan clean). Lighthouse mobile 71 (target ≥ 85); accessibility scan 4 serious issues.",
+     "Fix request sent on day 21; resubmission on day 25 shows the same scores."
+    ],
+    "rebuttals": [
+     "Provider: the performance target is unrealistic with the client's chosen analytics scripts."
+    ],
+    "bids": [
+     {
+      "role": "client",
+      "shareBps": 2000
+     },
+     {
+      "role": "provider",
+      "shareBps": 8000
+     }
+    ],
+    "amountCents": 150000
+   }
+  },
+  {
+   "id": "M06",
+   "source": "Consulting M01 · Client delay extends dates day-for-day",
+   "referenceShareBps": 10000,
+   "input": {
+    "disputeRule": "Client delay in access extends all dates day for day; a milestone delayed only by client access is not a provider failure.",
+    "clauses": [
+     "Confidentiality applies to client data."
+    ],
+    "evidence": [
+     "Access ticket log: system access requested day 1, granted day 9 by client IT.",
+     "Assessment report delivered day 12 (target day 5 + 7 days of client delay = day 12), 24 pages, all 8 processes covered."
+    ],
+    "rebuttals": [
+     "Client: the report was late."
+    ],
+    "bids": [
+     {
+      "role": "client",
+      "shareBps": 6000
+     },
+     {
+      "role": "provider",
+      "shareBps": 10000
+     }
+    ],
+    "amountCents": 120000
+   }
+  },
+  {
+   "id": "M07",
+   "source": "Web M06 · Rollback event goes to a mediator",
+   "referenceShareBps": 2000,
+   "input": {
+    "disputeRule": "Rollback event goes to a mediator.",
+    "clauses": [
+     "The provider fixes defects against the agreed acceptance criteria for 30 days after launch."
+    ],
+    "evidence": [
+     "Launch log: production deploy on day 24 rolled back after 40 minutes because database migrations failed; site restored from backup.",
+     "No second launch attempt within the window. Launch checklist not signed."
+    ],
+    "rebuttals": [
+     "Provider: the migration failed because the client changed the production database version without notice.",
+     "Client: no notice was required; the version is listed in the hosting clause as client-managed."
+    ],
+    "bids": [
+     {
+      "role": "client",
+      "shareBps": 0
+     },
+     {
+      "role": "provider",
+      "shareBps": 6000
+     }
+    ],
+    "amountCents": 150000
+   }
+  },
+  {
+   "id": "M08",
+   "source": "Classic car · Spoofed photos then valid proof (Playground S2)",
+   "referenceShareBps": 10000,
+   "input": {
+    "disputeRule": "Evidence must be taken at the workshop (GPS within 500 m); missing items listed and fixed within 72 hours.",
+    "clauses": [],
+    "evidence": [
+     "First submission: 3 photos with GPS 85 km from the workshop (blocked).",
+     "Second submission within 48 h: 3 photos and a 2-minute drive video at the workshop, plate visible, motor and battery installed."
+    ],
+    "rebuttals": [
+     "Client: the first photos were fake, so I do not trust the provider."
+    ],
+    "bids": [
+     {
+      "role": "client",
+      "shareBps": 5000
+     },
+     {
+      "role": "provider",
+      "shareBps": 10000
+     }
+    ],
+    "amountCents": 300000
+   }
+  },
+  {
+   "id": "M09",
+   "source": "Travel · Force majeure (airport closure)",
+   "referenceShareBps": 5000,
+   "input": {
+    "disputeRule": "Force majeure: unrecoverable costs are shared 50/50; recoverable amounts are refunded.",
+    "clauses": [
+     "Bookings cancelled by the provider are refunded in full."
+    ],
+    "evidence": [
+     "Airport closed for 3 days by the civil aviation authority (notice attached). Two nights of non-refundable hotel bookings were lost; supplier refused credit."
+    ],
+    "rebuttals": [
+     "Client: I want everything back.",
+     "Provider: the hotel nights are non-refundable and I paid them."
+    ],
+    "bids": [
+     {
+      "role": "client",
+      "shareBps": 0
+     },
+     {
+      "role": "provider",
+      "shareBps": 10000
+     }
+    ],
+    "amountCents": 80000
+   }
+  },
+  {
+   "id": "M10",
+   "source": "Roofing · Inspection failed, no fix within window",
+   "referenceShareBps": 0,
+   "input": {
+    "disputeRule": "Release only after the city inspection certificate; failed inspection must be fixed within 72 hours or the amount returns to the client.",
+    "clauses": [],
+    "evidence": [
+     "City inspection report: FAILED (flashing missing on 2 valleys). Re-inspection not requested within 72 hours.",
+     "No certificate issued."
+    ],
+    "rebuttals": [
+     "Provider: the work is 95% done."
+    ],
+    "bids": [
+     {
+      "role": "client",
+      "shareBps": 0
+     },
+     {
+      "role": "provider",
+      "shareBps": 9500
+     }
+    ],
+    "amountCents": 400000
+   }
+  }
+ ]
+}

@@ -1,0 +1,44 @@
+/* A10 · the judge tour. Prefix tour-. Uses the design tokens of app/globals.css only.
+   The dialog is a native <dialog> in the top layer; the resume bar is a small fixed bar that never covers the page centre.
+   Motion: one fade on open; the global prefers-reduced-motion and data-motion rules switch it off. */
+
+.tour-dialog { width: min(560px, 100vw - 24px); max-height: min(760px, 100dvh - 24px); margin: auto; padding: 0; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--card); color: var(--ink); box-shadow: 0 2px 6px rgba(17, 20, 24, 0.08), 0 28px 60px -24px rgba(17, 20, 24, 0.45); overflow: auto; overscroll-behavior: contain; }
+.tour-dialog::backdrop { background: rgba(10, 12, 16, 0.5); }
+.tour-dialog[open] { animation: tour-in 0.2s cubic-bezier(0.22, 1, 0.36, 1); }
+@keyframes tour-in { from { opacity: 0; transform: translateY(10px); } }
+.tour-in { padding: 20px 22px 18px; display: flex; flex-direction: column; gap: 10px; font-size: 15.5px; line-height: 1.5; }
+.tour-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.tour-count { font-size: 13px; color: var(--ink-3); font-weight: 500; }
+.tour-tag { font-size: 13.5px; font-weight: 600; color: var(--kicker, var(--ok)); margin-top: 2px; }
+.tour-title { font-size: 23px; line-height: 1.15; letter-spacing: -0.025em; }
+.tour-title:focus { outline: none; }
+.tour-title:focus-visible { outline: 2px solid var(--g1); outline-offset: 4px; }
+.tour-body { color: var(--ink-2); }
+.tour-look-h { font-size: 14px; font-weight: 600; margin-top: 4px; }
+.tour-look { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 4px; color: var(--ink-2); font-size: 14.5px; }
+.tour-go { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.tour-steps ol { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 2px; }
+.tour-dot { width: 26px; height: 26px; display: grid; place-items: center; border: 0; border-radius: 50%; background: transparent; cursor: pointer; padding: 0; }
+.tour-dot i { width: 10px; height: 10px; border-radius: 50%; background: var(--line-2); box-shadow: inset 0 0 0 1px var(--ink-3); }
+.tour-dot[aria-current="step"] i { width: 12px; height: 12px; background: var(--g1); box-shadow: none; }
+.tour-dot:hover i { background: var(--ink-3); }
+.tour-nav { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; border-top: 1px solid var(--line); padding-top: 12px; margin-top: 2px; }
+.tour-nav .btn-d { margin-left: auto; }
+.tour-keys { font-size: 12.5px; color: var(--ink-3); }
+.tour-x { flex: none; width: 36px; height: 36px; display: inline-grid; place-items: center; border: 1px solid transparent; border-radius: 50%; background: transparent; color: var(--ink-2); cursor: pointer; }
+.tour-x:hover { background: var(--sunken); color: var(--ink); }
+
+.tour-bar { position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 60; display: flex; align-items: center; gap: 8px; max-width: min(460px, 100vw - 32px); padding: 8px 8px 8px 16px; border: 1px solid var(--line-2); border-radius: var(--r-pill); background: var(--card); color: var(--ink); box-shadow: 0 2px 6px rgba(17, 20, 24, 0.08), 0 18px 40px -18px rgba(17, 20, 24, 0.4); font-size: 14px; }
+.tour-bar-t { min-width: 0; display: flex; gap: 6px; align-items: baseline; }
+.tour-bar-t span { color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tour-bar .tour-x { width: 32px; height: 32px; }
+/* the app's bottom tab bar (phones and tablets) sits under the resume bar */
+@media (max-width: 980px) { body:has(.tabs) .tour-bar { bottom: calc(78px + env(safe-area-inset-bottom, 0px)); } }
+@media (max-width: 520px) {
+  .tour-bar { left: 12px; right: 12px; max-width: none; }
+  .tour-nav .btn-gh { order: 3; width: 100%; }
+}
+@media print { .tour-bar, .tour-dialog { display: none !important; } }
+@media (pointer: coarse) { .tour-keys { display: none; } }
+/* a compact start button inside the app's sandbox banner (judge persona) */
+.sim-banner .tour-inline { margin-left: 10px; padding: 2px 12px; font-size: 12.5px; vertical-align: baseline; color: var(--ink); }

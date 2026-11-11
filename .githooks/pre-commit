@@ -1,0 +1,5 @@
+#!/bin/sh
+# P8 · refuse a commit that adds something that looks like a secret, or a former project name.
+# Turn on once per clone with: npm run hooks
+node tools/secret-scan.mjs --staged || exit 1
+node tools/no-old-name.mjs || exit 1

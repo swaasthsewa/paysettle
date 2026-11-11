@@ -1,0 +1,739 @@
+{
+ "set": "A3 evidence match",
+ "requirement": "A3, A6",
+ "target": {
+  "metric": "agreement with labelled recommendation",
+  "min": 0.85,
+  "spoofedMet": 0
+ },
+ "note": "Files are described as text (the runner sends the description as the file's extracted text). Signals use the evidence module's shape {code, level, detail}.",
+ "cases": [
+  {
+   "id": "E01",
+   "vertical": "web",
+   "spoofed": false,
+   "expected": "approve",
+   "spec": {
+    "artifacts": [
+     {
+      "kind": "LINK",
+      "min": 1
+     },
+     {
+      "kind": "LOG",
+      "min": 1
+     }
+    ],
+    "criteria": [
+     "CI is green on the main branch",
+     "API documentation lists every endpoint"
+    ]
+   },
+   "files": [
+    {
+     "name": "link-1.url",
+     "type": "text/uri-list",
+     "text": "https://staging.example.dev/api/docs — OpenAPI page listing 14 endpoints: /auth/login, /auth/logout, /projects (GET, POST), /projects/{id} (GET, PATCH, DELETE), /tasks (GET, POST), /tasks/{id} (GET, PATCH, DELETE), /health, /metrics. Backlog lists the same 14 endpoints.",
+     "signals": []
+    },
+    {
+     "name": "ci-run-4821.log",
+     "type": "text/plain",
+     "text": "GitHub Actions run #4821 on branch main, commit 9f2c1ab: build ok, 214 tests passed, 0 failed, 0 skipped. Status: success.",
+     "signals": []
+    }
+   ]
+  },
+  {
+   "id": "E02",
+   "vertical": "web",
+   "spoofed": false,
+   "expected": "request_fix",
+   "spec": {
+    "artifacts": [
+     {
+      "kind": "LINK",
+      "min": 1
+     },
+     {
+      "kind": "LOG",
+      "min": 1
+     }
+    ],
+    "criteria": [
+     "CI is green on the main branch",
+     "API documentation lists every endpoint"
+    ]
+   },
+   "files": [
+    {
+     "name": "link-1.url",
+     "type": "text/uri-list",
+     "text": "https://staging.example.dev/api/docs — lists 9 of the 14 endpoints in the backlog; /tasks endpoints missing.",
+     "signals": []
+    },
+    {
+     "name": "ci-run-4822.log",
+     "type": "text/plain",
+     "text": "GitHub Actions run #4822 on branch main: 201 passed, 13 failed. Status: failure.",
+     "signals": []
+    }
+   ]
+  },
+  {
+   "id": "E03",
+   "vertical": "web",
+   "spoofed": false,
+   "expected": "approve",
+   "spec": {
+    "artifacts": [
+     {
+      "kind": "PDF",
+      "min": 1,
+      "note": "Lighthouse report (mobile ≥ 85)"
+     },
+     {
+      "kind": "PDF",
+      "min": 1,
+      "note": "Accessibility scan"
+     }
+    ],
+    "criteria": [
+     "Lighthouse mobile performance ≥ 85 on staging",
+     "No serious accessibility issues"
+    ]
+   },
+   "files": [
+    {
+     "name": "lighthouse-mobile.pdf",
+     "type": "application/pdf",
+     "text": "Lighthouse 12 report for https://staging.example.dev, form factor mobile, generated 2026-11-03: Performance 91, Accessibility 98, Best practices 100, SEO 100.",
+     "signals": []
+    },
+    {
+     "name": "axe-scan.pdf",
+     "type": "application/pdf",
+     "text": "axe-core scan of 18 pages on staging, 2026-11-03: 0 critical, 0 serious, 3 moderate, 5 minor issues.",
+     "signals": []
+    }
+   ]
+  },
+  {
+   "id": "E04",
+   "vertical": "web",
+   "spoofed": false,
+   "expected": "request_fix",
+   "spec": {
+    "artifacts": [
+     {
+      "kind": "PDF",
+      "min": 1,
+      "note": "Lighthouse report (mobile ≥ 85)"
+     },
+     {
+      "kind": "PDF",
+      "min": 1,
+      "note": "Accessibility scan"
+     }
+    ],
+    "criteria": [
+     "Lighthouse mobile performance ≥ 85 on staging",
+     "No serious accessibility issues"
+    ]
+   },
+   "files": [
+    {
+     "name": "lighthouse-mobile.pdf",
+     "type": "application/pdf",
+     "text": "Lighthouse 12 report for https://staging.example.dev, mobile: Performance 72, Accessibility 95.",
+     "signals": []
+    }
+   ]
+  },
+  {
+   "id": "E05",
+   "vertical": "web",
+   "spoofed": true,
+   "expected": "request_fix",
+   "mismatch": "report is for a different site",
+   "spec": {
+    "artifacts": [
+     {
+      "kind": "PDF",
+      "min": 1,
+      "note": "Lighthouse report (mobile ≥ 85)"
+     }
+    ],
+    "criteria": [
+     "Lighthouse mobile performance ≥ 85 on staging (https://staging.example.dev)"
+    ]
+   },
+   "files": [
+    {
+     "name": "lighthouse.pdf",
+     "type": "application/pdf",
+     "text": "Lighthouse 12 report for https://www.google.com, form factor mobile: Performance 99.",
+     "signals": [
+      {
+       "code": "URL_MISMATCH",
+       "level": "fail",
+       "detail": "report URL is not the contract's staging URL"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "E06",
+   "vertical": "consulting",
+   "spoofed": false,
+   "expected": "approve",
+   "spec": {
+    "artifacts": [
+     {
+      "kind": "PDF",
+      "min": 1,
+      "note": "Test cases with ≥ 95% passed"
+     },
+     {
+      "kind": "PDF",
+      "min": 1,
+      "note": "Defect log"
+     }
+    ],
+    "criteria": [
+     "≥ 95% of integration test cases pass",
+     "No open severity-1 defects"
+    ]
+   },
+   "files": [
+    {
+     "name": "integration-tests.pdf",
+     "type": "application/pdf",
+     "text": "Integration test summary, 2026-11-05: 160 cases executed, 156 passed, 4 failed (97.5% passed). Failed cases all severity 3.",
+     "signals": []
+    },
+    {
+     "name": "defect-log.pdf",
+     "type": "application/pdf",
+     "text": "Defect log: 11 defects. Severity 1: 0 open, 1 closed. Severity 2: 0 open. Severity 3: 4 open.",
+     "signals": []
+    }
+   ]
+  },
+  {
+   "id": "E07",
+   "vertical": "consulting",
+   "spoofed": false,
+   "expected": "request_fix",
+   "spec": {
+    "artifacts": [
+     {
+      "kind": "PDF",
+      "min": 1,
+      "note": "Test cases with ≥ 95% passed"
+     },
+     {
+      "kind": "PDF",
+      "min": 1,
+      "note": "Defect log"
+     }
+    ],
+    "criteria": [
+     "≥ 95% of integration test cases pass",
+     "No open severity-1 defects"
+    ]
+   },
+   "files": [
+    {
+     "name": "integration-tests.pdf",
+     "type": "application/pdf",
+     "text": "Integration test summary: 160 cases executed, 149 passed (93.1%).",
+     "signals": []
+    },
+    {
+     "name": "defect-log.pdf",
+     "type": "application/pdf",
+     "text": "Defect log: Severity 1: 2 open (posting to wrong GL account; MRP run aborts).",
+     "signals": []
+    }
+   ]
+  },
+  {
+   "id": "E08",
+   "vertical": "consulting",
+   "spoofed": false,
+   "expected": "approve",
+   "spec": {
+    "artifacts": [
+     {
+      "kind": "PDF",
+      "min": 1,
+      "note": "Assessment report ≥ 10 pages"
+     },
+     {
+      "kind": "PDF",
+      "min": 1,
+      "note": "Process list"
+     }
+    ],
+    "criteria": [
+     "Every process in scope is described",
+     "Gaps are listed with impact"
+    ]
+   },
+   "files": [
+    {
+     "name": "assessment.pdf",
+     "type": "application/pdf",
+     "text": "Current-state assessment, 24 pages. Sections for all 8 processes in scope (demand planning, supply planning, S&OP, inventory, procurement, production scheduling, order promising, reporting). Chapter 9: 17 gaps, each with business impact and priority.",
+     "signals": []
+    },
+    {
+     "name": "process-list.pdf",
+     "type": "application/pdf",
+     "text": "Process list with the same 8 processes and owners.",
+     "signals": []
+    }
+   ]
+  },
+  {
+   "id": "E09",
+   "vertical": "consulting",
+   "spoofed": false,
+   "expected": "request_fix",
+   "spec": {
+    "artifacts": [
+     {
+      "kind": "PDF",
+      "min": 1,
+      "note": "Assessment report ≥ 10 pages"
+     },
+     {
+      "kind": "PDF",
+      "min": 1,
+      "note": "Process list"
+     }
+    ],
+    "criteria": [
+     "Every process in scope is described",
+     "Gaps are listed with impact"
+    ]
+   },
+   "files": [
+    {
+     "name": "assessment.pdf",
+     "type": "application/pdf",
+     "text": "Current-state assessment, 6 pages. Describes 5 of the 8 processes in scope; no gap list.",
+     "signals": []
+    }
+   ]
+  },
+  {
+   "id": "E10",
+   "vertical": "interior",
+   "spoofed": false,
+   "expected": "approve",
+   "spec": {
+    "artifacts": [
+     {
+      "kind": "IMAGE",
+      "min": 3,
+      "note": "Installed millwork, one per wall"
+     }
+    ],
+    "gpsRadiusM": 200,
+    "criteria": [
+     "Millwork installed on all 3 walls per drawing M-04",
+     "Photos taken at the site"
+    ]
+   },
+   "files": [
+    {
+     "name": "wall-a.jpg",
+     "type": "image/jpeg",
+     "text": "Photo: built-in oak shelving on wall A, matches drawing M-04 elevation A; level and fixed.",
+     "signals": [
+      {
+       "code": "GPS_DISTANCE",
+       "level": "ok",
+       "detail": "photo taken 40 m from the site"
+      }
+     ]
+    },
+    {
+     "name": "wall-b.jpg",
+     "type": "image/jpeg",
+     "text": "Photo: wardrobe unit on wall B with doors hung, matches elevation B.",
+     "signals": [
+      {
+       "code": "GPS_DISTANCE",
+       "level": "ok",
+       "detail": "photo taken 40 m from the site"
+      }
+     ]
+    },
+    {
+     "name": "wall-c.jpg",
+     "type": "image/jpeg",
+     "text": "Photo: desk and overhead cabinets on wall C, matches elevation C.",
+     "signals": [
+      {
+       "code": "GPS_DISTANCE",
+       "level": "ok",
+       "detail": "photo taken 40 m from the site"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "E11",
+   "vertical": "interior",
+   "spoofed": true,
+   "expected": "request_fix",
+   "mismatch": "stock photo; duplicate hash found on another contract",
+   "spec": {
+    "artifacts": [
+     {
+      "kind": "IMAGE",
+      "min": 3,
+      "note": "Installed millwork, one per wall"
+     }
+    ],
+    "gpsRadiusM": 200,
+    "criteria": [
+     "Millwork installed on all 3 walls per drawing M-04",
+     "Photos taken at the site"
+    ]
+   },
+   "files": [
+    {
+     "name": "wall-a.jpg",
+     "type": "image/jpeg",
+     "text": "Photo: luxury walk-in closet in a showroom, watermark 'stock' in the corner.",
+     "signals": [
+      {
+       "code": "DUPLICATE_HASH",
+       "level": "fail",
+       "detail": "same file was submitted on another contract"
+      }
+     ]
+    },
+    {
+     "name": "wall-b.jpg",
+     "type": "image/jpeg",
+     "text": "Photo: wardrobe unit on wall B.",
+     "signals": [
+      {
+       "code": "GPS_DISTANCE",
+       "level": "ok",
+       "detail": "photo taken 40 m from the site"
+      }
+     ]
+    },
+    {
+     "name": "wall-c.jpg",
+     "type": "image/jpeg",
+     "text": "Photo: desk on wall C.",
+     "signals": [
+      {
+       "code": "GPS_DISTANCE",
+       "level": "ok",
+       "detail": "photo taken 40 m from the site"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "E12",
+   "vertical": "classic-car",
+   "spoofed": true,
+   "expected": "request_fix",
+   "mismatch": "GPS 85 km from the workshop",
+   "spec": {
+    "artifacts": [
+     {
+      "kind": "IMAGE",
+      "min": 2,
+      "note": "Engine bay after the EV conversion"
+     },
+     {
+      "kind": "VIDEO",
+      "min": 1,
+      "note": "Cold start and drive"
+     }
+    ],
+    "gpsRadiusM": 500,
+    "criteria": [
+     "Electric motor and battery pack installed in the engine bay",
+     "Car drives under its own power"
+    ]
+   },
+   "files": [
+    {
+     "name": "engine-bay-1.jpg",
+     "type": "image/jpeg",
+     "text": "Photo: electric motor mounted in a 1967 coupe engine bay, orange high-voltage cables.",
+     "signals": [
+      {
+       "code": "GPS_DISTANCE",
+       "level": "fail",
+       "detail": "photo taken 85 km from the workshop"
+      }
+     ]
+    },
+    {
+     "name": "engine-bay-2.jpg",
+     "type": "image/jpeg",
+     "text": "Photo: battery pack in the boot.",
+     "signals": [
+      {
+       "code": "GPS_DISTANCE",
+       "level": "fail",
+       "detail": "photo taken 85 km from the workshop"
+      }
+     ]
+    },
+    {
+     "name": "drive.mp4",
+     "type": "video/mp4",
+     "text": "Video: the car drives out of a garage and down a street, 40 s.",
+     "signals": [
+      {
+       "code": "GPS_DISTANCE",
+       "level": "fail",
+       "detail": "video taken 85 km from the workshop"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "E13",
+   "vertical": "classic-car",
+   "spoofed": false,
+   "expected": "approve",
+   "spec": {
+    "artifacts": [
+     {
+      "kind": "IMAGE",
+      "min": 2,
+      "note": "Engine bay after the EV conversion"
+     },
+     {
+      "kind": "VIDEO",
+      "min": 1,
+      "note": "Cold start and drive"
+     }
+    ],
+    "gpsRadiusM": 500,
+    "criteria": [
+     "Electric motor and battery pack installed in the engine bay",
+     "Car drives under its own power"
+    ]
+   },
+   "files": [
+    {
+     "name": "engine-bay-1.jpg",
+     "type": "image/jpeg",
+     "text": "Photo: electric motor mounted in the engine bay of the client's 1967 coupe (plate visible), orange high-voltage cables routed and clamped.",
+     "signals": [
+      {
+       "code": "GPS_DISTANCE",
+       "level": "ok",
+       "detail": "12 m from the workshop"
+      }
+     ]
+    },
+    {
+     "name": "engine-bay-2.jpg",
+     "type": "image/jpeg",
+     "text": "Photo: battery pack installed in the boot with a fused disconnect.",
+     "signals": [
+      {
+       "code": "GPS_DISTANCE",
+       "level": "ok",
+       "detail": "10 m from the workshop"
+      }
+     ]
+    },
+    {
+     "name": "drive.mp4",
+     "type": "video/mp4",
+     "text": "Video: the same car (plate visible) starts silently, drives out of the workshop and around the block, 2 min.",
+     "signals": [
+      {
+       "code": "GPS_DISTANCE",
+       "level": "ok",
+       "detail": "at the workshop"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "E14",
+   "vertical": "travel",
+   "spoofed": true,
+   "expected": "request_fix",
+   "mismatch": "EXIF date before the contract started; different hotel name",
+   "spec": {
+    "artifacts": [
+     {
+      "kind": "PDF",
+      "min": 7,
+      "note": "Booking confirmation per night"
+     }
+    ],
+    "criteria": [
+     "All 7 nights booked at the hotels named in the itinerary",
+     "Bookings in the client's group name"
+    ]
+   },
+   "files": [
+    {
+     "name": "booking-1.pdf",
+     "type": "application/pdf",
+     "text": "Booking confirmation, Hotel Aurora Lisbon, guest name 'Travel group 14', 1 night.",
+     "signals": []
+    },
+    {
+     "name": "booking-2.pdf",
+     "type": "application/pdf",
+     "text": "Booking confirmation, Hotel Aurora Lisbon, guest name 'Travel group 14', 1 night.",
+     "signals": []
+    },
+    {
+     "name": "booking-3.pdf",
+     "type": "application/pdf",
+     "text": "Booking confirmation, Hotel Aurora Lisbon, guest name 'Travel group 14', 1 night.",
+     "signals": []
+    },
+    {
+     "name": "booking-4.pdf",
+     "type": "application/pdf",
+     "text": "Booking confirmation, Hotel Aurora Lisbon, guest name 'Travel group 14', 1 night.",
+     "signals": []
+    },
+    {
+     "name": "booking-5.pdf",
+     "type": "application/pdf",
+     "text": "Booking confirmation, Hotel Aurora Lisbon, guest name 'Travel group 14', 1 night.",
+     "signals": []
+    },
+    {
+     "name": "booking-6.pdf",
+     "type": "application/pdf",
+     "text": "Booking confirmation, Hotel Aurora Lisbon, guest name 'Travel group 14', 1 night.",
+     "signals": []
+    },
+    {
+     "name": "booking-7.pdf",
+     "type": "application/pdf",
+     "text": "Booking confirmation, Hotel Mar Azul Porto, guest name 'J. Doe', 1 night, dated 2024-03-02.",
+     "signals": [
+      {
+       "code": "EXIF_TIME",
+       "level": "fail",
+       "detail": "document created 2 years before the contract"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "E15",
+   "vertical": "telecom",
+   "spoofed": false,
+   "expected": "request_fix",
+   "spec": {
+    "artifacts": [
+     {
+      "kind": "IMAGE",
+      "min": 4,
+      "note": "Antenna mounts, each sector"
+     },
+     {
+      "kind": "PDF",
+      "min": 1,
+      "note": "Torque log"
+     }
+    ],
+    "gpsRadiusM": 100,
+    "criteria": [
+     "Antennas mounted on all 3 sectors",
+     "Bolts torqued to spec per the torque log"
+    ]
+   },
+   "files": [
+    {
+     "name": "sector-1.jpg",
+     "type": "image/jpeg",
+     "text": "Photo: antenna mounted on sector 1.",
+     "signals": [
+      {
+       "code": "GPS_DISTANCE",
+       "level": "ok",
+       "detail": "20 m from the tower"
+      }
+     ]
+    },
+    {
+     "name": "sector-2.jpg",
+     "type": "image/jpeg",
+     "text": "Photo: antenna mounted on sector 2.",
+     "signals": [
+      {
+       "code": "GPS_DISTANCE",
+       "level": "ok",
+       "detail": "25 m from the tower"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "E16",
+   "vertical": "web",
+   "spoofed": false,
+   "expected": "unclear",
+   "spec": {
+    "artifacts": [
+     {
+      "kind": "VIDEO",
+      "min": 1,
+      "note": "Walkthrough of each feature"
+     },
+     {
+      "kind": "LINK",
+      "min": 1
+     }
+    ],
+    "criteria": [
+     "Each backlog feature works on staging as demonstrated",
+     "End-to-end tests pass"
+    ]
+   },
+   "files": [
+    {
+     "name": "walkthrough.mp4",
+     "type": "video/mp4",
+     "text": "Video, 6 min: shows sign-in, project list and task board. The backlog in the contract is not attached here, so it is unknown whether every feature is shown.",
+     "signals": []
+    },
+    {
+     "name": "link-1.url",
+     "type": "text/uri-list",
+     "text": "https://staging.example.dev — reachable. No end-to-end report attached.",
+     "signals": []
+    }
+   ],
+   "accept": [
+    "unclear",
+    "request_fix"
+   ]
+  }
+ ]
+}

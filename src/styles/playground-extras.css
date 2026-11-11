@@ -1,0 +1,42 @@
+/* F3.03 out-of-sequence override panel, A6 "Try to cheat", A12 Pair A vs Pair B. Global tokens only. */
+
+/* F3.03 override panel (milestone page) */
+.pgx-so p { margin: 0; }
+.pgx-so-form { border-top: 1px solid var(--line); padding-top: 12px; }
+.pgx-so-reason { background: var(--sunken); border-radius: var(--r-sm); padding: 8px 12px; overflow-wrap: anywhere; white-space: pre-wrap; }
+.pgx-check { align-items: flex-start; font-weight: 500; gap: 8px; }
+.pgx-check input { margin-top: 3px; }
+.pgx-mfa { max-width: 260px; }
+
+/* A6 Try to cheat */
+.pgx-steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; color: var(--ink-2); }
+.pgx-actions { gap: 8px; flex-wrap: wrap; }
+.pgx-pick { max-width: 360px; }
+.pgx-pick select { width: 100%; }
+.pgx-scroll { max-height: 380px; overflow: auto; }
+.pgx-chain td { vertical-align: top; }
+.pgx-chain tr[data-broken] td { background: var(--danger-bg); }
+.pgx-chain tr[data-broken] td:first-child { box-shadow: inset 4px 0 0 var(--danger); }
+.pgx-hash code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+.pgx-ok { color: var(--ok); font-weight: 600; }
+.pgx-bad { color: var(--danger); }
+.pgx-edit { color: var(--danger); font-weight: 600; overflow-wrap: anywhere; }
+
+/* A12 Pair A vs Pair B */
+.pgx-sides { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 900px) { .pgx-sides { grid-template-columns: minmax(0, 1fr); } }
+.pgx-side { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--card); }
+.pgx-side h3 { font-size: 15px; margin: 0; }
+.pgx-side p { margin: 0; }
+.pgx-side .kv dd { overflow-wrap: anywhere; }
+.pgx-side .btn { align-self: flex-start; }
+.pgx-risk summary { cursor: pointer; font-size: 13.5px; }
+.pgx-risk summary:focus-visible { outline: 2px solid var(--ring-rest); outline-offset: 2px; border-radius: var(--r-sm); }
+.pgx-risk table { margin-top: 8px; }
+.pgx-risk .n { text-align: right; }
+.pgx-diffwrap { max-height: 520px; }
+.pgx-diff caption { text-align: left; font-size: 13px; color: var(--ink-2); padding-bottom: 6px; }
+.pgx-diff td, .pgx-diff th { vertical-align: top; }
+.pgx-diff td[data-changed] { background: color-mix(in srgb, var(--warn-bg) 60%, transparent); }
+.pgx-delta { color: var(--warn); font-weight: 600; font-size: 12px; }
+.pgx-added { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
