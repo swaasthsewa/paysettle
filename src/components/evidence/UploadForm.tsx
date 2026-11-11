@@ -14,8 +14,10 @@ import { SignalList } from "./SignalList";
 
 const kb = (n: number) => (n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
 const guessType = (f: File) => {
+  /* browsers label some files with types we don't list (".log" can arrive as text/x-log): fall back to the extension.
+     The server sniffs the real type from the bytes either way. */
   const t = normalizeType(f.type);
-  if (t) return t;
+  if (t && isAllowedType(t)) return t;
   const ext = f.name.toLowerCase().split(".").pop();
   return ({ jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", pdf: "application/pdf", txt: "text/plain", log: "text/plain", mp4: "video/mp4" } as Record<string, string>)[ext ?? ""] ?? "";
 };
