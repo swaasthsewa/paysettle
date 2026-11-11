@@ -94,6 +94,14 @@ export async function confirmTranche(a: Actor | null, trancheId: string, orderId
   try { hs = await withRetry(() => rail.confirm(t.paypalOrderId!, key)); }
   catch (e) {
     await audit(db, auditActor(a), "money.confirm_failed", t.id, { idemKey: key, error: railMessage(e) });
+    /* TRANSACTION_REFUSED is PayPal's final answer for this order: retrying it can only fail again. Drop the order and put
+       the tranche back to unfunded, so the client can fund it again with a fresh order (and another way to pay). */
+    if (e instanceof RailError && /TRANSACTION_REFUSED/.test(railMessage(e))) {
+      await db.update(tranches).set({ state: trancheMachine.next("AWAITING_APPROVAL", "expire"), paypalOrderId: null, approveUrl: null })
+        .where(and(eq(tranches.id, t.id), eq(tranches.state, "AWAITING_APPROVAL")));
+      await audit(db, auditActor(a), "money.order_refused", t.id, { idemKey: key, orderId: t.paypalOrderId });
+      throw new DomainError("BUYER_ACTION", "PayPal refused this payment, so nothing is held. Fund the tranche again and choose another way to pay in PayPal.");
+    }
     if (e instanceof RailError) throw new DomainError(e.kind === "BUYER_ACTION" ? "BUYER_ACTION" : "RAIL_ERROR", railMessage(e));
     throw e;
   }
