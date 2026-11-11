@@ -24,7 +24,7 @@ const BY_ROLE: Record<Role, MenuGroup[]> = {
 
 export function menuGroups(role: Role, demo: boolean): MenuGroup[] {
   const g = [...BY_ROLE[role]];
-  g.push({ title: "You", icon: "/account", items: [{ href: "/account", label: "Account & security" }, { href: "/account/ai", label: "AI & agents" }, ...(demo ? [{ href: "/login", label: "Switch person" }] : []), { href: "/logout", label: "Sign out" }] });
+  g.push({ title: "You", icon: "/account", items: [{ href: "/account", label: "Account & security" }, { href: "/account/ai", label: "AI & agents" }, { href: "/notifications", label: "Notifications" }, ...(demo ? [{ href: "/login", label: "Switch person" }] : []), { href: "/logout", label: "Sign out" }] });
   return g;
 }
 export const menuPages = (role: Role) => BY_ROLE[role].flatMap((g) => g.items);
