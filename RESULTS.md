@@ -106,7 +106,12 @@ PDFs. The AI only advises: the client approves every release.
 |---|---|---|
 | Health (`/api/health`) on <https://paysettle.onrender.com> | ok: database ok, PayPal Sandbox credentials present | 11 Nov 2026 |
 | Fund a tranche on the hosted demo (client Priya Shah, “Marketing site refresh”, $4,800) | PayPal Sandbox order created (intent AUTHORIZE); the browser is handed to `www.sandbox.paypal.com/checkoutnow`; the tranche shows “Waiting for PayPal approval” with a resume button | 11 Nov 2026 |
-| Buyer approves in PayPal, authorization held, partial capture on release, webhook received | pending: run by hand with the sandbox buyer account | |
+| Buyer approves in PayPal, authorization held | US sandbox buyer approved in PayPal's checkout; order `43116540D03903542` COMPLETED, authorization `1HG48080A7466173T` CREATED for $6,000.00 (contract “Travel booking web app”, Web / SaaS MVP blueprint, driven through the live site) | 11 Nov 2026 |
+| Partial captures on the client's approval | M02 → capture `8EC38566BE7584745` $900.00, M03 → capture `3SF00462RE943801C` $1,200.00 (both partial; authorization PARTIALLY_CAPTURED) | 11 Nov 2026 |
+| Change order funded as its own hold | +$600.00 change order signed by both parties; tranche 2 order `9FG30083GX972594U`, authorization `13D0694202179701H` | 11 Nov 2026 |
+| Dispute settled by sealed offers, paid as two legs | M04 ($1,500.00) frozen; offers 70% and 74% met within 5 points, settled at 72%: capture `7E409808VC9839329` $1,080.00 to the provider, $420.00 returned to the client (released with the authorization's remainder) | 11 Nov 2026 |
+| PayPal webhooks | CHECKOUT.ORDER.APPROVED, PAYMENT.AUTHORIZATION.CREATED and PAYMENT.CAPTURE.COMPLETED received for the orders above, signatures verified, applied once (`/admin/webhooks`) | 11 Nov 2026 |
+| Known PayPal limit | On Rail A1 the order pays the provider, and PayPal returns 403 when the platform voids that authorization. Final captures release the remainder; a return that empties a tranche is recorded and the money goes back to the buyer when the authorization lapses (`money.void_not_permitted`). | 11 Nov 2026 |
 
 ### Simulations
 
