@@ -14,39 +14,38 @@ const fmt = (d: Date) => d.toISOString().replace("T", " ").slice(0, 16) + " UTC"
 const DISPUTABLE = ["SUBMITTED", "REMEDIATION", "ESCALATED"];
 const FINAL = ["RELEASED", "SETTLED_BY_VERDICT", "REFUNDED"];
 
-export function DeadlinePanel({ f, extensions, as, viewerId, workspaceId, currency, disputeId, actions }: {
-  f: DeadlineFacts; extensions: ExtensionView[]; as: "client" | "provider" | "staff" | "other"; viewerId: string; workspaceId: string; currency: string; disputeId: string | null;
-  actions: { request: (fd: FormData) => Promise<void>; decide: (fd: FormData) => Promise<void>; excuse: (fd: FormData) => Promise<void> };
+type Who = "client" | "provider" | "staff" | "other";
+type Actions = { request: (fd: FormData) => Promise<void>; decide: (fd: FormData) => Promise<void>; excuse: (fd: FormData) => Promise<void> };
+
+/** F3.08 Whether the extension request and decision block shows: any LOCKED contract, deadline terms or not. */
+export const extensionsShown = (contractState: string, milestoneState: string) => contractState === "LOCKED" && !FINAL.includes(milestoneState);
+
+/**
+ * F3.08 The deadline panel for a contract without deadline terms: the due day and the extension request and decision
+ * (requestExtension does not need terms), without the late-deduction or early-bonus preview.
+ */
+export function ExtensionOnlyPanel({ milestone: m, extensions, as, viewerId, workspaceId, disputeId, actions }: {
+  milestone: { id: string; state: string; targetDay: number; trancheIdx: number }; extensions: ExtensionView[]; as: Who; viewerId: string; workspaceId: string; disputeId: string | null; actions: Actions;
 }) {
-  const m = f.milestone, a = f.adjustment, done = Boolean(f.stored);
-  const late = f.terms.late, early = f.terms.early;
-  const open = !done && !FINAL.includes(m.state);
-  const pending = extensions.find((x) => x.kind === "EXTENSION" && x.state === "REQUESTED");
-  const hidden = <><input type="hidden" name="workspaceId" value={workspaceId} /><input type="hidden" name="milestoneId" value={m.id} /></>;
-  const deduction = done ? f.stored!.deductionCents : a.deductionCents;
   return (
     <section className="c" id="deadline" aria-labelledby="dl-ms-h">
-      <div className="c-head">
-        <h2 id="dl-ms-h">Deadline</h2>
-        {f.lateness && m.type === "PAY" && <TimingBadge timing={a.timing} daysLate={a.daysLate} daysEarly={a.daysEarly} provisional={!done && f.basis !== "ACCEPTED"} />}
-      </div>
+      <div className="c-head"><h2 id="dl-ms-h">Deadline</h2></div>
       <dl className="kv">
-        <div><dt>Due</dt><dd>{f.dueAt ? <>{fmt(f.dueAt)}<small>Day {f.dueOffsetDays} of tranche {m.trancheIdx}, counted from the PayPal hold (contract clock){f.excusedDays ? ` · ${f.excusedDays} day${f.excusedDays === 1 ? "" : "s"} excused` : ""}</small></> : <>Day {m.targetDay}<small>The clock starts when tranche {m.trancheIdx} is held in PayPal.</small></>}</dd></div>
-        {f.acceptedAt && f.basis !== "IF_DELIVERED_NOW" && <div><dt>{f.basis === "ACCEPTED" ? "Accepted submission" : "Submission in review"}</dt><dd>{fmt(f.acceptedAt)}{f.lateness && f.lateness.reviewExcludedMs > 0 && <small>{Math.round(f.lateness.reviewExcludedMs / 3_600_000)} h of client review not counted</small>}</dd></div>}
-        <div><dt>Terms</dt><dd>
-          {late ? <>Late: −{(late.rateBps / 100).toFixed(2)}% a day after {late.graceDays} grace day{late.graceDays === 1 ? "" : "s"}, up to {(late.capBps / 100).toFixed(2)}%.</> : "No late deduction."}{" "}
-          {early ? <>Early: +{(early.rateBps / 100).toFixed(2)}% a day from {early.minDaysEarly} days early, up to {(early.capBps / 100).toFixed(2)}%; {formatCents(f.poolLeftCents, currency)} of the pool left.</> : "No early bonus."}
-        </dd></div>
+        <div><dt>Due</dt><dd>Day {m.targetDay}<small>Counted from when tranche {m.trancheIdx} is held in PayPal (contract clock).</small></dd></div>
+        <div><dt>Terms</dt><dd>This contract has no deadline terms: no late deduction and no early bonus. The parties can still agree a signed extension.</dd></div>
       </dl>
-      {m.type === "PAY" && (done
-        ? <p><AdjustmentLine a={{ ...f.stored!, countedDays: f.stored!.countedDays }} currency={currency} /></p>
-        : f.lateness
-          ? <p className="dl-adj">{f.basis === "IF_DELIVERED_NOW" ? "If delivered and approved now" : "If this submission is approved"}: {a.deductionCents ? <><b>−{formatCents(a.deductionCents, currency)}</b> late deduction ({a.countedLateDays} counted day{a.countedLateDays === 1 ? "" : "s"}), back to the client.</> : a.bonusCents ? <><b>+{formatCents(a.bonusCents, currency)}</b> early bonus from the pool{a.limitedByPool ? " (limited by what is left in the pool)" : ""}.</> : "no adjustment."}</p>
-          : null)}
-      {as === "provider" && deduction > 0 && DISPUTABLE.includes(m.state) && !disputeId && (
-        <p className="small">Think the deduction is wrong? <Link href={`/client/disputes/new?milestone=${encodeURIComponent(m.id)}&reason=MISSED_DEADLINE`}>Contest it as a dispute</Link> before the client approves; the milestone&apos;s money stays held while it runs.</p>
-      )}
+      <ExtensionsBlock milestoneId={m.id} open={!FINAL.includes(m.state)} extensions={extensions} as={as} viewerId={viewerId} workspaceId={workspaceId} disputeId={disputeId} actions={actions} />
+    </section>
+  );
+}
 
+function ExtensionsBlock({ milestoneId, open, extensions, as, viewerId, workspaceId, disputeId, actions }: {
+  milestoneId: string; open: boolean; extensions: ExtensionView[]; as: Who; viewerId: string; workspaceId: string; disputeId: string | null; actions: Actions;
+}) {
+  const pending = extensions.find((x) => x.kind === "EXTENSION" && x.state === "REQUESTED");
+  const hidden = <><input type="hidden" name="workspaceId" value={workspaceId} /><input type="hidden" name="milestoneId" value={milestoneId} /></>;
+  return (
+    <>
       {(extensions.length > 0 || (open && (as === "client" || as === "provider"))) && <h3 className="small">Extensions and rulings</h3>}
       {extensions.length > 0 && (
         <ul className="dl-ext">
@@ -84,6 +83,41 @@ export function DeadlinePanel({ f, extensions, as, viewerId, workspaceId, curren
           <div className="row wide"><button className="btn btn-sm">Record excused days</button><span className="small muted">Recorded as ruled; it reduces the counted late days.</span></div>
         </form>
       )}
+    </>
+  );
+}
+
+export function DeadlinePanel({ f, extensions, as, viewerId, workspaceId, currency, disputeId, actions }: {
+  f: DeadlineFacts; extensions: ExtensionView[]; as: Who; viewerId: string; workspaceId: string; currency: string; disputeId: string | null; actions: Actions;
+}) {
+  const m = f.milestone, a = f.adjustment, done = Boolean(f.stored);
+  const late = f.terms.late, early = f.terms.early;
+  const open = !done && !FINAL.includes(m.state);
+  const deduction = done ? f.stored!.deductionCents : a.deductionCents;
+  return (
+    <section className="c" id="deadline" aria-labelledby="dl-ms-h">
+      <div className="c-head">
+        <h2 id="dl-ms-h">Deadline</h2>
+        {f.lateness && m.type === "PAY" && <TimingBadge timing={a.timing} daysLate={a.daysLate} daysEarly={a.daysEarly} provisional={!done && f.basis !== "ACCEPTED"} />}
+      </div>
+      <dl className="kv">
+        <div><dt>Due</dt><dd>{f.dueAt ? <>{fmt(f.dueAt)}<small>Day {f.dueOffsetDays} of tranche {m.trancheIdx}, counted from the PayPal hold (contract clock){f.excusedDays ? ` · ${f.excusedDays} day${f.excusedDays === 1 ? "" : "s"} excused` : ""}</small></> : <>Day {m.targetDay}<small>The clock starts when tranche {m.trancheIdx} is held in PayPal.</small></>}</dd></div>
+        {f.acceptedAt && f.basis !== "IF_DELIVERED_NOW" && <div><dt>{f.basis === "ACCEPTED" ? "Accepted submission" : "Submission in review"}</dt><dd>{fmt(f.acceptedAt)}{f.lateness && f.lateness.reviewExcludedMs > 0 && <small>{Math.round(f.lateness.reviewExcludedMs / 3_600_000)} h of client review not counted</small>}</dd></div>}
+        <div><dt>Terms</dt><dd>
+          {late ? <>Late: −{(late.rateBps / 100).toFixed(2)}% a day after {late.graceDays} grace day{late.graceDays === 1 ? "" : "s"}, up to {(late.capBps / 100).toFixed(2)}%.</> : "No late deduction."}{" "}
+          {early ? <>Early: +{(early.rateBps / 100).toFixed(2)}% a day from {early.minDaysEarly} days early, up to {(early.capBps / 100).toFixed(2)}%; {formatCents(f.poolLeftCents, currency)} of the pool left.</> : "No early bonus."}
+        </dd></div>
+      </dl>
+      {m.type === "PAY" && (done
+        ? <p><AdjustmentLine a={{ ...f.stored!, countedDays: f.stored!.countedDays }} currency={currency} /></p>
+        : f.lateness
+          ? <p className="dl-adj">{f.basis === "IF_DELIVERED_NOW" ? "If delivered and approved now" : "If this submission is approved"}: {a.deductionCents ? <><b>−{formatCents(a.deductionCents, currency)}</b> late deduction ({a.countedLateDays} counted day{a.countedLateDays === 1 ? "" : "s"}), back to the client.</> : a.bonusCents ? <><b>+{formatCents(a.bonusCents, currency)}</b> early bonus from the pool{a.limitedByPool ? " (limited by what is left in the pool)" : ""}.</> : "no adjustment."}</p>
+          : null)}
+      {as === "provider" && deduction > 0 && DISPUTABLE.includes(m.state) && !disputeId && (
+        <p className="small">Think the deduction is wrong? <Link href={`/client/disputes/new?milestone=${encodeURIComponent(m.id)}&reason=MISSED_DEADLINE`}>Contest it as a dispute</Link> before the client approves; the milestone&apos;s money stays held while it runs.</p>
+      )}
+
+      <ExtensionsBlock milestoneId={m.id} open={open} extensions={extensions} as={as} viewerId={viewerId} workspaceId={workspaceId} disputeId={disputeId} actions={actions} />
     </section>
   );
 }

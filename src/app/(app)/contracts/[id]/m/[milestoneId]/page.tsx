@@ -2,7 +2,8 @@
  * Milestone page /contracts/[id]/m/[milestoneId] (F3.04, F3.06, F3.07, F3.09, A3).
  * Left: what the contract requires. Right: provider upload with a live checklist, or the client's review of the latest
  * package (files, hashes, signals, AI advice, decision). Below: review countdown and attempt history.
- * Deadline panel (due date, on-time badge, adjustment, extensions) when the contract has deadline terms.
+ * Deadline panel (due date, on-time badge, adjustment, extensions) when the contract has deadline terms; on any other
+ * LOCKED contract the extension request and decision only (F3.08).
  */
 import { SequenceOverridePanel } from "@/components/evidence/SequenceOverridePanel";
 import Link from "next/link";
@@ -23,7 +24,7 @@ import { DecisionPanel } from "@/components/evidence/DecisionPanel";
 import { approveAction, decideExtensionAction, recordExcusedAction, requestExtensionAction, requestFixAction } from "./actions";
 import { deadlineFacts, type DeadlineFacts } from "@/server/money/deadline";
 import { extensionsFor } from "@/server/contracts/deadline";
-import { DeadlinePanel } from "@/components/contracts/DeadlinePanel";
+import { DeadlinePanel, ExtensionOnlyPanel, extensionsShown } from "@/components/contracts/DeadlinePanel";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Milestone" };
@@ -43,7 +44,8 @@ export default async function MilestonePage({ params, searchParams }: { params: 
   const d = await getMilestoneDetail(v, id, milestoneId);
   if (!d) notFound();
   const dl = await deadlineFacts(d.milestone.id);
-  const exts = dl ? await extensionsFor(d.milestone.id) : [];
+  const showExt = !dl && extensionsShown(d.workspace.state, d.milestone.state) && (d.as === "client" || d.as === "provider");
+  const exts = dl || showExt ? await extensionsFor(d.milestone.id) : [];
   const { milestone: m, workspace: ws, tranche, packages, as } = d;
   const amount = formatCents(m.amountCents, ws.currency);
   const latest = packages[0] ?? null;
@@ -104,6 +106,8 @@ export default async function MilestonePage({ params, searchParams }: { params: 
           {sp.dl && <p className="notice" data-b="ok" role="status">{sp.dl}</p>}
           {sp.dlerr && <p className="notice" data-b="danger" role="alert">{sp.dlerr}</p>}
           {dl && <DeadlinePanel f={dl} extensions={exts} as={as ?? "other"} viewerId={v.id} workspaceId={ws.id} currency={ws.currency} disputeId={d.dispute?.id ?? null}
+            actions={{ request: requestExtensionAction, decide: decideExtensionAction, excuse: recordExcusedAction }} />}
+          {showExt && <ExtensionOnlyPanel milestone={m} extensions={exts} as={as ?? "other"} viewerId={v.id} workspaceId={ws.id} disputeId={d.dispute?.id ?? null}
             actions={{ request: requestExtensionAction, decide: decideExtensionAction, excuse: recordExcusedAction }} />}
           {as === "provider" && m.state === "REMEDIATION" && fixReview && (
             <div className="notice" data-b="warn" role="note">

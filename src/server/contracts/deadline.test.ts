@@ -10,6 +10,9 @@ import { newId } from "@/lib/ids";
 import type { DeadlineTerms } from "@/lib/deadline";
 import { DomainError, type Actor } from "../types";
 import { applyChange, createWorkspace, getWorkspace, sign } from "./index";
+import { decideExtension, extensionsFor, requestExtension } from "./deadline";
+import { deadlineFacts } from "@/server/money/deadline";
+import { extensionsShown } from "@/components/contracts/DeadlinePanel";
 
 afterAll(async () => { await pool.end(); });
 
@@ -67,5 +70,23 @@ describe("F2.05 F2.10 deadline terms in the contract", () => {
     const ts = await db.select().from(tranches).where(eq(tranches.workspaceId, id));
     expect(ts.reduce((s, t) => s + t.bonusPoolCents, 0)).toBe(12_000);
     expect(v.bonusPools?.[ts[0].id]).toBe(ts[0].bonusPoolCents);
+  });
+
+  it("F3.08 a LOCKED contract without deadline terms still takes a signed extension, and the milestone page shows the panel", async () => {
+    const { c, p } = await people();
+    const id = await createWorkspace(c, { blueprintCode: "UC_WEB_MVP", title: "No-terms extension test", totalCents: 600_000, providerId: p.id });
+    let v = await getWorkspace(c, id);
+    v = await sign(c, id, v.revision, v.canonicalHash!);
+    v = await sign(p, id, v.revision, v.canonicalHash!);
+    expect(v.state).toBe("LOCKED");
+    const ms = v.milestones.find((m) => m.active)!;
+    expect(await deadlineFacts(ms.id)).toBeNull();
+    expect(extensionsShown(v.state, ms.state)).toBe(true);
+    expect(extensionsShown("DRAFT", ms.state)).toBe(false);
+    expect(extensionsShown(v.state, "RELEASED")).toBe(false);
+    const ext = await requestExtension(p, ms.id, { days: 3, reason: "Staging access arrived late" });
+    await decideExtension(c, ext, "accept");
+    const [x] = await extensionsFor(ms.id);
+    expect(x).toMatchObject({ id: ext, days: 3, state: "ACCEPTED" });
   });
 });
