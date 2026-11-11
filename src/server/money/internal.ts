@@ -219,8 +219,8 @@ export async function openReady(q: Q, workspaceId: string): Promise<string[]> {
 
 /* ── notices (F3.10) ── */
 
-export async function notify(q: Q, w: WorkspaceRow, trancheId: string | null, kind: (typeof moneyNotices.$inferInsert)["kind"], message: string, dedup: string) {
-  const people = [w.clientId, w.providerId].filter((x): x is string => Boolean(x));
+export async function notify(q: Q, w: WorkspaceRow, trancheId: string | null, kind: (typeof moneyNotices.$inferInsert)["kind"], message: string, dedup: string, to?: string[]) {
+  const people = [w.clientId, w.providerId].filter((x): x is string => typeof x === "string" && x.length > 0 && (!to || to.includes(x)));
   for (const userId of people) {
     await q.insert(moneyNotices).values({ id: newId("ntc"), workspaceId: w.id, trancheId, userId, kind, message, dedupKey: `${dedup}:${userId}` }).onConflictDoNothing();
   }

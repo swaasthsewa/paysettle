@@ -19,6 +19,7 @@ import {
   type BlueprintClause, type BlueprintMilestone, type ProofSpec,
 } from "@/db/schema";
 import { SYSTEM_CLAUSES } from "@/data/blueprints/system";
+import { changeOrders, changeOrderSignatures } from "@/db/schema-amend";
 import { audit } from "@/lib/audit";
 import { canonical, canonicalHash } from "@/lib/canonical";
 import { sandboxMode } from "@/lib/clock";
@@ -503,7 +504,10 @@ export async function revisionStamp(a: Actor, id: string): Promise<{ revision: n
   await assertCanRead(db, a, w);
   const sigs = await db.select({ id: signatures.id, v: signatures.voidedAtRev }).from(signatures).where(eq(signatures.workspaceId, id));
   const live = sigs.filter((s) => s.v === null).length;
-  return { revision: w.revision, state: w.state, signatures: live, stamp: `${w.revision}:${w.state}:${live}:${sigs.length}` };
+  /* F2.12 change orders (proposed, signed, declined) refresh the room too */
+  const [co] = await db.select({ id: changeOrders.id, state: changeOrders.state }).from(changeOrders).where(eq(changeOrders.workspaceId, id)).orderBy(desc(changeOrders.no)).limit(1);
+  const coSigs = co ? (await db.select({ id: changeOrderSignatures.id }).from(changeOrderSignatures).where(eq(changeOrderSignatures.changeOrderId, co.id))).length : 0;
+  return { revision: w.revision, state: w.state, signatures: live, stamp: `${w.revision}:${w.state}:${live}:${sigs.length}:${co ? `${co.id}:${co.state}:${coSigs}` : "-"}` };
 }
 
 /** F2.11 queue: contracts waiting for Operations, with the risk parts that put them there. */
@@ -533,3 +537,6 @@ export async function providerOptions(a: Actor): Promise<{ id: string; name: str
   const links = rows.length ? await db.select({ userId: paypalLinks.userId }).from(paypalLinks).where(and(inArray(paypalLinks.userId, rows.map((r) => r.id)), eq(paypalLinks.kind, "merchant"), eq(paypalLinks.receivable, true))) : [];
   return rows.map((r) => ({ ...r, payable: links.some((l) => l.userId === r.id) }));
 }
+
+/** Shared with ./change-orders and ./continuation (same module; not part of the cross-module contract). */
+export const internals = { actorUser, loadWs, loadMs, loadCl, providerFacts, head, assertCanRead, partyRole, saveMs, saveCl, writeRevision, railFromEnv, ORG_WIDE };

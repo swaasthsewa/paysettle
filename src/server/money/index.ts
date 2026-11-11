@@ -21,6 +21,7 @@ import { idemKey, newId } from "@/lib/ids";
 import { feeFor, formatCents } from "@/lib/money";
 import { releaseSplit } from "@/lib/deadline";
 import { releaseAdjustments } from "@/db/schema-money";
+import { changeOrders, type ChangeOrderReturn } from "@/db/schema-amend";
 import { watchdogPlan, type Rail as PolicyRail } from "@/lib/policy";
 import { RailError, type HoldRef, type HoldState } from "@/lib/rails";
 import { canWrite } from "@/lib/rbac";
@@ -480,6 +481,7 @@ async function retryApproved(a: Actor | null, t: TrancheRow) {
 
 export async function runWatchdog(now: Date, workspaceId?: string): Promise<{ actions: { trancheId: string; action: string }[] }> {
   const actions: { trancheId: string; action: string }[] = [];
+  if (await retryChangeOrders(workspaceId).catch(() => 0)) actions.push({ trancheId: "-", action: "CHANGE_ORDER_RETURNS" });
   const where = workspaceId
     ? and(inArray(tranches.state, ["HELD", "PARTIALLY_RELEASED", "SETTLING", "ROLLED_OVER", "AWAITING_APPROVAL"]), eq(tranches.workspaceId, workspaceId))
     : inArray(tranches.state, ["HELD", "PARTIALLY_RELEASED", "SETTLING", "ROLLED_OVER", "AWAITING_APPROVAL"]);
@@ -614,6 +616,55 @@ async function settle(t0: TrancheRow, w: WorkspaceRow, day: number) {
     await notify(tx, w, t.id, "SETTLED", `Tranche ${t.idx} of “${w.title}” was settled on day ${Math.floor(day)} of the PayPal hold. ${unstarted.length ? `${unstarted.map((m) => m.code).join(", ")} had not started and went back to the client.` : "No unstarted milestones remained."}`, `settled:${t.id}`);
     await audit(tx, SYSTEM, "money.settled", t.id, { day: round1(day), returned: items, unstarted: unstarted.map((m) => m.code), carried: carried.map((m) => m.code), refundTranche });
   });
+}
+
+/* ───────────────────────── change orders (F2.12) ───────────────────────── */
+
+/**
+ * Executes the money part of an applied change order: each held tranche it reduces gives the amount back to the client
+ * through returnFunds (the same return/void path as every other return; key stored on the change order before the
+ * call, P2). Rail A: a part return stays authorized and is voided with the last remainder (or released by the final
+ * capture); Rail B: refunded. Then milestones that are now ready open. Idempotent; a failure is recorded on the change
+ * order and retried by the watchdog. Added money is never charged here: the new PLANNED tranches wait for the client to
+ * fund them through fundTranche / confirmTranche.
+ */
+export async function settleChangeOrder(a: Actor | null, changeOrderId: string): Promise<{ pending: number }> {
+  const [co] = await db.select().from(changeOrders).where(eq(changeOrders.id, changeOrderId)).limit(1);
+  if (!co) throw new DomainError("NOT_FOUND", "This change order does not exist.");
+  if (co.state !== "APPLIED") throw new DomainError("BAD_STATE", "Only an applied change order moves money.");
+  const list: ChangeOrderReturn[] = co.returns.map((r) => ({ ...r }));
+  const codes = new Map((await db.select({ id: wsMilestones.id, code: wsMilestones.code }).from(wsMilestones).where(eq(wsMilestones.workspaceId, co.workspaceId))).map((m) => [m.code, m.id]));
+  for (const r of list) {
+    if (r.status === "DONE") continue;
+    try {
+      const items = r.items.map((x) => ({ milestoneId: x.milestoneCode ? codes.get(x.milestoneCode) ?? null : null, amountCents: x.amountCents }));
+      const out = await returnFunds(a, r.trancheId, items, `Change order ${co.no} (revision ${co.revNo}), signed by both parties: ${formatCents(r.amountCents)} goes back to the client`, r.idemKey);
+      r.status = "DONE"; r.refundId = out.refundId; delete r.error;
+    } catch (e) {
+      r.status = "FAILED"; r.error = railMessage(e).slice(0, 300);
+      await audit(db, auditActor(a), "money.change_order_return_failed", r.trancheId, { changeOrderId: co.id, idemKey: r.idemKey, amountCents: r.amountCents, error: r.error });
+    }
+  }
+  await db.update(changeOrders).set({ returns: list }).where(eq(changeOrders.id, co.id));
+  const opened = await openReady(db, co.workspaceId);
+  const pending = list.filter((r) => r.status !== "DONE").length;
+  await audit(db, auditActor(a), "money.change_order_settled", co.workspaceId, { changeOrderId: co.id, returns: list.map((r) => ({ trancheIdx: r.trancheIdx, amountCents: r.amountCents, status: r.status, refundId: r.refundId ?? null })), opened, pending });
+  return { pending };
+}
+
+/** Change-order returns that have not completed (watchdog retry). */
+async function retryChangeOrders(workspaceId?: string): Promise<number> {
+  const rows = await db.select({ id: changeOrders.id, returns: changeOrders.returns }).from(changeOrders)
+    .where(workspaceId ? and(eq(changeOrders.state, "APPLIED"), eq(changeOrders.workspaceId, workspaceId)) : eq(changeOrders.state, "APPLIED"));
+  let n = 0;
+  for (const r of rows) if (r.returns.some((x) => x.status !== "DONE")) { n += 1; await settleChangeOrder(null, r.id).catch(() => undefined); }
+  return n;
+}
+
+/** Notices about contract amendments (change orders, continuations), to the people named (default: both parties). */
+export async function noticeParties(workspaceId: string, kind: "CHANGE_ORDER" | "CONTINUATION", message: string, dedup: string, to?: string[]): Promise<void> {
+  const w = await loadWorkspace(db, workspaceId);
+  await notify(db, w, null, kind, message, dedup, to);
 }
 
 /* ───────────────────────── ledger (F3.11) ───────────────────────── */
