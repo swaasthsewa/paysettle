@@ -1,5 +1,5 @@
 /**
- * Change orders on locked contracts (F2.12) and their signatures. Additive only.
+ * Change orders on locked contracts (F2.13) and their signatures. Additive only.
  *  - change_orders: one proposed amendment (add, change or remove milestones that have not started). Its canonical
  *    document (the amended contract plus the money plan) and hash are fixed when proposed; both parties sign that hash.
  *    Applied, it becomes the next contract revision. Content columns are final (guard in src/db/sql/guards.sql);

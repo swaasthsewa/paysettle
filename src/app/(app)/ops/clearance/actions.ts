@@ -16,7 +16,7 @@ export async function clearanceAction(f: FormData) {
   redirect(msg ? `/ops/clearance?err=${encodeURIComponent(msg)}` : `/ops/clearance?ok=${decision === "clear" ? "cleared" : "returned"}`);
 }
 
-/** F2.12 the same clearance for a signed change order with risk ≥ 75: clear (it takes effect) or return (the contract keeps its terms). */
+/** F2.13 the same clearance for a signed change order with risk ≥ 75: clear (it takes effect) or return (the contract keeps its terms). */
 export async function changeOrderClearanceAction(f: FormData) {
   const { a } = await currentActor(["ops"]);
   const id = String(f.get("coId") ?? ""), decision = String(f.get("decision") ?? ""), note = String(f.get("note") ?? "");

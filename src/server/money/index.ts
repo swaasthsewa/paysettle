@@ -618,7 +618,7 @@ async function settle(t0: TrancheRow, w: WorkspaceRow, day: number) {
   });
 }
 
-/* ───────────────────────── change orders (F2.12) ───────────────────────── */
+/* ───────────────────────── change orders (F2.13) ───────────────────────── */
 
 /**
  * Executes the money part of an applied change order: each held tranche it reduces gives the amount back to the client

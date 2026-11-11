@@ -1,5 +1,5 @@
 /**
- * F2.13 — continuation contracts, DB-backed with the mock rail: a 6-period monthly retainer with the same milestone
+ * F2.14 — continuation contracts, DB-backed with the mock rail: a 6-period monthly retainer with the same milestone
  * template, and "month 2 of a build" carrying unfinished milestones over (moved through a parent change order, so no
  * milestone is ever paid twice). Nothing is charged automatically.
  */
@@ -54,7 +54,7 @@ async function lockedContract(c: Actor, p: Actor, title = "Website care") {
   return id;
 }
 
-describe("F2.13 continuation contracts", () => {
+describe("F2.14 continuation contracts", () => {
   it("a monthly maintenance retainer: 6 periods with the same milestone template, each negotiated, signed and locked; nothing is charged", async () => {
     const { c, p } = await people();
     const ids = [await lockedContract(c, p, "Website care retainer")];

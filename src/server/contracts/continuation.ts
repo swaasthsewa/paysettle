@@ -1,9 +1,9 @@
 /**
- * F2.13 continuation contracts: roll a LOCKED contract into its next period (a monthly retainer, month 2 of a build).
+ * F2.14 continuation contracts: roll a LOCKED contract into its next period (a monthly retainer, month 2 of a build).
  * Either party starts it. The new contract is a DRAFT linked to its parent (parent_workspace_id, period_no): same
  * parties, blueprint, currency, fee, rail, clauses and deadline terms; optionally the parent's milestone template again
  * (a retainer's next month) and/or the parent's unfinished milestones carried over. Carried milestones are MOVED: the
- * parent removes them through a change order (F2.12), and the new period cannot be signed until both parties have signed
+ * parent removes them through a change order (F2.13), and the new period cannot be signed until both parties have signed
  * that change order, so no milestone is ever paid twice. The draft then goes through normal negotiation, signing, lock
  * and funding. Nothing is ever charged automatically. The signing gate lives in sign() (./index.ts, carryBlock).
  */

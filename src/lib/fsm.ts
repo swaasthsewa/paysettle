@@ -58,7 +58,7 @@ export const milestoneMachine = new Machine("milestone",
     { from: "APPROVED", event: "released", to: "RELEASED" },
     { from: "DISPUTED", event: "verdict_executed", to: "SETTLED_BY_VERDICT" },
     { from: ["LOCKED", "OPEN"], event: "refund_unstarted", to: "REFUNDED" },
-    /* F2.12 a signed change order moved this unstarted milestone into a tranche that is not funded yet; it opens again once funded */
+    /* F2.13 a signed change order moved this unstarted milestone into a tranche that is not funded yet; it opens again once funded */
     { from: "OPEN", event: "unfund", to: "LOCKED" },
   ]);
 

@@ -1,5 +1,5 @@
 /**
- * F2.12 change orders on a LOCKED contract: either party proposes (add milestones; change the title, proof spec,
+ * F2.13 change orders on a LOCKED contract: either party proposes (add milestones; change the title, proof spec,
  * criteria, due day or amount of a milestone that has not started; remove one), both parties sign the change order's
  * canonical hash (same HMAC scheme as contract signatures), and it becomes the next contract revision. Until both have
  * signed, the contract runs on the old terms. The policy gate runs on the amended contract (violations block signing);

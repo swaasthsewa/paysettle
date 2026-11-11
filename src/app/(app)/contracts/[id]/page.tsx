@@ -48,9 +48,9 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   try { d = await getWorkspaceDetail(a, id); } catch (e) { domainMessage(e); notFound(); }
   const stamp = (await revisionStamp(a, id)).stamp;
   const v = d.view;
-  /* F2.12 change orders on a locked contract */
+  /* F2.13 change orders on a locked contract */
   const coRoom: ChangeOrderRoom | null = v.state === "LOCKED" ? await changeOrderRoom(a, id) : null;
-  /* F2.13 the period chain and the next-period panel */
+  /* F2.14 the period chain and the next-period panel */
   const chain = await periodChain(a, id);
   const carry = v.state === "LOCKED" && d.viewerRole ? await carryable(a, id) : [];
   const party = d.viewerRole;

@@ -1,4 +1,4 @@
-/** F2.02 F2.03 F2.13 — the contract list (with the period number of continuation contracts) for a client or a provider (title, counterpart, state, total, updated). */
+/** F2.02 F2.03 F2.14 — the contract list (with the period number of continuation contracts) for a client or a provider (title, counterpart, state, total, updated). */
 import Link from "next/link";
 import { formatCents } from "@/lib/money";
 import { WsChip } from "./chips";

@@ -1,5 +1,5 @@
 /**
- * F2.12 — change orders in the contract room of a LOCKED contract: the "Propose change order" panel (one form: change or
+ * F2.13 — change orders in the contract room of a LOCKED contract: the "Propose change order" panel (one form: change or
  * remove milestones that have not started, add up to two new ones), the review panel for the other party (what changes,
  * the money impact in plain words, the policy gate, signatures, sign or decline) and the history. Server-rendered forms
  * reusing the negotiation room's styles; the server re-plans everything, the form only collects what changed.

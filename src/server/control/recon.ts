@@ -32,7 +32,7 @@ type TrancheState = (typeof trancheMachine.states)[number];
 export type LineStatus = "MATCHED" | "IN_FLIGHT" | "DRIFT" | "UNAVAILABLE";
 export interface Issue { plane: string; expected: number; actual: number; note: string; ageMs: number; lagMs: number }
 export interface TrancheInput {
-  tranche: { id: string; workspaceId: string; idx: number; rail: string; amountCents: number; state: string; paypalOrderId: string | null; authorizationId: string | null; captureId: string | null; heldAt: Date | null; /** F2.12 cents signed change orders returned from this hold */ amendedOutCents?: number };
+  tranche: { id: string; workspaceId: string; idx: number; rail: string; amountCents: number; state: string; paypalOrderId: string | null; authorizationId: string | null; captureId: string | null; heldAt: Date | null; /** F2.13 cents signed change orders returned from this hold */ amendedOutCents?: number };
   milestones: { amountCents: number; state: string; type: string; active: boolean }[];
   ledger: { type: string; amountCents: number; paypalRef: string | null; milestoneId: string | null; at: Date }[];
   rail: { kind: "mock" | "paypal"; txns: PaypalTxn[] | null; error?: string };
@@ -47,7 +47,7 @@ const maxAt = (ds: Date[]) => ds.reduce((a, d) => (d > a ? d : a), new Date(0));
 export function evaluateTranche(i: TrancheInput): Evaluation {
   const t = i.tranche, now = i.now.getTime();
   const pay = i.milestones.filter((m) => m.active && m.type === "PAY");
-  /* F2.12 a signed change order that reduced or removed milestones in a held tranche returned that part to the client:
+  /* F2.13 a signed change order that reduced or removed milestones in a held tranche returned that part to the client:
      the contract still accounts for it (amended_out_cents), so the hold matches the signed contract plus what it gave back */
   const planeA: PlaneA = { contractCents: sum(pay) + Math.max(0, t.amendedOutCents ?? 0), trancheCents: t.amountCents, openCents: sum(pay.filter((m) => !DONE.has(m.state))) };
   const of = (type: string) => sum(i.ledger.filter((e) => e.type === type));

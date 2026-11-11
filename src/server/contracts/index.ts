@@ -443,7 +443,7 @@ export async function sign(a: Actor, id: string, revNo: number, hash: string, mf
 }
 
 /**
- * F2.13 signing gate for a continuation: when the draft carries milestones from its parent, the parent's change order
+ * F2.14 signing gate for a continuation: when the draft carries milestones from its parent, the parent's change order
  * that removes them must be applied first, so no milestone is ever paid twice. Returns a message, or null to go ahead.
  */
 async function carryBlock(q: Q, w: WsRow): Promise<string | null> {
@@ -521,7 +521,7 @@ export async function revisionStamp(a: Actor, id: string): Promise<{ revision: n
   await assertCanRead(db, a, w);
   const sigs = await db.select({ id: signatures.id, v: signatures.voidedAtRev }).from(signatures).where(eq(signatures.workspaceId, id));
   const live = sigs.filter((s) => s.v === null).length;
-  /* F2.12 change orders (proposed, signed, declined) refresh the room too */
+  /* F2.13 change orders (proposed, signed, declined) refresh the room too */
   const [co] = await db.select({ id: changeOrders.id, state: changeOrders.state }).from(changeOrders).where(eq(changeOrders.workspaceId, id)).orderBy(desc(changeOrders.no)).limit(1);
   const coSigs = co ? (await db.select({ id: changeOrderSignatures.id }).from(changeOrderSignatures).where(eq(changeOrderSignatures.changeOrderId, co.id))).length : 0;
   return { revision: w.revision, state: w.state, signatures: live, stamp: `${w.revision}:${w.state}:${live}:${sigs.length}:${co ? `${co.id}:${co.state}:${coSigs}` : "-"}` };

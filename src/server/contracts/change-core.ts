@@ -1,5 +1,5 @@
 /**
- * F2.12 — change orders on a locked contract: the pure planner (no I/O). Given the contract as it stands (milestones with
+ * F2.13 — change orders on a locked contract: the pure planner (no I/O). Given the contract as it stands (milestones with
  * their states, tranches with theirs) and a list of items, it returns the amended contract, the money plan and the
  * canonical document both parties sign. The same inputs always give the same document and hash, so the server re-plans
  * at signing and at apply time and refuses when anything moved in between (a tranche was funded, a milestone was

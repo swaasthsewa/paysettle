@@ -1,6 +1,6 @@
 "use server";
 /**
- * F2.12 — change order server actions for the contract room. The propose form posts the room's current values; this
+ * F2.13 — change order server actions for the contract room. The propose form posts the room's current values; this
  * action keeps only what the person changed (compared with the contract as stored now) and sends it to the service,
  * which re-plans everything server-side. Sign and decline carry the change order id and the hash the person saw.
  */
@@ -111,7 +111,7 @@ export async function declineChangeOrderAction(f: FormData) {
   redirect(msg ? `${path}?err=${encodeURIComponent(msg)}#co` : `${path}?ok=co_closed#co`);
 }
 
-/** F2.13 continue a locked contract into its next period (a new draft linked to this one). */
+/** F2.14 continue a locked contract into its next period (a new draft linked to this one). */
 export async function continueAction(f: FormData) {
   const id = s(f, "wsId");
   if (!/^ws_[a-z0-9]{1,40}$/.test(id)) redirect("/client/contracts");

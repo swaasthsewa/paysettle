@@ -1,5 +1,5 @@
 /**
- * F2.12 — change orders on locked contracts, DB-backed with the mock rail: propose → both sign → new revision; money
+ * F2.13 — change orders on locked contracts, DB-backed with the mock rail: propose → both sign → new revision; money
  * only through the money module (new PLANNED tranche funded with fundTranche/confirmTranche; reductions returned with
  * returnFunds); three-way reconciliation stays CLEAN after an increasing and after a decreasing change order.
  */
@@ -76,7 +76,7 @@ async function bothSign(first: Actor, second: Actor, coId: string) {
 const trs = async (id: string) => db.select().from(tranches).where(eq(tranches.workspaceId, id)).orderBy(asc(tranches.idx));
 const msBy = async (id: string, c: string) => (await db.select().from(wsMilestones).where(and(eq(wsMilestones.workspaceId, id), eq(wsMilestones.code, c))))[0];
 
-describe("F2.12 change orders", () => {
+describe("F2.13 change orders", () => {
   it("increasing: added milestone goes to a new PLANNED tranche, funded on the mock rail; revision, signatures, audit; recon CLEAN", async () => {
     const { c, p, o, id } = await locked(true);
     const coId = await proposeChangeOrder(p, id, { items: [addPay("Content and marketing pages", 25, 120_000)], note: "Client asked for marketing pages in the last week." });

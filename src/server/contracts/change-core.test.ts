@@ -1,5 +1,5 @@
 /**
- * F2.12 — pure change-order planner: frozen milestones, money plan per tranche state, cents authoritative, shares
+ * F2.13 — pure change-order planner: frozen milestones, money plan per tranche state, cents authoritative, shares
  * derived, deterministic document and hash, plain-words money lines. No database.
  */
 import { describe, expect, it } from "vitest";
@@ -23,7 +23,7 @@ const base = (over: Partial<PlanInput> = {}): PlanInput => ({
 const code = (f: () => unknown) => { try { f(); return "ok"; } catch (e) { return e instanceof DomainError ? e.code : String(e); } };
 const add = (title: string, day: number, amountCents: number): CoItem => ({ action: "ADD", milestone: { title, type: "PAY", day, amountCents, proof, lockRule: "client approves", disputeRule: "scoped dispute" } });
 
-describe("F2.12 change-order planner", () => {
+describe("F2.13 change-order planner", () => {
   it("adds a milestone into a new PLANNED tranche; frozen milestones keep their exact cents; total = sum of milestones", () => {
     const p = planChangeOrder(base({ items: [add("Content and marketing pages", 24, 120_000)] }));
     expect(p.money.fund).toEqual([{ trancheIdx: 2, amountCents: 120_000, startDay: 24, endDay: 24, codes: ["C01"] }]);

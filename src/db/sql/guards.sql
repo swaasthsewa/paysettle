@@ -39,7 +39,7 @@ END $$;
 DROP TRIGGER IF EXISTS release_adjustments_final ON release_adjustments;
 CREATE TRIGGER release_adjustments_final BEFORE UPDATE OR DELETE ON release_adjustments FOR EACH ROW EXECUTE FUNCTION ps_adjustment_final();
 
--- Change orders (F2.12): signatures are append-only; a change order's content (items, document, hash, money plan) is
+-- Change orders (F2.13): signatures are append-only; a change order's content (items, document, hash, money plan) is
 -- final once proposed. Only the state, the decision fields and the return statuses may move; rows are never deleted.
 DROP TRIGGER IF EXISTS change_order_signatures_immutable ON change_order_signatures;
 CREATE TRIGGER change_order_signatures_immutable BEFORE UPDATE OR DELETE ON change_order_signatures FOR EACH ROW EXECUTE FUNCTION ps_refuse_change();

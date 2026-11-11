@@ -1,5 +1,5 @@
 /**
- * F2.13 — continuation contracts in the contract room: the period chain ("Period 2 · continues …", with links both
+ * F2.14 — continuation contracts in the contract room: the period chain ("Period 2 · continues …", with links both
  * ways) and the "Continue into the next period" panel for a LOCKED contract (repeat this period's milestones, carry
  * unfinished ones over). The new period is a draft: it is negotiated, signed, locked and funded like any contract.
  */
