@@ -1,6 +1,8 @@
 /**
  * F2.02 F2.04 F2.05 F2.10 F2.11 — demo contracts for the contracts module, built through the service functions so every
  * state, revision, signature and tranche is consistent. Idempotent: a contract with the same client and title is skipped.
+ * F2.13 F2.14: "Clinic website build" (locked, tranche 1 held on the mock rail) is where change orders are shown;
+ * "Monthly marketing retainer" (locked, period 1) is where a contract continues into its next period.
  * Usage (after npm run db:seed): npx tsx --env-file-if-exists=.env.local scripts/seed-contracts.ts
  */
 import "./lib/demo-rail"; // first: demo seeds always use the mock rail
@@ -8,6 +10,7 @@ import { and, eq } from "drizzle-orm";
 import { db, pool } from "../src/db/client";
 import { workspaces } from "../src/db/schema";
 import { applyChange, createWorkspace, getWorkspace, sign } from "../src/server/contracts";
+import { confirmTranche, fundTranche } from "../src/server/money";
 import type { Actor } from "../src/server/types";
 
 if (process.env.PAYSETTLE_ENV === "production") { console.error("Refusing to seed demo data in production."); process.exit(1); }
@@ -67,7 +70,29 @@ async function rushRebuild() {
   return `${title}: ${v.state}, risk ${v.riskScore}`;
 }
 
+/** F2.13 a locked build with tranche 1 held (mock rail): the place to propose, review and sign change orders. */
+async function changeOrderDemo() {
+  const title = "Clinic website build";
+  const e = await existing(priya.id, title);
+  if (e) return `${title}: kept (${e.state})`;
+  const id = await createWorkspace(priya, { blueprintCode: "UC_WEB_MVP", title, totalCents: 600_000, providerId: meera.id });
+  const v = await signBoth(id, priya, meera);
+  const t = v.tranches[0];
+  if (v.state === "LOCKED" && t?.state === "PLANNED") { await fundTranche(priya, t.id); await confirmTranche(priya, t.id); }
+  return `${title}: ${v.state}, tranche 1 ${(await getWorkspace(priya, id)).tranches[0]?.state ?? "missing"}`;
+}
+
+/** F2.14 period 1 of a monthly retainer, locked: the place to continue into the next period. */
+async function retainerDemo() {
+  const title = "Monthly marketing retainer";
+  const e = await existing(dan.id, title);
+  if (e) return `${title}: kept (${e.state})`;
+  const id = await createWorkspace(dan, { blueprintCode: "UC_MARKETING_CAMPAIGN", title, totalCents: 300_000, providerId: arjun.id });
+  const v = await signBoth(id, dan, arjun);
+  return `${title}: ${v.state}, risk ${v.riskScore}`;
+}
+
 async function main() {
-  for (const step of [bookingApp, planningSprint, rushRebuild]) console.log(await step());
+  for (const step of [bookingApp, planningSprint, rushRebuild, changeOrderDemo, retainerDemo]) console.log(await step());
 }
 main().then(() => pool.end()).catch(async (e) => { console.error(e); await pool.end(); process.exit(1); });
