@@ -8,6 +8,7 @@ import { requireViewer } from "@/lib/session";
 import { formatCents } from "@/lib/money";
 import { DataTable } from "@/components/console/DataTable";
 import { invariants, ledgerView } from "@/server/money/queries";
+import { isSeededExample, SEEDED_EXAMPLE_LABEL } from "@/server/control/demo-fixtures";
 import "@/styles/money.css";
 
 export const metadata = { title: "Ledger" };
@@ -21,6 +22,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
   const f = { workspaceId: sp.contract || undefined, trancheId: sp.tranche || undefined, type: TYPES.includes(sp.type ?? "") ? sp.type : undefined, includeTest: sp.test === "1" };
   const [{ rows, accounts, contracts }, inv] = await Promise.all([ledgerView(f), invariants(f)]);
   const bad = inv.filter((i) => !i.ok).length;
+  const badSeeded = inv.filter((i) => !i.ok && isSeededExample(i.trancheId)).length;
   const invOk = new Map(inv.map((i) => [i.trancheId, i.ok]));
   return (
     <>
@@ -28,9 +30,10 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
         <div><h1>Ledger</h1><p className="sub">Double-entry, integer cents. Each tranche must satisfy held = released + returned + remaining, and agree with the release and return records.</p></div>
         <div className="stats">
           <div className="hstat"><div className="v">{rows.length}</div><div className="l">entries shown</div></div>
-          <div className="hstat"><div className={`v ${bad ? "inv-bad" : "inv-ok"}`}>{bad ? `${bad} ✗` : "✓"}</div><div className="l">{inv.length} tranche invariants</div></div>
+          <div className="hstat"><div className={`v ${bad ? "inv-bad" : "inv-ok"}`}>{bad ? `${bad} ✗` : "✓"}</div><div className="l">{inv.length} tranche invariants{badSeeded ? ` · ${badSeeded === bad ? "all" : badSeeded} ✗ from the seeded example` : ""}</div></div>
         </div>
       </div>
+      {badSeeded > 0 && <p className="c small" role="note"><b>{SEEDED_EXAMPLE_LABEL}.</b> The “Inventory dashboard” demo contract carries a duplicate release posting on purpose. Pick your own contract under Contract to see its tranches on their own.</p>}
 
       <form className="c money-filter" method="get" aria-label="Filter the ledger">
         <div className="field mf-contract"><label htmlFor="f-c">Contract</label>
@@ -59,11 +62,13 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
               { field: "returned", headerName: "Returned", type: "money", group: "Where the money went" },
               { field: "remaining", headerName: "Remaining", type: "money", group: "Where the money went" },
               { field: "issues", headerName: "Failing checks", hide: !bad },
+              { field: "example", headerName: "Example", width: 200, hide: !badSeeded },
             ]}
             rowData={inv.map((i) => ({
               id: i.trancheId, ok: i.ok, tranche: { href: `/finance/ledger?tranche=${i.trancheId}${f.includeTest ? "&test=1" : ""}`, label: `${i.title} · ${i.idx}` }, state: i.state,
               held: i.balance.held, released: i.balance.released, returned: i.balance.returned, remaining: i.balance.remaining,
               issues: i.checks.filter((c) => !c.ok).map((c) => `${c.name}: ${c.detail}`).join(" · ") || null,
+              example: isSeededExample(i.trancheId) ? "Seeded example" : null,
             }))} />
         </section>
         <section className="c" aria-labelledby="acc-h">

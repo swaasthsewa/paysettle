@@ -41,3 +41,18 @@ test("F5.02 F3.11 P6 finance ledger lists double-entry rows and the invariant pe
   await expect(page.locator('main .ag-cell[col-id="type"]').filter({ hasText: /^(Hold|Release|Fee)$/i }).first()).toBeVisible();
   await expect(page.locator('main .ag-cell[col-id="account"]').filter({ hasText: /^paypal:hold:/ }).first()).toBeVisible();
 });
+
+test("F5.01 F5.03 the seeded drift is labelled as an example and each contract's tranches can be seen on their own", async ({ page }) => {
+  await signIn(page, "Farah");
+  await page.goto("/finance/recon");
+  const main = page.locator("main");
+  await expect(main).toContainText("Seeded example: shows how the breaker pauses one tranche");
+  await expect(page.getByRole("heading", { name: "By contract" })).toBeVisible();
+  await expect(main.locator("article.cx-exc").filter({ hasText: "Inventory dashboard" })).toContainText("Seeded example");
+  // the summary links each contract to a view of only its tranches
+  await main.locator('a[href*="contract=ws_demo_mvp"]').first().click();
+  await page.waitForURL(/[?&]contract=ws_demo_mvp/);
+  await expect(page.getByRole("heading", { name: "Booking web app MVP: tranches in this run" })).toBeVisible();
+  await expect(main.locator("article.cx-exc").filter({ hasText: "Inventory dashboard" })).toHaveCount(0);
+  await expect(main.getByRole("link", { name: "Show all contracts" })).toBeVisible();
+});

@@ -8,6 +8,7 @@ import { lastRecon } from "@/server/control/health";
 import { DataTable } from "@/components/console/DataTable";
 import { DualControlQueue, Flash, Head, one, Stat, type SP } from "@/components/console/parts";
 import { fmtDate, human, stateClass } from "@/components/console/format";
+import { isSeededExample, SEEDED_EXAMPLE_LABEL } from "@/server/control/demo-fixtures";
 
 export const metadata = { title: "Finance" };
 
@@ -41,6 +42,7 @@ export default async function Page({ searchParams }: { searchParams: SP }) {
               return (
                 <li key={b.id} className="cx-item">
                   <div className="row"><b>{b.title}</b><span className="small muted">tranche {b.idx} · rail {b.rail}</span><code className="cx-code">{b.id}</code><span className="sp" /><span className="money">{formatCents(b.amountCents)}</span><span className={stateClass("BREAKER")}>Breaker</span></div>
+                  {isSeededExample(b.id) && <p className="small"><span className="chip" data-b="warn">{SEEDED_EXAMPLE_LABEL}</span></p>}
                   <p className="small">Releases from this tranche are paused until the drift is explained and two people clear the breaker. The money stays held in PayPal.</p>
                   {b.notes.length > 0 && <ul className="cx-notes">{b.notes.slice(0, 4).map((n, i) => <li key={i}>{n}</li>)}</ul>}
                   {waiting ? <span className="chip" data-b="warn">Clear request waiting for approval ({waiting.id})</span> : mayClear && (

@@ -11,6 +11,7 @@ import { runReconAction } from "@/server/control/actions";
 import { DataTable } from "@/components/console/DataTable";
 import { Flash, Head, one, Stat, type SP } from "@/components/console/parts";
 import { fmtDate, human, iso, stateClass } from "@/components/console/format";
+import { isSeededExample, SEEDED_EXAMPLE_LABEL } from "@/server/control/demo-fixtures";
 
 export const metadata = { title: "Reconciliation" };
 type Line = Awaited<ReturnType<typeof reconRunLines>>[number];
@@ -44,10 +45,19 @@ export default async function Page({ searchParams }: { searchParams: SP }) {
   const runs = await reconHistory(30);
   const runId = one(sp.run) || runs[0]?.id;
   const run = runs.find((r) => r.id === runId) ?? runs[0];
-  const lines = run ? await reconRunLines(run.id) : [];
-  const names = lines.length ? await db.select({ id: tranches.id, idx: tranches.idx, title: workspaces.title }).from(tranches).innerJoin(workspaces, eq(workspaces.id, tranches.workspaceId)).where(inArray(tranches.id, lines.map((l) => l.trancheId))) : [];
+  const allLines = run ? await reconRunLines(run.id) : [];
+  const names = allLines.length ? await db.select({ id: tranches.id, idx: tranches.idx, title: workspaces.title, workspaceId: tranches.workspaceId }).from(tranches).innerJoin(workspaces, eq(workspaces.id, tranches.workspaceId)).where(inArray(tranches.id, allLines.map((l) => l.trancheId))) : [];
   const nameOf = (id: string) => { const n = names.find((x) => x.id === id); return n ? `${n.title} · tranche ${n.idx}` : id; };
+  const wsOf = (id: string) => names.find((x) => x.id === id)?.workspaceId ?? "";
+  // per-contract summary and filter: a reviewer can find their own contract's tranches without reading every row
+  const byContract = [...new Map(names.map((n) => [n.workspaceId, n.title])).entries()].map(([id, title]) => {
+    const ls = allLines.filter((l) => wsOf(l.trancheId) === id);
+    return { id, title, total: ls.length, matched: ls.filter((l) => l.status === "MATCHED").length, waiting: ls.filter((l) => l.status === "IN_FLIGHT" || l.status === "UNAVAILABLE").length, inFlight: ls.filter((l) => l.status === "IN_FLIGHT").length, drift: ls.filter((l) => l.status === "DRIFT").length, seeded: isSeededExample(id) };
+  }).sort((a, b) => a.title.localeCompare(b.title));
+  const contract = byContract.find((c) => c.id === one(sp.contract));
+  const lines = contract ? allLines.filter((l) => wsOf(l.trancheId) === contract.id) : allLines;
   const attention = lines.filter((l) => l.status !== "MATCHED");
+  const seededOnly = attention.length > 0 && attention.every((l) => isSeededExample(l.trancheId));
   return (
     <>
       <Head title="Reconciliation" sub={`Three planes per tranche: the signed contract, our ledger and PayPal. Differences younger than ${IN_FLIGHT_MS / 60_000} minutes are in flight; older ones are drift and stop that tranche's releases.`} />
@@ -56,27 +66,47 @@ export default async function Page({ searchParams }: { searchParams: SP }) {
         <Stat label="This run" value={run ? human(run.verdict) : "No runs yet"} tone={!run ? "warn" : run.verdict === "CLEAN" ? "ok" : run.verdict === "DRIFT" ? "danger" : "warn"} detail={run ? fmtDate(run.createdAt) : undefined} />
         <Stat label="Matched" value={run?.matched ?? 0} tone="ok" />
         <Stat label="Waiting (in flight or no PayPal data)" value={run?.inFlight ?? 0} tone={run?.inFlight ? "held" : undefined} />
-        <Stat label="Drift exceptions" value={run?.exceptions.length ?? 0} tone={run?.exceptions.length ? "danger" : "ok"} />
+        <Stat label="Drift exceptions" value={run?.exceptions.length ?? 0} tone={run?.exceptions.length ? "danger" : "ok"} detail={run && run.exceptions.length > 0 && run.exceptions.every((e) => isSeededExample(e.trancheId)) ? "all from the seeded example" : undefined} />
       </div>
+      {seededOnly && !contract && <p className="c small" role="note"><b>{SEEDED_EXAMPLE_LABEL}.</b> The drift below comes from a demo contract seeded on purpose with a duplicate release posting. Every other contract&apos;s tranches are listed under By contract.</p>}
       <section className="c">
         <div className="c-head"><h2>{run ? `Run ${run.id}` : "No run yet"}</h2>
           {canWrite(v.role, "recon.run") && <div className="r"><form action={runReconAction}><input type="hidden" name="back" value="/finance/recon" /><button className="btn btn-g btn-sm" type="submit">Run now</button></form></div>}
         </div>
-        {run && <p className="small muted">Window {fmtDate(run.windowStart)} to {fmtDate(run.windowEnd)} · {lines.length} tranches checked.</p>}
+        {run && <p className="small muted">Window {fmtDate(run.windowStart)} to {fmtDate(run.windowEnd)} · {lines.length} {lines.length === 1 ? "tranche" : "tranches"} checked{contract ? <> for {contract.title} · <a href={`/finance/recon?run=${run.id}`}>Show all contracts</a></> : ""}.</p>}
         {attention.length === 0 && run && <p className="muted">Every tranche matched on all three planes.</p>}
         <div className="stack">
           {attention.map((l) => (
             <article key={l.id} className="cx-exc" data-b={l.status}>
               <div className="row"><b>{nameOf(l.trancheId)}</b><code className="cx-code">{l.trancheId}</code><span className="sp" />{l.trippedBreaker && <span className="chip" data-b="danger">Breaker tripped by this run</span>}<span className={stateClass(l.status)}>{human(l.status)}</span></div>
+              {isSeededExample(l.trancheId) && <p className="small"><span className="chip" data-b="warn">{SEEDED_EXAMPLE_LABEL}</span></p>}
               <Planes l={l} />
               {l.notes.length > 0 && <ul className="cx-notes">{l.notes.map((n, i) => <li key={i}>{n}</li>)}</ul>}
             </article>
           ))}
         </div>
       </section>
+      {byContract.length > 0 && run && (
+        <section className="c">
+          <div className="c-head"><h2>By contract</h2></div>
+          <p className="small muted">Each contract&apos;s tranches in this run. Open a contract to see only its tranches.</p>
+          <DataTable caption="Reconciliation by contract" getRowId="id" quickFilter={byContract.length > 8}
+            columnDefs={[
+              { field: "contract", headerName: "Contract", type: "link", width: 280 },
+              { field: "result", headerName: "Result", type: "state", filter: true },
+              { field: "matched", headerName: "Matched", type: "number" }, { field: "waiting", headerName: "Waiting", type: "number" }, { field: "drift", headerName: "Drift", type: "number" },
+              { field: "note", headerName: "Note", width: 360 },
+            ]}
+            rowData={byContract.map((c) => ({
+              id: c.id, contract: { href: `/finance/recon?run=${run.id}&contract=${c.id}`, label: c.title },
+              result: c.drift ? "DRIFT" : c.inFlight ? "IN_FLIGHT" : c.waiting ? "UNAVAILABLE" : "MATCHED", matched: c.matched, waiting: c.waiting, drift: c.drift,
+              note: c.seeded ? SEEDED_EXAMPLE_LABEL : c.matched === c.total ? `All ${c.total} matched` : null,
+            }))} />
+        </section>
+      )}
       {lines.length > 0 && (
         <section className="c">
-          <div className="c-head"><h2>All tranches in this run</h2></div>
+          <div className="c-head"><h2>{contract ? `${contract.title}: tranches in this run` : "All tranches in this run"}</h2></div>
           <p className="small muted">The three planes side by side. <b>A↔B</b> is what the ledger still holds minus what the contract still owes; <b>A</b> is the tranche amount minus its signed payment milestones. Any difference that is not zero is highlighted; explained differences are listed under Notes in the exceptions above.</p>
           <DataTable caption="Reconciliation lines" persistKey="recon-lines" getRowId="id" exportName={`recon-${run?.id ?? "run"}`} rowToneField="tone"
             initialSort={{ field: "dAB", dir: "asc" }}
@@ -98,6 +128,7 @@ export default async function Page({ searchParams }: { searchParams: SP }) {
               { field: "dA", headerName: "A", type: "diff", group: "Difference", tooltip: "Tranche amount minus its payment milestones", hide: true },
               { field: "cIssues", headerName: "C", type: "chip", group: "Difference", tooltip: "Differences between the ledger and PayPal found by this run" },
               { field: "notes", headerName: "Notes", type: "number", width: 96 },
+              { field: "example", headerName: "Example", width: 200, hide: !lines.some((l) => isSeededExample(l.trancheId)) },
             ]}
             rowData={lines.map((l) => {
               const cIssues = l.notes.filter((n) => n.startsWith("C:")).length;
@@ -108,7 +139,7 @@ export default async function Page({ searchParams }: { searchParams: SP }) {
                 cAuth: l.planeC.available ? l.planeC.authorizedCents : null, c: l.planeC.available ? l.planeC.capturedCents : null, cReturned: l.planeC.available ? l.planeC.returnedCents : null,
                 dAB: l.planeB.remainingCents - l.planeA.openCents, dA: l.planeA.trancheCents - l.planeA.contractCents,
                 cIssues: !l.planeC.available ? { label: "No data", tone: "none" as const } : cIssues ? { label: `${cIssues} found`, tone: "danger" as const } : { label: "None", tone: "ok" as const },
-                notes: l.notes.length,
+                notes: l.notes.length, example: isSeededExample(l.trancheId) ? "Seeded example" : null,
               };
             })} />
         </section>
