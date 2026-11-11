@@ -35,8 +35,8 @@ async function main() {
   const links = [
     { id: "pl_priya", userId: "u_priya", kind: "buyer" as const, email: "buyer@personal.example.com", receivable: false, emailConfirmed: true },
     { id: "pl_dan", userId: "u_dan", kind: "buyer" as const, email: "buyer2@personal.example.com", receivable: false, emailConfirmed: true },
-    { id: "pl_arjun", userId: "u_arjun", kind: "merchant" as const, email: process.env.PAYPAL_PROVIDER1_EMAIL ?? "provider-1@business.example.com", receivable: true, emailConfirmed: true },
-    { id: "pl_meera", userId: "u_meera", kind: "merchant" as const, email: process.env.PAYPAL_PROVIDER2_EMAIL ?? "provider-2@business.example.com", receivable: true, emailConfirmed: true },
+    { id: "pl_arjun", userId: "u_arjun", kind: "merchant" as const, email: process.env.PAYPAL_PROVIDER1_EMAIL || "provider-1@business.example.com", receivable: true, emailConfirmed: true },
+    { id: "pl_meera", userId: "u_meera", kind: "merchant" as const, email: process.env.PAYPAL_PROVIDER2_EMAIL || "provider-2@business.example.com", receivable: true, emailConfirmed: true },
   ];
   for (const l of links) await db.insert(paypalLinks).values(l).onConflictDoUpdate({ target: paypalLinks.id, set: { email: l.email } });
   for (const b of BLUEPRINTS) {

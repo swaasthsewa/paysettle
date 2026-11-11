@@ -62,7 +62,7 @@ async function main() {
     await db.update(users).set({ profile: sql`${users.profile} || ${JSON.stringify({ provider })}::jsonb` }).where(eq(users.id, P.id));
     console.log(`provider: ${P.name} licences refreshed`);
   }
-  await db.insert(paypalLinks).values({ id: "pl_reg_sana", userId: P.id, kind: "merchant", email: "sana-business@business.example.com", receivable: true, emailConfirmed: true }).onConflictDoNothing();
+  await db.insert(paypalLinks).values({ id: "pl_reg_sana", userId: P.id, kind: "merchant", email: process.env.PAYPAL_PROVIDER2_EMAIL || "sana-business@business.example.com", receivable: true, emailConfirmed: true }).onConflictDoNothing();
   if ((await termsState(P.id)) !== "ACCEPTED") await recordTermsDecision({ userId: P.id, role: "provider", decision: "ACCEPTED", ip: "seed", userAgent: "scripts/seed-reg.ts" });
 }
 main().then(() => pool.end(), (e) => { console.error(e); pool.end(); process.exit(1); });

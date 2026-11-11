@@ -63,7 +63,7 @@ async function people() {
   for (const [id, name] of CLIENTS) await db.insert(users).values({ id, orgId: "org_demo", email: `${id.slice(6)}@ctl-demo.example`, name, role: "client", tier: "standard", onboardingState: "ACTIVE", profile: { blurb: "Analytics demo client (not a sign-in persona)" } }).onConflictDoNothing();
   for (const [id, name, tier] of PROVIDERS) {
     await db.insert(users).values({ id, orgId: "org_demo", email: `${id.slice(6)}@ctl-demo.example`, name, role: "provider", tier, onboardingState: "ACTIVE", profile: { blurb: "Analytics demo provider (not a sign-in persona)" } }).onConflictDoNothing();
-    await db.insert(paypalLinks).values({ id: `pl_${id}`, userId: id, kind: "merchant", email: `${id.slice(6)}@business.example.com`, receivable: true, emailConfirmed: true }).onConflictDoNothing();
+    await db.insert(paypalLinks).values({ id: `pl_${id}`, userId: id, kind: "merchant", email: process.env.PAYPAL_PROVIDER1_EMAIL || `${id.slice(6)}@business.example.com`, receivable: true, emailConfirmed: true }).onConflictDoNothing();
   }
 }
 

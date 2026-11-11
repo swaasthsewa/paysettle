@@ -68,7 +68,7 @@ async function people() {
   await db.insert(users).values({ id: "u_noor", orgId: "org_demo", email: "noor@provider.demo", name: "Noor Haddad", role: "provider", persona: null, tier: "new", passwordHash: pw, onboardingState: "SUBMITTED", profile: { blurb: "Classic car restoration shop, waiting for Ops review", currency: "USD", timezone: "America/Denver", billingCountry: "US", provider: { ...noor, submittedAt: new Date(now - 20 * HOUR).toISOString() } } })
     .onConflictDoNothing({ target: users.id });
   const [link] = await db.select({ id: paypalLinks.id }).from(paypalLinks).where(and(eq(paypalLinks.userId, "u_noor"), eq(paypalLinks.kind, "merchant"))).limit(1);
-  if (!link) await db.insert(paypalLinks).values({ id: "pl_noor", userId: "u_noor", kind: "merchant", email: "noor-restorations@business.example.com", receivable: true, emailConfirmed: true });
+  if (!link) await db.insert(paypalLinks).values({ id: "pl_noor", userId: "u_noor", kind: "merchant", email: process.env.PAYPAL_PROVIDER1_EMAIL || "noor-restorations@business.example.com", receivable: true, emailConfirmed: true });
 }
 
 /* ── 3: contracts ── */
