@@ -3,6 +3,7 @@
  * in one white line that ends just above the heading. The live waitlist count sits beside the actions.
  * Drawn in a fixed box of 1440 x 280 units.
  */
+import type { CSSProperties } from "react";
 import Link from "next/link";
 import { site } from "@/copy/site";
 import { AMBER, TEAL } from "./hero";
@@ -31,6 +32,16 @@ export function Closing({ waitlist }: { waitlist: number }) {
   return (
     <section className="lp-close" data-scene="close" aria-labelledby="lp-close-h">
       <div className="lp-close-stage">
+        <div className="cl2-orbit" aria-hidden="true">
+          {[{ r: 6, s: "60s", chips: ["M02 ✓", "M05 ✓"] }, { r: 16, s: "46s", chips: ["held in PayPal", "M06 ✓"] }, { r: 26, s: "36s", chips: ["M03 ✓", "evidence ✓"] }].map((o) => (
+            <div key={o.r}>
+              <i style={{ "--r": o.r } as CSSProperties} />
+              <div className="cl2-ring" style={{ "--r": o.r, "--s": o.s } as CSSProperties}>
+                {o.chips.map((c, k) => <span key={c} className={`cl2-chip${k ? " gold" : ""}`} style={{ "--s": o.s, top: k ? "100%" : "0" } as CSSProperties}>{c}</span>)}
+              </div>
+            </div>
+          ))}
+        </div>
         <svg className="lp-close-thread" viewBox="0 0 1440 280" aria-hidden="true" focusable="false">
           <path className="lp-close-line" pathLength={1} d={strand(true)} stroke={TEAL} />
           <path className="lp-close-line" pathLength={1} d={strand(false)} stroke={AMBER} />

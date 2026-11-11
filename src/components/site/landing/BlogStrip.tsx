@@ -10,12 +10,12 @@ export async function BlogStrip({ count = 3 }: { count?: number }) {
   try { posts = (await listPublished()).slice(0, count); } catch { return null; }
   if (!posts.length) return null;
   return (
-    <section className="lp-scene" aria-labelledby="lp-blog-h" data-scene="blog">
+    <section className="lp-scene sc-blog" aria-labelledby="lp-blog-h" data-progress>
       <div className="lp-wrap">
         <div className="bl-strip-head">
           <div>
             <p className="lp-kicker">From the blog</p>
-            <h2 id="lp-blog-h">How it works, one question at a time</h2>
+            <h2 id="lp-blog-h">One question at a time</h2>
           </div>
           <Link className="btn" href="/blog">All posts</Link>
         </div>

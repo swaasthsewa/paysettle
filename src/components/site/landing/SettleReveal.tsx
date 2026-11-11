@@ -15,25 +15,19 @@
  */
 import { useEffect, useRef, type CSSProperties } from "react";
 import Link from "next/link";
+import { EXAMPLE_SHARES, EXAMPLE_TOTAL, usd } from "./example";
 
 const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 const seg = (p: number, a: number, b: number) => { const t = clamp((p - a) / (b - a)); return t * t * (3 - 2 * t); };
 
-/** The tranche: M02–M06 of the web MVP example, and what happens to each share. */
-const SHARES = [
-  { code: "M02", cents: 90_000, end: "released" },
-  { code: "M03", cents: 120_000, end: "released" },
-  { code: "M04", cents: 150_000, end: "frozen" },
-  { code: "M05", cents: 90_000, end: "released" },
-  { code: "M06", cents: 150_000, end: "returned" },
-] as const;
-const TOTAL = SHARES.reduce((a, s) => a + s.cents, 0);
+/** The tranche: the Web / SaaS MVP blueprint's paid milestones on $6,000, and what happens to each share. */
+const SHARES = EXAMPLE_SHARES;
+const TOTAL = EXAMPLE_TOTAL;
 const END_LABEL = { released: "Released", frozen: "Frozen", returned: "Returned" } as const;
-const usd = (c: number) => `$${(c / 100).toLocaleString("en-US")}`;
 
 /** Phase windows over the progress p (0..1 while the window fills the screen). */
 const PH = { a: [0.02, 0.12], b: [0.12, 0.22], c: [0.22, 0.34], d: [0.34, 0.48], f: [0.48, 0.58], o: [0.9, 0.98] } as const;
-const SHARE_AT = (k: number): [number, number] => [0.58 + k * 0.06, 0.64 + k * 0.06];
+const SHARE_AT = (k: number): [number, number] => [0.58 + k * 0.05, 0.63 + k * 0.05];
 
 const BAR_X = 40, BAR_W = 520;
 /** Each share's place on the bar, in proportion to its amount. */
@@ -115,7 +109,7 @@ export function SettleReveal() {
             </div>
           </div>
 
-          <svg className="lp2-sr-art" viewBox="0 0 600 600" role="img" aria-label="A vague criterion is struck out and rewritten as a measurable one; client and provider sign and the revision is sealed; PayPal holds a $6,000 tranche; milestones M02, M03 and M05 are released, M04 is frozen in a dispute and M06 is returned to the client.">
+          <svg className="lp2-sr-art" viewBox="0 0 600 600" role="img" aria-label="A vague criterion is struck out and rewritten as a measurable one; client and provider sign and the revision is sealed; PayPal holds a $6,000 tranche; milestones M02, M03 and M05 are released, M04 is frozen in a dispute and M07 is returned to the client.">
             {/* 1 · the vague criterion, struck out */}
             <g className="lp2-sr-in" style={{ "--x": "var(--a)" } as CSSProperties}>
               <rect x="40" y="18" width="520" height="92" rx="16" className="lp2-card" />
@@ -165,8 +159,8 @@ export function SettleReveal() {
                 <text x={s.x + s.w / 2} y="522" textAnchor="middle" className="lp2-t-mono lp2-share-amt">{usd(s.cents)}</text>
               </g>
             ))}
-            <g className="lp2-sr-in" style={{ "--x": "var(--s4)" } as CSSProperties}>
-              <text x="300" y="566" textAnchor="middle" className="lp2-t-dim lp2-t-small">Released by partial capture · M04 frozen alone · M06 voided back to the client</text>
+            <g className="lp2-sr-in" style={{ "--x": "var(--s5)" } as CSSProperties}>
+              <text x="300" y="566" textAnchor="middle" className="lp2-t-dim lp2-t-small">Released by partial capture · M04 frozen alone · M07 voided back to the client</text>
             </g>
           </svg>
         </div>

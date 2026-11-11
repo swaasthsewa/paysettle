@@ -133,7 +133,7 @@ export const site = {
       lead: "PaySettle exposes MCP tools, so a procurement or assistant agent can draft, negotiate and submit evidence. Every step that moves money stops for a person.",
       calls: [
         { who: "Client agent", tool: "draft_contract", note: "Proposes milestones from a blueprint", gate: false },
-        { who: "Provider agent", tool: "negotiate", note: "Prunes and appends; humans review the diff", gate: false },
+        { who: "Provider agent", tool: "propose_changes", note: "Prunes and appends; humans review the diff", gate: false },
         { who: "Client agent", tool: "request_funding", note: "Creates the PayPal order", gate: false },
         { who: "Person", tool: "approve in PayPal", note: "The client approves the hold in PayPal itself", gate: true },
         { who: "Provider agent", tool: "submit_evidence", note: "Uploads proof against the spec", gate: false },

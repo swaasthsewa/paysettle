@@ -38,9 +38,23 @@ export function Motion({ children }: { children: ReactNode }) {
     /* parallax: a part marked data-depth drifts against the scroll by its depth (a fraction of its distance from the
        middle of the screen), so the illustrations sit on a different plane from the text */
     const deep = Array.from(root.querySelectorAll<HTMLElement>("[data-depth]"));
+    /* scroll scenes: a section marked data-progress gets --p from 0 (its top enters the screen) to 1 (it is well in
+       view), and .is-in while on screen, which starts its looping parts. CSS shows the final state when --p is unset. */
+    const scenes = Array.from(root.querySelectorAll<HTMLElement>("[data-progress]"));
+    const seen = new IntersectionObserver((entries) => {
+      for (const e of entries) (e.target as HTMLElement).classList.toggle("is-in", e.isIntersecting);
+    }, { rootMargin: "0px 0px -10% 0px" });
+    for (const el of scenes) { el.style.setProperty("--p", "0"); seen.observe(el); }
     let frame = 0;
     const paint = () => {
       frame = 0;
+      const vh = window.innerHeight;
+      for (const el of scenes) {
+        const r = el.getBoundingClientRect();
+        if (r.bottom < -100 || r.top > vh + 100) continue;
+        const span = Math.min(r.height, vh) * 0.85 + vh * 0.25;
+        el.style.setProperty("--p", Math.min(1, Math.max(0, (vh - r.top) / span)).toFixed(3));
+      }
       const mid = window.innerHeight / 2;
       for (const el of deep) {
         const r = el.getBoundingClientRect();
@@ -56,11 +70,18 @@ export function Motion({ children }: { children: ReactNode }) {
     window.addEventListener("scroll", onScroll, { passive: true });
 
     /* someone switches reduced motion on while reading: show everything at once */
-    const stop = () => { if (!calm.matches) return; root.classList.remove("lp-moving"); root.querySelectorAll<HTMLElement>("[data-wait]").forEach((el) => delete el.dataset.wait); };
+    const stop = () => {
+      if (!calm.matches) return;
+      root.classList.remove("lp-moving");
+      root.querySelectorAll<HTMLElement>("[data-wait]").forEach((el) => delete el.dataset.wait);
+      for (const el of scenes) { el.style.removeProperty("--p"); el.classList.remove("is-in"); }
+    };
     calm.addEventListener("change", stop);
 
     return () => {
       io.disconnect();
+      seen.disconnect();
+      for (const el of scenes) { el.style.removeProperty("--p"); el.classList.remove("is-in"); }
       for (const el of deep) el.style.translate = "";
       window.removeEventListener("scroll", onScroll);
       calm.removeEventListener("change", stop);

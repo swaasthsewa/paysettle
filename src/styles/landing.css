@@ -54,7 +54,7 @@
 /* ── "From a sentence to a settlement": fixed-picture reveal ──
    Without script every phase variable is 1, so the final composition is shown in the flow of the page. With script
    (.is-live) the section becomes a tall window, the stage is pinned, and SettleReveal.tsx drives the variables. */
-.lp2-sr { --a: 1; --b: 1; --c: 1; --d: 1; --f: 1; --o: 1; --s0: 1; --s1: 1; --s2: 1; --s3: 1; --s4: 1; --p: 0.5;
+.lp2-sr { --a: 1; --b: 1; --c: 1; --d: 1; --f: 1; --o: 1; --s0: 1; --s1: 1; --s2: 1; --s3: 1; --s4: 1; --s5: 1; --p: 0.5;
   position: relative; clip-path: inset(0); color: var(--lp-ink); background: var(--lp-night); }
 .lp2-sr-stage { position: relative; min-height: 100vh; display: flex; align-items: center; overflow: hidden; padding: 72px 0; }
 .lp2-sr.is-live { height: 380vh; }
