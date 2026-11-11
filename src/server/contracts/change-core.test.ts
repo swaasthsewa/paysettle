@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 import { canonicalHash } from "@/lib/canonical";
 import { formatCents } from "@/lib/money";
 import { DomainError } from "../types";
+import { evaluateTranche } from "../control/recon";
 import { bpsFromCents, moneyLines, planChangeOrder, type CoItem, type PlanInput } from "./change-core";
 import type { MsDraft, WsHead } from "./core";
 
@@ -99,9 +100,32 @@ describe("F2.13 change-order planner", () => {
     expect(canonicalHash(planChangeOrder({ ...i, tranches: [{ idx: 1, state: "PLANNED", amountCents: 600_000 }] }).doc)).not.toBe(canonicalHash(planChangeOrder(i).doc));
   });
 
+  it("key order in proof artifacts (blueprint data, form input, jsonb) is not a change", () => {
+    const m = ms("M04", 17, 300_000);
+    m.proof = { artifacts: [{ note: "Signed backlog", min: 1, kind: "PDF" } as never], criteria: ["done"] };
+    const i = base({ ms: [m], items: [{ action: "EDIT", milestoneCode: "M04", day: 18, proof: { artifacts: [{ kind: "PDF", min: 1, note: "Signed backlog" }], criteria: ["done"] } }] });
+    expect(planChangeOrder(i).diff.changed[0].fields.map((f) => f.field)).toEqual(["day"]);
+    expect(code(() => planChangeOrder({ ...i, items: [{ action: "EDIT", milestoneCode: "M04", proof: { artifacts: [{ kind: "PDF", min: 1, note: "Signed backlog" }], criteria: ["done"] } }] }))).toBe("NO_CHANGE");
+  });
+
   it("shares derived from cents add up to exactly 100%", () => {
     const list = [ms("M01", 1, 33_333), ms("M02", 2, 33_333), ms("M03", 3, 33_334)];
     bpsFromCents(list);
     expect(list.reduce((s, m) => s + m.bps, 0)).toBe(10_000);
+  });
+});
+
+describe("F2.13 reconciliation's contract plane counts what change orders returned", () => {
+  const ago = (min: number) => new Date(Date.now() - min * 60_000);
+  const input = (amendedOutCents: number) => ({
+    tranche: { id: "t", workspaceId: "w", idx: 1, rail: "MOCK", amountCents: 600_000, state: "HELD", paypalOrderId: null, authorizationId: "A", captureId: null, heldAt: ago(120), amendedOutCents },
+    /* M07 (100,000) removed by a change order; 500,000 of milestones left, all open */
+    milestones: [{ amountCents: 500_000, state: "OPEN", type: "PAY", active: true }, { amountCents: 100_000, state: "LOCKED", type: "PAY", active: false }],
+    ledger: [{ type: "HOLD", amountCents: 600_000, paypalRef: "A", milestoneId: null, at: ago(120) }, { type: "VOID", amountCents: 100_000, paypalRef: "recorded:r1", milestoneId: "m7", at: ago(60) }],
+    rail: { kind: "mock" as const, txns: null, error: "not needed" }, now: new Date(), windowFrom: ago(60 * 24),
+  });
+  it("matches with amended_out_cents; without it the hold looks larger than the contract (drift)", () => {
+    expect(evaluateTranche(input(100_000)).issues).toEqual([]);
+    expect(evaluateTranche(input(0)).status).toBe("DRIFT");
   });
 });

@@ -15,6 +15,7 @@
  *  - any other tranche state (waiting for PayPal approval, settling, rolled over, paused, closed) refuses money changes.
  * Milestones that are submitted or later (or have any evidence) are frozen and cannot be touched.
  */
+import { canonical } from "@/lib/canonical";
 import { BPS_FULL, splitByBps } from "@/lib/money";
 import { trancheOf, type Rail } from "@/lib/policy";
 import type { ProofSpec } from "@/db/schema";
@@ -79,7 +80,8 @@ export function changeOrderDoc(h: WsHead, revNo: number, ms: MsDraft[], cl: ClDr
   return { ...canonicalDoc(h, revNo, ms, cl), amends: { kind: "paysettle.change_order", ...amends } };
 }
 
-const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+/* canonical JSON: key order differs between blueprint data, form input and Postgres jsonb, and must not count as a change */
+const same = (a: unknown, b: unknown) => canonical(a ?? null) === canonical(b ?? null);
 const artifactsText = (p: ProofSpec) => p.artifacts.map((a) => `${a.min} × ${a.kind}${a.note ? ` (${a.note})` : ""}`).join(", ") || "none";
 
 export function planChangeOrder(i: PlanInput): Plan {
@@ -155,7 +157,7 @@ export function planChangeOrder(i: PlanInput): Plan {
     if (it.title !== undefined && it.title !== m.title) { fields.push({ field: "title", from: m.title, to: it.title }); m.title = it.title; }
     if (it.day !== undefined && it.day !== m.targetDay) { fields.push({ field: "day", from: m.targetDay, to: it.day }); m.targetDay = it.day; }
     if (it.proof !== undefined) {
-      if (!same(it.proof.artifacts, m.proof.artifacts) || it.proof.oracle !== m.proof.oracle || it.proof.gpsRadiusM !== m.proof.gpsRadiusM) fields.push({ field: "proof", from: artifactsText(m.proof), to: artifactsText(it.proof) });
+      if (!same(it.proof.artifacts, m.proof.artifacts) || !same(it.proof.oracle, m.proof.oracle) || !same(it.proof.gpsRadiusM, m.proof.gpsRadiusM)) fields.push({ field: "proof", from: artifactsText(m.proof), to: artifactsText(it.proof) });
       if (!same(it.proof.criteria, m.proof.criteria)) fields.push({ field: "criteria", from: m.proof.criteria.join(" · ") || "none", to: it.proof.criteria.join(" · ") || "none" });
       m.proof = it.proof;
     }

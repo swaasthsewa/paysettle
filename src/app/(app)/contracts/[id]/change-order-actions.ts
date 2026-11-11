@@ -15,6 +15,7 @@ import { db } from "@/db/client";
 import { changeOrders } from "@/db/schema-amend";
 import { eq } from "drizzle-orm";
 import type { ProofSpec } from "@/db/schema";
+import { canonical } from "@/lib/canonical";
 import { DomainError } from "@/server/types";
 
 const s = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
@@ -60,7 +61,7 @@ export async function proposeChangeOrderAction(f: FormData) {
       const artifacts = await parseProofLines(s(f, `proof_${m.code}`));
       if (!artifacts) throw new DomainError("INVALID_INPUT", `${m.code}: write each proof line as “count × kind — what it shows”, for example “2 × IMAGE — before and after photos”.`);
       const criteria = lines(s(f, `criteria_${m.code}`));
-      if (JSON.stringify(artifacts) !== JSON.stringify(m.proof.artifacts) || JSON.stringify(criteria) !== JSON.stringify(m.proof.criteria)) e.proof = { ...m.proof, artifacts, criteria };
+      if (canonical(artifacts) !== canonical(m.proof.artifacts) || canonical(criteria) !== canonical(m.proof.criteria)) e.proof = { ...m.proof, artifacts, criteria };
       if (Object.keys(e).length > 2) items.push(e);
     }
     for (const n of [1, 2]) {
