@@ -3,7 +3,7 @@
  * P9: every exported function refuses to run outside sandbox mode. Audit rows are written for every mutation and never removed;
  * a reset starts a new sim session with a fresh workspace and simply abandons the old one.
  */
-import { asc, desc, eq, inArray } from "drizzle-orm";
+import { asc, eq, inArray } from "drizzle-orm";
 import { db } from "@/db/client";
 import { ledgerEntries, releases, refunds, simSessions, tranches, users, wsMilestones, type Role } from "@/db/schema";
 import { simEvents, simProgress, type SimEventKind, type SimStepRecord } from "@/db/schema-playground";
@@ -72,10 +72,19 @@ export async function getSim(simId: string): Promise<Sim> {
   return s;
 }
 
-export async function latestSimFor(judgeId: string): Promise<Sim | null> {
-  assertSandbox();
-  const [s] = await db.select().from(simSessions).where(eq(simSessions.judgeId, judgeId)).orderBy(desc(simSessions.createdAt)).limit(1);
-  return s ?? null;
+/*
+ * One action at a time per run. Judges share one account, and a step reads the run's progress, works, then saves it; two
+ * overlapping calls on the same run (two tabs, the live-mode auto-retry, a double click) would race and the last save
+ * would win. The app runs as one server process, so an in-memory set is enough; it sits on globalThis because route
+ * handlers and server actions may load this module separately.
+ */
+const g = globalThis as unknown as { __psSimBusy?: Set<string> };
+const busy: Set<string> = (g.__psSimBusy ??= new Set<string>());
+export class SimBusy extends DomainError { constructor() { super("SIM_BUSY", "This run is busy with a step; try again in a moment."); } }
+export async function withSimLock<T>(simId: string, fn: () => Promise<T>): Promise<T> {
+  if (busy.has(simId)) throw new SimBusy();
+  busy.add(simId);
+  try { return await fn(); } finally { busy.delete(simId); }
 }
 
 export async function setSimWorkspace(simId: string, workspaceId: string) {
@@ -163,6 +172,12 @@ export function checkTravel(current: number, hours: number): number {
 /** Adds `hours` to the sim clock (0–720 h in total), then runs the hold watchdog and the review timers for its workspace. */
 export async function timeTravel(actor: { id: string; role: string }, simId: string, hours: number, step = "time-machine"): Promise<TimeTravelResult> {
   assertSandbox();
+  return withSimLock(simId, () => travelInRun(actor, simId, hours, step));
+}
+
+/** timeTravel for a scenario step, which already holds the run's lock. */
+export async function travelInRun(actor: { id: string; role: string }, simId: string, hours: number, step = "time-machine"): Promise<TimeTravelResult> {
+  assertSandbox();
   const s = await getSim(simId);
   const next = checkTravel(s.clockOffsetHours, hours);
   await db.update(simSessions).set({ clockOffsetHours: next }).where(eq(simSessions.id, simId));
@@ -205,10 +220,12 @@ export async function addFault(simId: string, fault: string) {
 
 export async function resetSim(actor: { id: string; role: string }, simId: string): Promise<Sim> {
   assertSandbox();
-  const old = await getSim(simId);
-  mockControl.reset(); // mock rail state only; database rows (ledger, audit, old workspaces) are kept and simply abandoned
-  const fresh = await createSim(actor, old.scenario, old.mode);
-  await audit(db, { id: actor.id, role: actor.role }, "sandbox.reset", simId, { replacedBy: fresh.id, abandonedWorkspace: old.workspaceId });
-  await logEvent(fresh.id, "reset", "state", `reset from ${simId}`, `fresh session at simulated day 0; previous workspace ${old.workspaceId ?? "(none)"} left as it was`, true, 0);
-  return fresh;
+  return withSimLock(simId, async () => {
+    const old = await getSim(simId);
+    mockControl.reset(); // mock rail state only; database rows (ledger, audit, old workspaces) are kept and simply abandoned
+    const fresh = await createSim(actor, old.scenario, old.mode);
+    await audit(db, { id: actor.id, role: actor.role }, "sandbox.reset", simId, { replacedBy: fresh.id, abandonedWorkspace: old.workspaceId });
+    await logEvent(fresh.id, "reset", "state", `reset from ${simId}`, `fresh session at simulated day 0; previous workspace ${old.workspaceId ?? "(none)"} left as it was`, true, 0);
+    return fresh;
+  });
 }

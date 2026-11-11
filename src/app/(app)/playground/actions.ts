@@ -1,7 +1,8 @@
 "use server";
 /**
  * Playground extras: A6 "Try to cheat" on a simulation's audit chain and A12 Pair A vs Pair B.
- * Sandbox only (P9), judges and platform admins only, zod-validated input. The services re-check the sim scope.
+ * Sandbox only (P9), judges and platform admins only, zod-validated input. The services re-check the sim scope, and each
+ * action works only on the run this browser holds (ps_sim cookie), so judges sharing one account never touch each other's.
  */
 import { z } from "zod";
 import { sandboxMode } from "@/lib/clock";
@@ -10,6 +11,7 @@ import { DomainError } from "@/server/types";
 import { PLAYGROUND_ROLES, playgroundState, type PlaygroundState } from "@/server/playground";
 import { attemptDirectAuditEditForDemo, copySimAudit, repairSimAuditForDemo, tamperSimAuditCopyForDemo, verifySimAuditCopy, type TamperState } from "@/server/playground/tamper";
 import { buildPairs, type PairResult } from "@/server/playground/pairs";
+import { assertOwnSim, holdPair, holdSim } from "@/server/playground/owner";
 
 export type ExtrasResult<T> = { ok: true; data: T; message?: string } | { ok: false; message: string };
 
@@ -34,12 +36,12 @@ async function run<T>(fn: () => Promise<T>, message?: (d: T) => string): Promise
 
 /** Copies this simulation's audit rows and verifies them (fresh copy, nothing edited). */
 export async function auditCopyAction(simId: string): Promise<ExtrasResult<TamperState>> {
-  return run(async () => { await judge(); const id = SimId.parse(simId); await copySimAudit(id); return verifySimAuditCopy(id); });
+  return run(async () => { await judge(); const id = SimId.parse(simId); await assertOwnSim(id); await copySimAudit(id); return verifySimAuditCopy(id); });
 }
 
 /** Step 1: a direct UPDATE on the real chain (always rolled back), then the verifier. */
 export async function directEditAction(simId: string): Promise<ExtrasResult<{ attempt: { seq: number; refused: boolean; message: string }; state: TamperState }>> {
-  return run(async () => { const j = await judge(); const id = SimId.parse(simId); const attempt = await attemptDirectAuditEditForDemo(j, id); return { attempt, state: await verifySimAuditCopy(id) }; });
+  return run(async () => { const j = await judge(); const id = SimId.parse(simId); await assertOwnSim(id); const attempt = await attemptDirectAuditEditForDemo(j, id); return { attempt, state: await verifySimAuditCopy(id) }; });
 }
 
 /** Step 2 + 3: edit one copied row (optionally re-hash it) and run the verifier. */
@@ -47,6 +49,7 @@ export async function tamperAction(input: { simId: string; mode: "edit" | "rehas
   return run(async () => {
     const j = await judge();
     const p = Tamper.parse(input);
+    await assertOwnSim(p.simId);
     const t = await tamperSimAuditCopyForDemo(j, p.simId, { mode: p.mode, seq: p.seq });
     return { change: t.change, state: await verifySimAuditCopy(p.simId) };
   });
@@ -54,10 +57,16 @@ export async function tamperAction(input: { simId: string; mode: "edit" | "rehas
 
 /** Step 4: drop the copy and re-run the scenario reset (fresh simulation at day 0). */
 export async function repairAction(simId: string): Promise<ExtrasResult<PlaygroundState>> {
-  return run(async () => { const j = await judge(); const fresh = await repairSimAuditForDemo(j, SimId.parse(simId)); return playgroundState(fresh.id); });
+  return run(async () => {
+    const j = await judge(); const id = SimId.parse(simId);
+    await assertOwnSim(id);
+    const fresh = await repairSimAuditForDemo(j, id);
+    await holdSim(fresh.id);
+    return playgroundState(fresh.id);
+  });
 }
 
 /** A12: build Pair A and Pair B from the classic-car blueprint and return the side-by-side diff. */
 export async function buildPairsAction(): Promise<ExtrasResult<PairResult>> {
-  return run(async () => buildPairs(await judge()));
+  return run(async () => { const r = await buildPairs(await judge()); await holdPair(r.id); return r; });
 }
