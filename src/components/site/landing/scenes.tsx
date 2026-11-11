@@ -70,12 +70,12 @@ export function TrustScene({ facts }: { facts: LandingFacts }) {
               {i < 2 && <span className="ph ph-fade tr2-eq" style={w(0.78, 0.84)} aria-hidden="true">=</span>}
             </div>
           ))}
-          <div className="ph ph-pop tr2-zero" style={w(0.82, 0.9)}><Glyph d={G.check} /> zero drift</div>
+          <div className="ph ph-pop tr2-zero" style={w(0.82, 0.9)}><Glyph d={G.check} /> matched to the cent</div>
           <div className="ph ph-pop tr2-keys" style={w(0.86, 0.95)}><Glyph d={G.key} /><Glyph d={G.key} /><span>drift needs two people</span></div>
         </div>
         <p className="sc-live">
           <span><i aria-hidden="true" />{facts.auditRows.toLocaleString("en-US")} rows in this build&apos;s audit chain</span>
-          <span><i aria-hidden="true" />{facts.recon === "CLEAN" ? "last reconciliation: zero drift" : facts.recon === "IN_FLIGHT" ? "last reconciliation: matched, releases in flight" : facts.recon === "DRIFT" ? "last reconciliation: drift, contracts stopped" : "no reconciliation run yet"}</span>
+          <span><i aria-hidden="true" />{facts.recon === "CLEAN" ? "last reconciliation: zero drift" : facts.recon === "IN_FLIGHT" ? "last reconciliation: matched, releases in flight" : facts.recon === "DRIFT" ? "last reconciliation caught drift and stopped that contract for review" : "no reconciliation run yet"}</span>
         </p>
       </div>
     </section>

@@ -118,9 +118,10 @@ export function PaypalScene() {
         if (s.end === "returned") back += s.cents * seg(t, 0.85, 1);
       });
       const inHold = EXAMPLE_TOTAL * fill - captured - back;
-      if (held.current) held.current.textContent = usd(Math.round(inHold / 100) * 100);
-      if (cap.current) cap.current.textContent = usd(Math.round(captured / 100) * 100);
-      if (voided.current) voided.current.textContent = usd(Math.round(back / 100) * 100);
+      const step = (c: number) => usd(Math.round(c / 10_000) * 10_000); // whole hundreds while money is moving
+      if (held.current) held.current.textContent = step(inHold);
+      if (cap.current) cap.current.textContent = step(captured);
+      if (voided.current) voided.current.textContent = step(back);
     };
 
     let raf = 0, listening = false;
@@ -172,7 +173,6 @@ export function PaypalScene() {
             {/* the hold clock */}
             <g className="pp-clock">
               <line x1={TL.x0} y1={TL.y} x2={TL.x1} y2={TL.y} className="pp-tl" />
-              <text x={TL.x0} y={TL.y + 30} className="pp-mono pp-dim">Day 0</text>
               <text x={(TL.x0 + TL.x1) / 2} y={TL.y + 56} textAnchor="middle" className="pp-mono pp-dim pp-window">one authorization · {CAP}-day hold window</text>
               {EXAMPLE_SHARES.map((s) => (
                 <g key={s.code} transform={`translate(${dayX(s.day)} ${TL.y})`}>
