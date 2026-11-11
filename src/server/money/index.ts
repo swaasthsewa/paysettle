@@ -499,7 +499,7 @@ export async function runWatchdog(now: Date, workspaceId?: string): Promise<{ ac
   const list = await db.select().from(tranches).where(where).orderBy(asc(tranches.workspaceId), asc(tranches.idx));
   for (const t of list) {
     try {
-      if (t.state === "AWAITING_APPROVAL") { if (await pollApproval(t)) actions.push({ trancheId: t.id, action: "CONFIRMED_BY_POLL" }); continue; }
+      if (t.state === "AWAITING_APPROVAL") { const polled = await pollApproval(t); if (polled) actions.push({ trancheId: t.id, action: polled }); continue; }
       if (!t.heldAt) continue;
       if (await retryDeadlineSteps(t)) actions.push({ trancheId: t.id, action: "DEADLINE_SETTLED" });
       const wnow = await effectiveNow(now, t.workspaceId);
@@ -545,13 +545,36 @@ async function effectiveNow(now: Date, workspaceId: string): Promise<Date> {
   return new Date(Math.max(now.getTime(), shifted));
 }
 
-async function pollApproval(t: TrancheRow): Promise<boolean> {
-  if (!t.paypalOrderId || t.paypalOrderId.startsWith("MOCKORD-")) return false; // the mock approval link lands on the return handler
+/* PayPal answers that mean the order itself is gone or can no longer be approved: polling it again can only fail */
+const DEAD_ORDER = /RESOURCE_NOT_FOUND|INVALID_RESOURCE_ID|ORDER_NOT_FOUND|ORDER_EXPIRED|ORDER_VOIDED|ORDER_ALREADY_VOIDED/;
+
+/**
+ * F3.02 a tranche waiting for the buyer: confirms it once PayPal says the order is approved. When PayPal no longer knows
+ * the order (expired, voided, not found), the tranche goes back to unfunded as on TRANSACTION_REFUSED in confirmTranche:
+ * the order and its approve link are dropped, so the client can fund again with a fresh order, and the
+ * money.order_refused row gives that next attempt its own idempotency key (fundTranche). Without this the watchdog
+ * logged an error on every run and the client kept getting the dead link.
+ */
+async function pollApproval(t: TrancheRow): Promise<"CONFIRMED_BY_POLL" | "ORDER_GONE" | null> {
+  if (!t.paypalOrderId || t.paypalOrderId.startsWith("MOCKORD-")) return null; // the mock approval link lands on the return handler
   const rail = await railOf(t);
-  const s = await rail.status(t.paypalOrderId);
-  if (s.status !== "APPROVED") return false;
+  let s: HoldState;
+  try { s = await rail.status(t.paypalOrderId); }
+  catch (e) {
+    if (e instanceof RailError && DEAD_ORDER.test(`${e.message} ${JSON.stringify(e.detail ?? "")}`)) return (await dropDeadOrder(t, railMessage(e))) ? "ORDER_GONE" : null;
+    throw e;
+  }
+  if (s.status === "EXPIRED" || s.status === "VOIDED") return (await dropDeadOrder(t, `PayPal reports the order as ${s.status.toLowerCase()}`)) ? "ORDER_GONE" : null;
+  if (s.status !== "APPROVED") return null;
   await confirmTranche(null, t.id, t.paypalOrderId);
-  return true;
+  return "CONFIRMED_BY_POLL";
+}
+
+async function dropDeadOrder(t: TrancheRow, why: string): Promise<boolean> {
+  const r = await db.update(tranches).set({ state: trancheMachine.next("AWAITING_APPROVAL", "expire"), paypalOrderId: null, approveUrl: null })
+    .where(and(eq(tranches.id, t.id), eq(tranches.state, "AWAITING_APPROVAL"), eq(tranches.paypalOrderId, t.paypalOrderId!))).returning({ id: tranches.id });
+  if (r.length) await audit(db, SYSTEM, "money.order_refused", t.id, { orderId: t.paypalOrderId, reason: "order_gone", error: why });
+  return r.length > 0;
 }
 
 async function perform(action: string, t: TrancheRow, day: number, wnow: Date): Promise<boolean> {

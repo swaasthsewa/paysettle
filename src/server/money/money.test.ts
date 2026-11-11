@@ -7,9 +7,11 @@ import { db, pool } from "@/db/client";
 import { auditChain, ledgerEntries, refunds, releases, tranches, wsMilestones } from "@/db/schema";
 import { moneyNotices } from "@/db/schema-money";
 import { mockControl } from "@/lib/rails/mock";
+import { RailError, type FundInput, type HoldState, type Rail } from "@/lib/rails";
 import { DomainError, type Actor } from "../types";
 import { confirmTranche, fundTranche, ledgerFor, releaseMilestone, returnToClient, rollover, runWatchdog } from "./index";
 import { checkInvariant } from "./queries";
+import { setTestRail } from "./internal";
 import { makeContract, recordApproval, recordVerdict, setMilestoneState, setOffset, type Fixture } from "./fixtures";
 
 beforeAll(() => { delete process.env.PAYPAL_CLIENT_ID; process.env.MONEY_RETRY_MS = "0"; });
@@ -245,5 +247,42 @@ describe("F3.11 ledger shape", () => {
     const rows = await db.select().from(ledgerEntries).where(eq(ledgerEntries.trancheId, f.trancheId));
     for (const r of rows) { expect(Number.isSafeInteger(r.amountCents)).toBe(true); expect(r.debit).not.toBe(r.credit); }
     expect(rows.map((r) => r.type).sort()).toEqual(["FEE", "HOLD", "RELEASE"]);
+  });
+});
+
+describe("F3.02 a PayPal order that no longer exists", () => {
+  it("F3.02 the watchdog puts the tranche back to unfunded once; the next funding is a fresh order with its own key", async () => {
+    const keys: string[] = [];
+    let n = 0;
+    const gone = new Set<string>();
+    /* a PayPal-like rail: the first order is unknown to PayPal by the time the watchdog polls it (404 RESOURCE_NOT_FOUND) */
+    const rail = {
+      id: "A1",
+      async fund(i: FundInput) { keys.push(i.idemKey); n += 1; const id = `DEAD-${n}-${i.trancheId.slice(-6)}`; if (n === 1) gone.add(id); return { orderId: id, approveUrl: `https://sim.invalid/approve?token=${id}` }; },
+      async status(orderId: string): Promise<HoldState> {
+        if (gone.has(orderId)) throw new RailError("BUG", `PayPal 404 INVALID_RESOURCE_ID on /v2/checkout/orders/${orderId}`, { name: "RESOURCE_NOT_FOUND", details: [{ issue: "INVALID_RESOURCE_ID" }] });
+        return { status: "CREATED", heldCents: 0, capturedCents: 0 };
+      },
+    } as unknown as Rail;
+    const f = await makeContract({ milestones: [{ day: 3, amountCents: 40_000 }], rail: "A1" });
+    setTestRail((t) => (t.id === f.trancheId ? rail : null));
+    try {
+      const first = await fundTranche(client(f), f.trancheId);
+      expect((await tranche(f.trancheId)).state).toBe("AWAITING_APPROVAL");
+      const w = await runWatchdog(new Date(), f.workspaceId);
+      expect(w.actions).toContainEqual({ trancheId: f.trancheId, action: "ORDER_GONE" });
+      const t = await tranche(f.trancheId);
+      expect(t).toMatchObject({ state: "PLANNED", paypalOrderId: null, approveUrl: null });
+      const audits = await db.select().from(auditChain).where(eq(auditChain.target, f.trancheId));
+      expect(audits.filter((a) => a.action === "money.order_refused")).toHaveLength(1);
+      // funding again does not hand back the dead link: a new order under a new idempotency key
+      const second = await fundTranche(client(f), f.trancheId);
+      expect(second.approveUrl).not.toBe(first.approveUrl);
+      expect(new Set(keys).size).toBe(2);
+      // the live order is simply still waiting: no error, nothing dropped
+      expect((await runWatchdog(new Date(), f.workspaceId)).actions).toEqual([]);
+      expect((await tranche(f.trancheId)).state).toBe("AWAITING_APPROVAL");
+      expect((await db.select().from(auditChain).where(eq(auditChain.target, f.trancheId))).filter((a) => a.action === "money.watchdog_error")).toHaveLength(0);
+    } finally { setTestRail(null); }
   });
 });
