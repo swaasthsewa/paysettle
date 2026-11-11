@@ -672,12 +672,25 @@ const S5: Scenario = {
   ],
 };
 
+/**
+ * F5.08 the ids a PayPal fault of this run is scoped to: its tranches, orders, authorizations and captures. The mock
+ * rail is shared by every judge's run, so a fault fires only on a call about one of these ids (src/lib/rails/mock.ts).
+ */
+async function railScope(workspaceId: string | undefined): Promise<string[]> {
+  if (!workspaceId) return [];
+  const ts = await db.select({ id: tranches.id, o: tranches.paypalOrderId, a: tranches.authorizationId, c: tranches.captureId }).from(tranches).where(eq(tranches.workspaceId, workspaceId));
+  return ts.flatMap((t) => [t.id, t.o, t.a, t.c]).filter((x): x is string => Boolean(x));
+}
+const NO_SCOPE = "No tranche yet. A PayPal 503 is armed only on this run's own tranches, so lock the contract first.";
+
 async function stInject503(ctx: StepCtx): Promise<StepOutcome> {
   if (ctx.sim.mode === "LIVE") return skipped("Fault injection works on the mock rail only; the live PayPal Sandbox is never sabotaged.");
-  mockControl.inject("release_503");
+  const scope = await railScope(ctx.bag.workspaceId);
+  if (!scope.length) return failed(NO_SCOPE);
+  mockControl.inject("release_503", scope);
   await addFault(ctx.sim.id, "release_503");
-  await ctx.log("fault", "mockControl.inject('release_503')", "next capture on the mock rail answers 503 once (simulated)");
-  return done("Armed: the next capture on the mock rail answers a transient PayPal 503 once.");
+  await ctx.log("fault", "mockControl.inject('release_503', this run's tranche)", "next capture on this run's authorization answers 503 once (simulated)");
+  return done("Armed: the next capture on this run's tranche answers a transient PayPal 503 once.");
 }
 async function stReleaseUnderFault(ctx: StepCtx): Promise<StepOutcome> {
   const r = await stApprove(ctx, "M02");
@@ -1065,12 +1078,15 @@ async function injectOnce(judge: { id: string; role: string }, simId: string, fa
   let out: StepOutcome;
   try {
     switch (fault) {
-      case "release_503": case "fund_503": case "refund_503":
+      case "release_503": case "fund_503": case "refund_503": {
         if (sim.mode === "LIVE") { out = skipped("Faults are injected on the mock rail only; the live PayPal Sandbox is never sabotaged."); break; }
-        mockControl.inject(fault); await addFault(simId, fault);
-        await ctx.log("fault", `mockControl.inject('${fault}')`, "the next matching rail call answers a transient 503 once (simulated)");
-        out = done(`Armed ${fault}: the next ${fault.split("_")[0]} call on the mock rail answers 503 once; the money module retries with the same idempotency key.`);
+        const scope = await railScope(bag.workspaceId);
+        if (!scope.length) { out = failed(NO_SCOPE); break; }
+        mockControl.inject(fault, scope); await addFault(simId, fault);
+        await ctx.log("fault", `mockControl.inject('${fault}', this run's tranches)`, "the next matching rail call on this run answers a transient 503 once (simulated)");
+        out = done(`Armed ${fault}: the next ${fault.split("_")[0]} call on this run's tranches answers 503 once; the money module retries with the same idempotency key.`);
         break;
+      }
       case "duplicate_webhook": out = bag.workspaceId ? await stDupWebhook(ctx) : failed("Start the scenario first: no contract yet."); break;
       case "chargeback_webhook": {
         if (!bag.workspaceId) { out = failed("Start the scenario first: no contract yet."); break; }

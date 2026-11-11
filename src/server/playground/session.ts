@@ -12,7 +12,6 @@ import { audit } from "@/lib/audit";
 import { nowFor, sandboxMode } from "@/lib/clock";
 import { newId } from "@/lib/ids";
 import { formatCents } from "@/lib/money";
-import { mockControl } from "@/lib/rails/mock";
 import { liveAvailable } from "@/lib/rails";
 import { DomainError, NotBuilt, type Actor } from "../types";
 import * as money from "../money";
@@ -222,7 +221,8 @@ export async function resetSim(actor: { id: string; role: string }, simId: strin
   assertSandbox();
   return withSimLock(simId, async () => {
     const old = await getSim(simId);
-    mockControl.reset(); // mock rail state only; database rows (ledger, audit, old workspaces) are kept and simply abandoned
+    /* the mock rail's memory is left alone: it holds every judge's runs, and a fresh run makes its own orders. Database rows
+       (ledger, audit, old workspaces) are kept and simply abandoned. */
     const fresh = await createSim(actor, old.scenario, old.mode);
     await audit(db, { id: actor.id, role: actor.role }, "sandbox.reset", simId, { replacedBy: fresh.id, abandonedWorkspace: old.workspaceId });
     await logEvent(fresh.id, "reset", "state", `reset from ${simId}`, `fresh session at simulated day 0; previous workspace ${old.workspaceId ?? "(none)"} left as it was`, true, 0);

@@ -8,6 +8,7 @@ import { db } from "@/db/client";
 import { releases, simSessions, wsMilestones } from "@/db/schema";
 import { simEvents } from "@/db/schema-playground";
 import { simWorkspaces } from "@/db/schema-sim";
+import { MockRail, mockControl } from "@/lib/rails/mock";
 import { NotBuilt } from "../types";
 import * as contracts from "../contracts";
 import * as money from "../money";
@@ -88,6 +89,15 @@ describe("F5.07 time machine bounds", () => {
     expect(fresh.scenario).toBe("S1");
     const [old] = await db.select().from(simSessions).where(eq(simSessions.id, sim.id));
     expect(old.clockOffsetHours).toBe(24);
+  });
+
+  it("F5.08: a reset leaves the shared mock rail alone, so another judge's armed fault still fires on their own run", async () => {
+    mockControl.inject("fund_503", "tr_other_judge_run");
+    const sim = await createSim(JUDGE, "S1", "MOCK");
+    await resetSim(JUDGE, sim.id);
+    const fund = () => new MockRail().fund({ trancheId: "tr_other_judge_run", amountCents: 100, currency: "USD", description: "t", returnUrl: "http://x/r", cancelUrl: "http://x/c", idemKey: `fund-other-${sim.id}` });
+    await expect(fund()).rejects.toMatchObject({ kind: "TRANSIENT" });
+    await expect(fund()).resolves.toBeTruthy();
   });
 });
 
