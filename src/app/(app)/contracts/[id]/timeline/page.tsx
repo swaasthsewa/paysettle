@@ -59,7 +59,8 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   const base = `/contracts/${id}/timeline`;
   const coQs = coParam ? `co=${coParam}&` : "";
   const changeKinds: CoChange[] = ["redated", "added", "removed", "changed"];
-  const pay = plan.tasks.flatMap((t) => t.children ?? []).filter((t) => t.kind === "pay");
+  /* the header always describes this contract as signed (money held, released, disputed), whatever view is selected */
+  const pay = signedPlan.tasks.flatMap((t) => t.children ?? []).filter((t) => t.kind === "pay");
   const sum = (tone: MsTone) => pay.filter((t) => t.tone === tone).reduce((s, t) => s + t.amountCents, 0);
   const tones: MsTone[] = ["held", "released", "disputed", "refunded", "draft", "gate"];
 
@@ -69,7 +70,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
         <div>
           <p className="crumb"><Link href={`/contracts/${id}`}>{v.title}</Link> › Timeline</p>
           <h1>Timeline</h1>
-          <p className="sub">{ANCHOR[plan.anchorKind]} ({day(plan.anchor)}). Now is {day(plan.now)}{plan.virtual ? " on this contract's virtual clock" : ""}.</p>
+          <p className="sub">{ANCHOR[signedPlan.anchorKind]} ({day(signedPlan.anchor)}). Now is {day(signedPlan.now)}{signedPlan.virtual ? " on this contract's virtual clock" : ""}.</p>
         </div>
         <div className="stats">
           <div className="hstat"><div className="v money">{formatCents(sum("held"), v.currency)}</div><div className="l">Held in PayPal</div></div>
