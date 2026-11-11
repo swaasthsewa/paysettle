@@ -1,0 +1,52 @@
+{
+  "at": "2026-11-11T04:04:51.676Z",
+  "commit": "529af61",
+  "file": "evals/golden/compile.json",
+  "n": 60,
+  "model": null,
+  "rewriteJudge": "rule linter (lintCriterion)",
+  "compilerRules": {
+    "n": 60,
+    "answered": 60,
+    "precisionVague": 1,
+    "recallVague": 1,
+    "agreement": 1,
+    "rewrites": 30,
+    "rewritesCheckable": 7,
+    "rewriteCheckableRate": 0.233,
+    "flaggedWithoutRewrite": 0,
+    "misses": [],
+    "uncheckableRewrites": [
+      "C03 \"User-friendly dashboard for the operations team — measured as: 3 named test users complete the 3 core tasks without help (session recordings attached)\"",
+      "C07 \"High quality code — measured as: matches the approved specification sheet item by item, with zero open defects at handover (signed checklist attached)\"",
+      "C09 \"Deliver the design files ASAP — measured as: delivered by day N of the contract (timestamped delivery record)\"",
+      "C11 \"Make changes as needed until the client is happy — measured as: the full list of items written out in the milestone, each checked off in a signed checklist\"",
+      "C13 \"Kitchen cabinets look nice and are well finished — measured as: matches the approved design file screen by screen / room by room (dated photos or screenshots of each attached)\"",
+      "C15 \"The car's paint job is excellent — measured as: matches the approved specification sheet item by item, with zero open defects at handover (signed checklist attached)\"",
+      "C17 \"Tour itinerary is engaging and well organised — measured as: 3 named test users complete the 3 core tasks without help (session recordings attached)\"",
+      "C19 \"Provide reasonable support after go-live, evidenced by a dated report or signed checklist that lists each item\"",
+      "C23 \"Professional photos of the finished rooms — measured as: matches the approved specification sheet item by item, with zero open defects at handover (signed checklist attached)\"",
+      "C25 \"Seamless migration of customer data — measured as: 3 named test users complete the 3 core tasks without help (session recordings attached)\"",
+      "C27 \"Intuitive onboarding flow — measured as: 3 named test users complete the 3 core tasks without help (session recordings attached)\"",
+      "C33 \"The roof is watertight and durable, evidenced by a dated report or signed checklist that lists each item\"",
+      "C35 \"Secure login and data handling — measured as: no critical or high findings in a dependency scan and a web scan (reports attached)\"",
+      "C37 \"Clean, polished UI that matches our brand — measured as: matches the approved design file screen by screen / room by room (dated photos or screenshots of each attached)\"",
+      "C39 \"Landscaping completed to the client's satisfaction — measured as: accepted when the client signs the acceptance checklist; objections must name a failed item within 48 h\"",
+      "C41 \"Translations of good quality into several languages — measured as: matches the approved design file screen by screen / room by room (dated photos or screenshots of each attached)\"",
+      "C43 \"Use industry standard best practices for the configuration, evidenced by a dated report or signed checklist that lists each item\"",
+      "C45 \"Improve planning accuracy significantly, evidenced by a dated report or signed checklist that lists each item\"",
+      "C47 \"Engine runs better than before, evidenced by a dated report or signed checklist that lists each item\"",
+      "C49 \"Roughly 10 pages of documentation, more if needed, evidenced by a dated report or signed checklist that lists each item\"",
+      "C51 \"Marketing campaign gets great engagement — measured as: matches the approved design file screen by screen / room by room (dated photos or screenshots of each attached)\"",
+      "C53 \"Provide training where possible — measured as: the full list of items written out in the milestone, each checked off in a signed checklist\"",
+      "C59 \"Work is done on time, evidenced by a dated report or signed checklist that lists each item\""
+    ]
+  },
+  "compilerAi": {
+    "pending": "pending: needs AI_API_KEY"
+  },
+  "baseline": {
+    "pending": "pending: needs AI_API_KEY",
+    "prompt": "eval.baseline@v1"
+  }
+}

@@ -22,6 +22,7 @@
     "verify": "npm run typecheck && npm run lint && npm run test && npm run gate:copy && npm run gate:names && npm run gate:vocab && npm run gate:secrets && npm run build",
     "db:guards": "tsx scripts/guards.ts",
     "eval": "tsx evals/run.ts",
+    "eval:compare": "tsx evals/compare.ts",
     "db:reset": "tsx scripts/reset-db.ts",
     "db:reset:test": "tsx scripts/reset-db.ts paysettle_test --base",
     "demo:reset": "tsx scripts/demo-reset.ts",

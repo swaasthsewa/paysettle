@@ -1,0 +1,11 @@
+{
+  "set": "real acceptance criteria (anonymised)",
+  "source": "Replace with one line on where these come from, e.g. 'past consulting statements of work, names and amounts removed'",
+  "labelledBy": "Replace with who labelled each row and when",
+  "labels": "verifiable=true when a neutral third person could check it yes/no from evidence alone",
+  "items": [
+    { "id": "R01", "text": "DUMMY ROW: the new report runs in under 5 seconds for a 12-month date range.", "verifiable": true, "domain": "dummy" },
+    { "id": "R02", "text": "DUMMY ROW: the team provides support as required during rollout.", "verifiable": false, "domain": "dummy" },
+    { "id": "R03", "text": "DUMMY ROW: client signs off the 8 listed UAT scripts in the test log.", "verifiable": true, "domain": "dummy" }
+  ]
+}
