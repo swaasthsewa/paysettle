@@ -1,6 +1,6 @@
 /** F2.04 F3.03 F3.11 F4.01 — Bryntum timeline builders (contract Gantt, mediator schedule). */
 import { describe, expect, it } from "vitest";
-import { buildCaseEvent, buildContractPlan, msTone, verdictDue, type PlanInput } from "./plan";
+import { buildCaseEvent, buildContractPlan, buildProposedPlan, msTone, verdictDue, type CoDocMilestone, type PlanInput } from "./plan";
 
 const H = 3_600_000, D = 24 * H;
 const held = new Date("2026-10-29T00:00:00Z");
@@ -53,6 +53,47 @@ describe("F2.04 contract Gantt plan", () => {
     expect(nowLine.endDate).toBeUndefined();
     expect(Date.parse(p.startDate)).toBeLessThan(held.getTime());
     expect(Date.parse(p.endDate)).toBeGreaterThan(held.getTime() + 30 * D);
+  });
+});
+
+describe("F2.13 proposed change order on the Gantt", () => {
+  const now = new Date(held.getTime() + 9 * D);
+  /* the change order's stored document: M05 re-dated 30 → 34, M03 removed (pruned stays pruned), C01 added in a new tranche 3 */
+  const doc: CoDocMilestone[] = [
+    ...ws.milestones.map((m) => ({ code: m.code, seq: m.seq, active: m.code === "M03" ? false : m.active, type: m.type, title: m.title, day: m.code === "M05" ? 34 : m.targetDay, amountCents: m.amountCents, dependsOn: m.dependsOn, tranche: m.trancheIdx })),
+    { code: "C01", seq: 60, active: true, type: "PAY", title: "Marketing pages", day: 40, amountCents: 120000, dependsOn: [], tranche: 3 },
+  ];
+  const p = buildProposedPlan(ws, { milestones: doc, fund: [{ trancheIdx: 3, amountCents: 120000, startDay: 40, endDay: 40 }], planned: [{ trancheIdx: 2, toCents: 50000 }] }, now);
+  const kids = p.tasks.flatMap((t) => t.children ?? []);
+  const byCode = (c: string) => kids.find((k) => k.code === c)!;
+  it("F2.13 keeps day 0 of the signed plan and draws the signed bar as a baseline", () => {
+    const signed = buildContractPlan(ws, now);
+    expect(p.anchor).toBe(signed.anchor);
+    const launch = byCode("M05");
+    expect(launch.change).toBe("redated");
+    expect(launch.changeLabel).toBe("Re-dated");
+    expect(launch.endDate).toBe(new Date(held.getTime() + 34 * D).toISOString());
+    expect(launch.baselines).toEqual([{ startDate: signed.tasks[1].children![0].startDate, endDate: new Date(held.getTime() + 30 * D).toISOString() }]);
+    expect(launch.cls).toContain("ps-co-redated");
+  });
+  it("F2.13 marks added, removed and unchanged rows in words", () => {
+    expect(p.changes).toEqual({ added: 1, removed: 1, redated: 1, changed: 0, same: 2 });
+    const added = byCode("C01");
+    expect([added.change, added.baselines, added.href]).toEqual(["added", undefined, null]);
+    expect(p.tasks.map((t) => t.id)).toEqual(["tranche-1", "tranche-2", "tranche-3"]);
+    const removed = byCode("M03");
+    expect(removed.change).toBe("removed");
+    expect(removed.name).toBe("M03 · Build (removed)");
+    expect(removed.baselines).toEqual([{ startDate: removed.startDate, endDate: removed.endDate }]);
+    expect(byCode("M02").changeLabel).toBe("No change");
+    expect(kids.map((k) => k.code)).not.toContain("M04"); // pruned before the change order: not part of either plan
+  });
+  it("F2.13 the table repeats the change with the signed and proposed dates", () => {
+    const row = (c: string) => p.rows.find((r) => r.code === c)!;
+    expect(row("M05")).toMatchObject({ change: "Re-dated", due: new Date(held.getTime() + 34 * D).toISOString(), signedDue: new Date(held.getTime() + 30 * D).toISOString() });
+    expect(row("C01")).toMatchObject({ change: "Added", signedDue: null, state: "PROPOSED", open: { href: "/contracts/ws_1#co", label: "Change order" } });
+    expect(row("M03").change).toBe("Removed");
+    expect(Date.parse(p.endDate)).toBeGreaterThan(held.getTime() + 40 * D);
   });
 });
 

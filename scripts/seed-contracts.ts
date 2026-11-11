@@ -3,6 +3,8 @@
  * state, revision, signature and tranche is consistent. Idempotent: a contract with the same client and title is skipped.
  * F2.13 F2.14: "Clinic website build" (locked, tranche 1 held on the mock rail) is where change orders are shown;
  * "Monthly marketing retainer" (locked, period 1) is where a contract continues into its next period.
+ * F2.13 F2.04: "Patient portal build" (locked, tranche 1 held) has change order 1 waiting for signatures (Meera
+ * proposed it; nobody has signed), so its timeline can show the proposed plan against the signed one.
  * Usage (after npm run db:seed): npx tsx --env-file-if-exists=.env.local scripts/seed-contracts.ts
  */
 import "./lib/demo-rail"; // first: demo seeds always use the mock rail
@@ -11,6 +13,7 @@ import { db, pool } from "../src/db/client";
 import { workspaces } from "../src/db/schema";
 import { applyChange, createWorkspace, getWorkspace, sign } from "../src/server/contracts";
 import { confirmTranche, fundTranche } from "../src/server/money";
+import { proposeChangeOrder } from "../src/server/contracts/change-orders";
 import type { Actor } from "../src/server/types";
 
 if (process.env.PAYSETTLE_ENV === "production") { console.error("Refusing to seed demo data in production."); process.exit(1); }
@@ -92,7 +95,29 @@ async function retainerDemo() {
   return `${title}: ${v.state}, risk ${v.riskScore}`;
 }
 
+/** F2.13 a locked build with a change order waiting for both signatures: the place to see a proposed plan on the timeline. */
+async function pendingChangeOrderDemo() {
+  const title = "Patient portal build";
+  const e = await existing(priya.id, title);
+  if (e) return `${title}: kept (${e.state})`;
+  const id = await createWorkspace(priya, { blueprintCode: "UC_WEB_MVP", title, totalCents: 600_000, providerId: meera.id });
+  const v = await signBoth(id, priya, meera);
+  const t = v.tranches[0];
+  if (v.state === "LOCKED" && t?.state === "PLANNED") { await fundTranche(priya, t.id); await confirmTranche(priya, t.id); }
+  if (v.state !== "LOCKED") return `${title}: ${v.state} (no change order: not locked)`;
+  const coId = await proposeChangeOrder(meera, id, {
+    note: "The clinic's records system opens its test access a week late, so the last three steps move later, and the audit findings get their own fix step.",
+    items: [
+      { action: "EDIT", milestoneCode: "M05", day: 26 },
+      { action: "EDIT", milestoneCode: "M06", day: 29 },
+      { action: "EDIT", milestoneCode: "M07", day: 31 },
+      { action: "ADD", milestone: { title: "Accessibility fixes from the audit", type: "PAY", day: 33, amountCents: 60_000, lockRule: "Client approves.", disputeRule: "Missing fixes listed; fixed within 72 hours.", proof: { artifacts: [{ kind: "PDF", min: 1, note: "Audit re-test report" }], criteria: ["Every audit finding rated serious is fixed or has an agreed plan"] } } },
+    ],
+  });
+  return `${title}: LOCKED, change order ${coId} waiting for signatures`;
+}
+
 async function main() {
-  for (const step of [bookingApp, planningSprint, rushRebuild, changeOrderDemo, retainerDemo]) console.log(await step());
+  for (const step of [bookingApp, planningSprint, rushRebuild, changeOrderDemo, retainerDemo, pendingChangeOrderDemo]) console.log(await step());
 }
 main().then(() => pool.end()).catch(async (e) => { console.error(e); await pool.end(); process.exit(1); });

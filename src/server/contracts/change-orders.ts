@@ -348,3 +348,30 @@ export async function changeOrderQueue(a: Actor): Promise<{ id: string; no: numb
   }
   return out;
 }
+
+/**
+ * F2.13 — the change order to draw on the contract timeline: the one named by `coId` (any state, so a link from an agent
+ * or a notice still explains itself), else the open one. Returns the milestone part of its stored canonical document and
+ * its money plan, so the timeline shows exactly what both parties would sign. Read-only; same read rule as the room.
+ */
+export async function changeOrderForTimeline(a: Actor, workspaceId: string, coId?: string | null): Promise<{
+  id: string; no: number; state: string; open: boolean; note: string; lines: string[]; signedBy: ("client" | "provider")[];
+  milestones: { code: string; seq: number; active: boolean; type: "GATE" | "PAY"; title: string; day: number; amountCents: number; dependsOn: string[]; tranche: number }[];
+  fund: { trancheIdx: number; amountCents: number; startDay: number; endDay: number }[]; planned: { trancheIdx: number; toCents: number }[];
+} | null> {
+  const w = await loadWs(db, workspaceId);
+  await assertCanRead(db, a, w);
+  const where = coId ? and(eq(changeOrders.workspaceId, w.id), eq(changeOrders.id, coId)) : and(eq(changeOrders.workspaceId, w.id), inArray(changeOrders.state, [...OPEN_STATES]));
+  const [co] = await db.select().from(changeOrders).where(where).orderBy(desc(changeOrders.no)).limit(1);
+  if (!co) return null;
+  const sigs = await db.select({ role: changeOrderSignatures.role }).from(changeOrderSignatures).where(eq(changeOrderSignatures.changeOrderId, co.id));
+  const doc = co.canonical as { milestones?: { code: string; seq: number; active: boolean; type: "GATE" | "PAY"; title: string; day: number; amountCents: number; dependsOn?: string[]; tranche: number }[] };
+  const money = co.money as unknown as MoneyPlan;
+  return {
+    id: co.id, no: co.no, state: co.state, open: (OPEN_STATES as readonly string[]).includes(co.state), note: co.note,
+    lines: moneyLines(money, (c) => formatCents(c, w.currency)), signedBy: sigs.map((s) => s.role),
+    milestones: (doc.milestones ?? []).map((m) => ({ code: m.code, seq: m.seq, active: m.active, type: m.type, title: m.title, day: m.day, amountCents: m.amountCents, dependsOn: m.dependsOn ?? [], tranche: m.tranche })),
+    fund: (money.fund ?? []).map((f) => ({ trancheIdx: f.trancheIdx, amountCents: f.amountCents, startDay: f.startDay, endDay: f.endDay })),
+    planned: (money.planned ?? []).map((l) => ({ trancheIdx: l.trancheIdx, toCents: l.toCents })),
+  };
+}

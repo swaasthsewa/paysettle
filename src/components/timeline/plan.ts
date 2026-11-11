@@ -1,10 +1,12 @@
 /**
- * F2.04 F3.03 F3.11 F4.01 — pure builders for the Bryntum timelines (no React, no Bryntum import: runs in tests and on the
+ * F2.04 F2.13 F3.03 F3.11 F4.01 — pure builders for the Bryntum timelines (no React, no Bryntum import: runs in tests and on the
  * server, and returns only plain, serialisable data for the client components).
  *  - Contract Gantt: milestones as bars from the previous milestone's day to their own target day, tranches as summary
  *    rows and shaded bands (the PayPal hold window once funded), dependencies (explicit, else the sequence), now line.
  *  - Mediator schedule: one row per mediator (plus "Not assigned yet"), one bar per case from opening to its last
  *    deadline, with the sealed-offer, vault and verdict phases inside it.
+ *  - F2.13 proposed change order: the change order's milestones as bars, the signed plan as Bryntum baselines, and each
+ *    row marked added, removed, re-dated or unchanged (read from the stored change order; nothing changes until both sign).
  * Contract day N is N days after the anchor: the first tranche's hold in PayPal (as the ops radar counts days), else the
  * signing, else now (a projection for contracts that are not signed yet).
  */
@@ -45,6 +47,8 @@ export interface PlanTask {
   id: string; name: string; startDate: string; endDate: string; manuallyScheduled: true; expanded?: boolean;
   kind: "tranche" | "pay" | "gate"; code: string; state: string; stateLabel: string; tone: MsTone; amountCents: number; amountLabel: string;
   dayFrom: number; dayTo: number; href: string | null; eventColor: string; cls: string; children?: PlanTask[];
+  /** F2.13 proposed change order view: what the change order does to this row, and the signed bar as a baseline. */
+  change?: CoChange; changeLabel?: string; baselines?: { startDate: string; endDate: string }[];
 }
 export interface PlanDep { id: string; from: string; to: string; implicit: boolean; cls: string }
 export interface PlanBand { id: string; name: string; startDate: string; endDate?: string; cls: string }
@@ -53,7 +57,7 @@ export interface ContractPlan {
   anchor: string; anchorKind: "funded" | "signed" | "projected"; now: string; virtual: boolean;
   startDate: string; endDate: string;
   tasks: PlanTask[]; dependencies: PlanDep[]; timeRanges: PlanBand[];
-  rows: { id: string; tranche: string; code: string; title: string; type: string; from: number; to: number; due: string; amount: number; state: string; where: string; open: { href: string; label: string } }[];
+  rows: { id: string; tranche: string; code: string; title: string; type: string; from: number; to: number; due: string; amount: number; state: string; where: string; open: { href: string; label: string }; change?: string; signedDue?: string | null }[];
   counts: Record<MsTone, number>;
 }
 
@@ -137,6 +141,87 @@ export function buildContractPlan(v: PlanInput, now: Date, virtualOffsetHours = 
     startDate: new Date(Math.min(...all) - 2 * DAY).toISOString(), endDate: new Date(Math.max(...all) + 3 * DAY).toISOString(),
     tasks, dependencies: deps, timeRanges: bands, rows, counts,
   };
+}
+
+/* ── F2.13 proposed change order on the Gantt ── */
+export type CoChange = "added" | "removed" | "redated" | "changed" | "same";
+export const CHANGE_LABEL: Record<CoChange, string> = { added: "Added", removed: "Removed", redated: "Re-dated", changed: "Changed (same date)", same: "No change" };
+/** The milestone part of a change order's stored canonical document (changeOrderDoc → canonicalDoc). */
+export interface CoDocMilestone { code: string; seq: number; active: boolean; type: "GATE" | "PAY"; title: string; day: number; amountCents: number; dependsOn: string[]; tranche: number }
+export interface ProposedInput {
+  milestones: CoDocMilestone[];
+  /** Money plan of the change order: new PLANNED tranches to fund, and new amounts of tranches not funded yet. */
+  fund: { trancheIdx: number; amountCents: number; startDay: number; endDay: number }[];
+  planned: { trancheIdx: number; toCents: number }[];
+}
+export type ProposedPlan = ContractPlan & { changes: Record<CoChange, number> };
+
+/**
+ * The contract as the change order would make it, on the same day 0 as the signed plan: the proposed milestones are the
+ * bars, each carries its signed bar as a baseline, and milestones the change order removes stay as rows marked
+ * "Removed" (bar and baseline at the signed dates). Nothing here changes the contract; it only reads the stored document.
+ */
+export function buildProposedPlan(v: PlanInput, co: ProposedInput, now: Date, virtualOffsetHours = 0): ProposedPlan {
+  const signed = buildContractPlan(v, now, virtualOffsetHours);
+  const signedTask = new Map(signed.tasks.flatMap((t) => t.children ?? []).map((k) => [k.id, k]));
+  const byCode = new Map(v.milestones.map((m) => [m.code, m]));
+  const docByCode = new Map(co.milestones.map((m) => [m.code, m]));
+  const planned = new Map(co.planned.map((l) => [l.trancheIdx, l.toCents]));
+  const input: PlanInput = {
+    ...v,
+    milestones: co.milestones.filter((m) => m.active).map((m) => {
+      const old = byCode.get(m.code);
+      return { id: old?.id ?? `new-${m.code}`, seq: m.seq, code: m.code, title: m.title, type: m.type, active: true, targetDay: m.day, amountCents: m.amountCents, dependsOn: m.dependsOn, trancheIdx: m.tranche, state: old?.state ?? "LOCKED" };
+    }),
+    tranches: [
+      ...v.tranches.map((t) => (planned.has(t.idx) && !t.heldAt ? { ...t, amountCents: planned.get(t.idx)! } : t)),
+      ...co.fund.filter((f) => !v.tranches.some((t) => t.idx === f.trancheIdx)).map((f) => ({ id: `new-tranche-${f.trancheIdx}`, idx: f.trancheIdx, amountCents: f.amountCents, startDay: f.startDay, endDay: f.endDay, state: "PLANNED", heldAt: null, windowEndsAt: null })),
+    ],
+  };
+  const p = buildContractPlan(input, now, virtualOffsetHours);
+  const changes: Record<CoChange, number> = { added: 0, removed: 0, redated: 0, changed: 0, same: 0 };
+  const mark = (t: PlanTask, c: CoChange, base: PlanTask | undefined) => {
+    t.change = c; t.changeLabel = CHANGE_LABEL[c]; changes[c] += 1;
+    t.cls = `${t.cls} ps-co-${c}`;
+    if (base) t.baselines = [{ startDate: base.startDate, endDate: base.endDate }];
+    if (c === "added") t.href = null; // no milestone page until both parties sign
+  };
+  for (const tr of p.tasks) for (const t of tr.children ?? []) {
+    const old = byCode.get(t.code);
+    const base = old ? signedTask.get(old.id) : undefined;
+    if (!old || !old.active) mark(t, "added", undefined);
+    else if (old.targetDay !== t.dayTo) mark(t, "redated", base);
+    else if (old.title !== docByCode.get(t.code)!.title || old.amountCents !== t.amountCents) mark(t, "changed", base);
+    else mark(t, "same", base);
+  }
+  /* removed: active in the signed plan, inactive (or absent) in the change order */
+  const removed = v.milestones.filter((m) => m.active && !docByCode.get(m.code)?.active);
+  for (const m of removed) {
+    const base = signedTask.get(m.id);
+    if (!base) continue;
+    const t: PlanTask = { ...base, name: `${base.name} (removed)`, cls: base.cls };
+    mark(t, "removed", base);
+    let tr = p.tasks.find((x) => x.id === `tranche-${m.trancheIdx}`);
+    if (!tr) {
+      const st = signed.tasks.find((x) => x.id === `tranche-${m.trancheIdx}`)!;
+      tr = { ...st, children: [] };
+      p.tasks.push(tr);
+      p.tasks.sort((a, b) => a.dayFrom - b.dayFrom || a.id.localeCompare(b.id));
+    }
+    tr.children = [...(tr.children ?? []), t].sort((a, b) => a.dayTo - b.dayTo || a.code.localeCompare(b.code));
+  }
+  /* table rows follow the same order and say what changed, with the signed date next to the proposed one */
+  const signedRow = new Map(signed.rows.map((r) => [r.id, r]));
+  p.rows = p.tasks.flatMap((tr) => (tr.children ?? []).map((t) => {
+    const r = signedRow.get(t.id);
+    return {
+      id: t.id, tranche: tr.name, code: t.code, title: t.name.replace(/^[^·]+· /, ""), type: t.kind === "gate" ? "Gate" : "Payment", from: t.dayFrom, to: t.dayTo,
+      due: t.endDate, amount: t.amountCents, state: t.change === "added" ? "PROPOSED" : t.state, where: t.change === "added" ? "Not funded yet" : TONE_LABEL[t.tone],
+      open: t.href ? { href: t.href, label: "Open" } : { href: `/contracts/${v.id}#co`, label: "Change order" }, change: t.changeLabel, signedDue: r?.due ?? null,
+    };
+  }));
+  const ends = [Date.parse(p.startDate), Date.parse(p.endDate), Date.parse(signed.startDate), Date.parse(signed.endDate)];
+  return { ...p, startDate: new Date(Math.min(...ends)).toISOString(), endDate: new Date(Math.max(...ends)).toISOString(), changes };
 }
 
 /* ── mediator schedule ── */
