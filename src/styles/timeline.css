@@ -77,3 +77,21 @@
 .tl-tip ul { margin: 4px 0 0; padding-left: 16px; }
 .tl-tip li.cur { font-weight: 600; }
 .tl-tip-state { color: var(--ink-3); font-size: 12px; }
+
+/* F2.13 proposed change order: the change is said in words (Change column, tooltip, table); colour only repeats it */
+.ps-bry .b-gantt-task.ps-co-added, .ps-bry .ps-co-added .b-gantt-task { outline: 2px dashed var(--g1); outline-offset: 1px; }
+.ps-bry .b-gantt-task.ps-co-removed, .ps-bry .ps-co-removed .b-gantt-task { opacity: .45; background-image: repeating-linear-gradient(135deg, transparent 0 5px, rgb(255 255 255 / .55) 5px 8px); }
+.ps-bry .b-gantt-task.ps-co-redated, .ps-bry .ps-co-redated .b-gantt-task { box-shadow: 0 0 0 2px var(--g2); }
+.ps-bry .b-task-baseline { opacity: .8; background: var(--ink-4); }
+.ps-co-tag { font-size: 11.5px; font-weight: 600; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line-2); }
+.ps-co-tag-added { color: var(--ink); border-color: var(--g1); }
+.ps-co-tag-removed { color: var(--danger); border-color: var(--danger); }
+.ps-co-tag-redated, .ps-co-tag-changed { color: var(--ink); border-color: var(--g2); }
+.ps-co-tag-same { color: var(--ink-3); }
+.tl-views { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.tl-views a[aria-current="page"] { background: var(--ink); color: var(--card); border-color: var(--ink); }
+.tl-note { border: 1px solid var(--line-2); border-left: 4px solid var(--g2); border-radius: var(--r-md); padding: 10px 14px; background: var(--sunken); display: flex; flex-direction: column; gap: 4px; }
+.tl-note p { margin: 0; }
+/* F2.14 contract chain */
+.ps-bry .b-sch-dependency.ps-dep-chain { stroke-width: 2; }
+.tl-chain-list { margin: 0 0 12px; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }

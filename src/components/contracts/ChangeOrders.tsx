@@ -46,7 +46,7 @@ export function ChangeOrders({ wsId, revision, room, party, signAction, declineA
   return (
     <section className="c span12" id="co" aria-labelledby="co-h">
       <div className="c-head"><h2 id="co-h">Change orders</h2><span className="r small muted">Milestones that have not started can change after lock. Both parties sign; until then the current terms apply.</span></div>
-      {open ? <Review co={open} stale={room.openStale} party={party} signAction={signAction} declineAction={declineAction} />
+      {open ? <Review wsId={wsId} co={open} stale={room.openStale} party={party} signAction={signAction} declineAction={declineAction} />
         : party ? <Propose wsId={wsId} revision={revision} room={room} action={proposeAction} />
         : <p className="small muted">No change order is open.</p>}
       {past.length > 0 && (
@@ -70,7 +70,7 @@ export function ChangeOrders({ wsId, revision, room, party, signAction, declineA
   );
 }
 
-function Review({ co, stale, party, signAction, declineAction }: { co: ChangeOrderView; stale: string | null; party: "client" | "provider" | null; signAction: Action; declineAction: Action }) {
+function Review({ wsId, co, stale, party, signAction, declineAction }: { wsId: string; co: ChangeOrderView; stale: string | null; party: "client" | "provider" | null; signAction: Action; declineAction: Action }) {
   const iSigned = party !== null && co.signatures.some((s) => s.role === party);
   const mine = party !== null && co.proposedBy.role === party;
   const blocked = co.violations.length > 0 || Boolean(stale);
@@ -80,7 +80,8 @@ function Review({ co, stale, party, signAction, declineAction }: { co: ChangeOrd
       <p className="notice small">“{co.note}”</p>
       {stale && <div className="notice" data-b="danger" role="alert">{stale} {mine ? "Withdraw it and propose again." : "Decline it; the other party can propose again."}</div>}
       <div className="bento">
-        <div className="span6"><h4>What changes</h4><CoDiffList co={co} /></div>
+        <div className="span6"><h4>What changes</h4><CoDiffList co={co} />
+          <p className="small"><Link href={`/contracts/${wsId}/timeline?co=${co.id}`}>See change order {co.no} on the timeline</Link> (the signed plan stays in force until both of you sign)</p></div>
         <div className="span6">
           <h4>Money</h4>
           <ul className="diff-list" data-testid="co-money">{co.lines.map((l, i) => <li key={i}>{l}</li>)}</ul>

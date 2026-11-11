@@ -15,7 +15,7 @@ import { runReconcile } from "../control/recon";
 import { DomainError, type Actor } from "../types";
 import { applyChange, createWorkspace, getWorkspace, listWorkspaces, sign } from "./index";
 import { declineChangeOrder, signChangeOrder } from "./change-orders";
-import { carryable, createContinuation, periodChain } from "./continuation";
+import { carryable, contractChain, createContinuation, periodChain } from "./continuation";
 
 beforeAll(() => { delete process.env.PAYPAL_CLIENT_ID; process.env.MONEY_RETRY_MS = "0"; });
 beforeEach(() => mockControl.reset());
@@ -147,5 +147,20 @@ describe("F2.14 continuation contracts", () => {
     expect((await db.select().from(workspaces).where(eq(workspaces.parentWorkspaceId, parent))).length).toBe(0); // nothing half-made
     const draft = await createWorkspace(c, { blueprintCode: "UC_WEB_MVP", title: "Draft only", totalCents: 600_000, providerId: p.id });
     expect(await code(createContinuation(c, draft, { repeat: true, carry: [] }))).toBe("NOT_LOCKED");
+  });
+
+  it("F2.14 contractChain lists every period around a contract, oldest first, only for people who may read it", async () => {
+    const { c, p, o, x } = await people();
+    const p1 = await lockedContract(c, p, "Care plan");
+    const { workspaceId: p2 } = await createContinuation(c, p1, { repeat: true, carry: [] });
+    expect((await signBoth(c, p, p2)).state).toBe("LOCKED");
+    const { workspaceId: p3 } = await createContinuation(p, p2, { repeat: true, carry: [] });
+    const want = [{ id: p1, periodNo: 1 }, { id: p2, periodNo: 2 }, { id: p3, periodNo: 3 }];
+    expect(await contractChain(c, p2)).toEqual(want);
+    expect(await contractChain(p, p3)).toEqual(want);
+    expect(await contractChain(o, p1)).toEqual(want); // Operations in the same organisation reads every period
+    expect(await code(contractChain(x, p2))).toBe("FORBIDDEN");
+    const single = await lockedContract(c, p, "One-off build");
+    expect(await contractChain(c, single)).toEqual([{ id: single, periodNo: 1 }]);
   });
 });

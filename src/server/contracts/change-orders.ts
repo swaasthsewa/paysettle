@@ -6,7 +6,9 @@
  * a risk score of 75 or more sends the signed change order to Operations' clearance queue before it takes effect.
  * Money moves only through the money module's existing functions (P1): new PLANNED tranches are funded by the client
  * through fundTranche/confirmTranche; reductions in held tranches go back through returnFunds (settleChangeOrder).
- * The AI never writes change orders, signatures, ledger rows or releases.
+ * The AI never signs change orders and never writes signatures, ledger rows or releases. A party's agent may PROPOSE a
+ * change order over MCP (A5 propose_change_order, through proposeChangeOrder below, with the person's own permissions);
+ * it then waits for both parties to sign it in the app with MFA like any other.
  */
 import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -27,7 +29,7 @@ import { noticeParties, settleChangeOrder } from "../money";
 import { workspaceNow } from "../clock";
 import { DomainError, type Actor } from "../types";
 import { evaluate } from "./core";
-import { isFrozen, moneyLines, planChangeOrder, UNSTARTED, type CoDiff, type CoItem, type MoneyPlan, type Plan } from "./change-core";
+import { isFrozen, moneyLines, planChangeOrder, UNSTARTED, zItem, type CoDiff, type CoItem, type MoneyPlan, type Plan } from "./change-core";
 import { internals, signatureFor } from "./index";
 
 const { actorUser, loadWs, loadMs, loadCl, providerFacts, head, assertCanRead, partyRole } = internals;
@@ -36,22 +38,7 @@ type Q = Tx | typeof db;
 type CoRow = typeof changeOrders.$inferSelect;
 const OPEN_STATES = ["PROPOSED", "AWAITING_OPS"] as const;
 
-/* ───────────── input validation (zod) ───────────── */
-const zProof = z.object({
-  artifacts: z.array(z.object({ kind: z.enum(["IMAGE", "VIDEO", "PDF", "LOG", "LINK", "SIGNATURE", "ORACLE"]), min: z.number().int().min(0).max(50), note: z.string().max(200).optional() })).max(12),
-  gpsRadiusM: z.number().int().min(1).max(100_000).optional(),
-  oracle: z.string().max(40).optional(),
-  criteria: z.array(z.string().trim().min(1).max(300)).max(20),
-});
-const zCode = z.string().min(1).max(40);
-const zDay = z.number().int().min(1).max(365);
-const zCents = z.number().int().min(0).max(100_000_000);
-const zRule = z.string().trim().min(1).max(300);
-const zItem = z.union([
-  z.object({ action: z.literal("ADD"), milestone: z.object({ title: z.string().trim().min(3).max(140), type: z.enum(["GATE", "PAY"]), day: zDay, amountCents: zCents, proof: zProof, lockRule: zRule, disputeRule: zRule }) }),
-  z.object({ action: z.literal("EDIT"), milestoneCode: zCode, title: z.string().trim().min(3).max(140).optional(), day: zDay.optional(), amountCents: zCents.optional(), proof: zProof.optional(), lockRule: zRule.optional(), disputeRule: zRule.optional() }),
-  z.object({ action: z.literal("REMOVE"), milestoneCode: zCode }),
-]);
+/* ───────────── input validation (zod; the item shapes live in change-core.ts) ───────────── */
 const zPropose = z.object({ items: z.array(zItem).min(1).max(20), note: z.string().trim().min(5, "Say in a few words why the contract changes.").max(1000), expectedRev: z.number().int().min(1).optional() });
 function invalid(e: z.ZodError): never { throw new DomainError("INVALID_INPUT", e.issues.map((i) => `${i.path.join(".") || "input"}: ${i.message}`).join("; ")); }
 
@@ -347,4 +334,40 @@ export async function changeOrderQueue(a: Actor): Promise<{ id: string; no: numb
     });
   }
   return out;
+}
+
+/** A5 F2.13 — what an agent gets back after proposing: number, state and the money impact in plain words. */
+export async function changeOrderSummary(a: Actor, changeOrderId: string): Promise<{ id: string; no: number; state: string; currency: string; totalFromCents: number; totalToCents: number; netCents: number; lines: string[] }> {
+  const co = await loadCo(db, changeOrderId);
+  const w = await loadWs(db, co.workspaceId);
+  await assertCanRead(db, a, w);
+  const money = co.money as unknown as MoneyPlan;
+  return { id: co.id, no: co.no, state: co.state, currency: w.currency, totalFromCents: co.totalFromCents, totalToCents: co.totalToCents, netCents: money.netCents ?? co.totalToCents - co.totalFromCents, lines: moneyLines(money, (c) => formatCents(c, w.currency)) };
+}
+
+/**
+ * F2.13 — the change order to draw on the contract timeline: the one named by `coId` (any state, so a link from an agent
+ * or a notice still explains itself), else the open one. Returns the milestone part of its stored canonical document and
+ * its money plan, so the timeline shows exactly what both parties would sign. Read-only; same read rule as the room.
+ */
+export async function changeOrderForTimeline(a: Actor, workspaceId: string, coId?: string | null): Promise<{
+  id: string; no: number; state: string; open: boolean; note: string; lines: string[]; signedBy: ("client" | "provider")[];
+  milestones: { code: string; seq: number; active: boolean; type: "GATE" | "PAY"; title: string; day: number; amountCents: number; dependsOn: string[]; tranche: number }[];
+  fund: { trancheIdx: number; amountCents: number; startDay: number; endDay: number }[]; planned: { trancheIdx: number; toCents: number }[];
+} | null> {
+  const w = await loadWs(db, workspaceId);
+  await assertCanRead(db, a, w);
+  const where = coId ? and(eq(changeOrders.workspaceId, w.id), eq(changeOrders.id, coId)) : and(eq(changeOrders.workspaceId, w.id), inArray(changeOrders.state, [...OPEN_STATES]));
+  const [co] = await db.select().from(changeOrders).where(where).orderBy(desc(changeOrders.no)).limit(1);
+  if (!co) return null;
+  const sigs = await db.select({ role: changeOrderSignatures.role }).from(changeOrderSignatures).where(eq(changeOrderSignatures.changeOrderId, co.id));
+  const doc = co.canonical as { milestones?: { code: string; seq: number; active: boolean; type: "GATE" | "PAY"; title: string; day: number; amountCents: number; dependsOn?: string[]; tranche: number }[] };
+  const money = co.money as unknown as MoneyPlan;
+  return {
+    id: co.id, no: co.no, state: co.state, open: (OPEN_STATES as readonly string[]).includes(co.state), note: co.note,
+    lines: moneyLines(money, (c) => formatCents(c, w.currency)), signedBy: sigs.map((s) => s.role),
+    milestones: (doc.milestones ?? []).map((m) => ({ code: m.code, seq: m.seq, active: m.active, type: m.type, title: m.title, day: m.day, amountCents: m.amountCents, dependsOn: m.dependsOn ?? [], tranche: m.tranche })),
+    fund: (money.fund ?? []).map((f) => ({ trancheIdx: f.trancheIdx, amountCents: f.amountCents, startDay: f.startDay, endDay: f.endDay })),
+    planned: (money.planned ?? []).map((l) => ({ trancheIdx: l.trancheIdx, toCents: l.toCents })),
+  };
 }

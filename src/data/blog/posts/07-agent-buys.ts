@@ -1,5 +1,5 @@
-/* Sample post 7 (product). PaySettle facts from src/server/ai/mcp.ts (eight tools, human gates on request_funding
- * and approve_release, spend reservation, audit actions ai.mcp.*), src/server/ai/agent.ts (token hash only, default
+/* Sample post 7 (product). PaySettle facts from src/server/ai/mcp.ts (nine tools, human gates on request_funding,
+ * approve_release and propose_change_order, spend reservation, audit actions ai.mcp.*), src/server/ai/agent.ts (token hash only, default
  * spend limit $15,000.00, default 24 h, max 720 h), src/app/api/mcp/route.ts and token/route.ts (Bearer token,
  * sandbox only, JSON-RPC 2.0 over Streamable HTTP), src/server/playground/scenarios.ts (S6). MCP quotes cite the spec. */
 import { api, callout, cta, faq, h2, table, text, tldr, type SeedPost } from "../build";
@@ -12,7 +12,7 @@ export const POST_AGENT_BUYS: SeedPost = {
   topic: "product",
   blocks: [
     tldr("t1", [
-      "PaySettle runs an MCP server with eight tools, from searching blueprints to opening a dispute.",
+      "PaySettle runs an MCP server with nine tools, from searching blueprints to opening a dispute.",
       "An agent acts with a token its person creates. It can do no more than that person may, it expires (after 24 hours by default) and it carries a spend limit ($15,000.00 by default).",
       "Two human gates: a hold is funded only when the buyer approves it in PayPal, and money is released only when the client signs the approval in the app.",
       "Every tool call that changes something is written to the audit chain with the token that made it.",
@@ -23,7 +23,7 @@ export const POST_AGENT_BUYS: SeedPost = {
 
 The Model Context Protocol, which agents use to call tools, is candid about this. It asks hosts to obtain explicit user consent before invoking any tool, and it says the protocol itself cannot enforce its security principles; implementers should build the consent and authorization flows. We took that literally, and put the consent where the money is.`, { sources: [MCP_SPEC], claimStatus: "research" }),
 
-    h2("h2", "The eight tools"),
+    h2("h2", "The nine tools"),
     table("tb1", ["Tool", "What it does", "Where a person acts"], [
       ["search_blueprints", "Finds contract templates by text, vertical and duration. Read-only.", "Not needed"],
       ["draft_contract", "Creates a negotiation workspace from a brief, a budget and a duration. A draft, not a contract.", "Both parties review and sign in the app"],
@@ -32,6 +32,7 @@ The Model Context Protocol, which agents use to call tools, is candid about this
       ["request_funding", "Creates the PayPal order for one tranche and returns the approval link.", "The buyer approves the hold in PayPal"],
       ["submit_evidence", "Submits a note and links for a milestone. Files and photos are uploaded by people in the app.", "The client reviews"],
       ["approve_release", "Records a pending release request. Moves no money.", "The client confirms in the app with an authenticator code"],
+      ["propose_change_order", "Proposes a change order on a signed contract: new dates, added steps, or steps removed before they start. Moves no money and changes nothing on its own.", "Both parties review it and sign in the app with an authenticator code"],
       ["open_dispute", "Disputes one milestone; only its amount is frozen.", "Both parties bid; a mediator decides if they do not meet"],
     ], { claimStatus: "product" }),
 

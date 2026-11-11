@@ -11,6 +11,7 @@ import * as contracts from "../contracts";
 import * as money from "../money";
 import * as evidence from "../evidence";
 import * as disputes from "../disputes";
+import { changeOrderSummary, proposeChangeOrder } from "../contracts/change-orders";
 import { draftContract } from "./index";
 import { createAgentApproval, releaseSpend, reserveSpend } from "./agent";
 import type { McpServices } from "./mcp";
@@ -37,5 +38,7 @@ export const realServices: McpServices = {
   reserveSpend,
   releaseSpend,
   createApproval: createAgentApproval,
+  /* F2.13 the same service the contract room's change order form calls; the summary is read back with the person's rights */
+  async proposeChangeOrder(a, contractId, input) { return changeOrderSummary(a, await proposeChangeOrder(a, contractId, input)); },
   async audit(a, action, target, detail) { await audit(db, { id: a.id, role: a.role, requestId: a.requestId }, action, target, detail); },
 };
