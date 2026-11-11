@@ -12,7 +12,7 @@ export const moneyNotices = pgTable("money_notices", {
   workspaceId: text("workspace_id").notNull().references(() => workspaces.id),
   trancheId: text("tranche_id").references(() => tranches.id),
   userId: text("user_id").notNull().references(() => users.id),
-  kind: text("kind").$type<"WARN" | "OFFER_ROLLOVER" | "SETTLED" | "REFUND_REQUESTED" | "EXTERNAL_DISPUTE" | "REAUTHORIZED">().notNull(),
+  kind: text("kind").$type<"WARN" | "OFFER_ROLLOVER" | "SETTLED" | "REFUND_REQUESTED" | "EXTERNAL_DISPUTE" | "REAUTHORIZED" | "CHANGE_ORDER" | "CONTINUATION">().notNull(),
   message: text("message").notNull(),
   dedupKey: text("dedup_key").notNull(),
   readAt: timestamp("read_at", { withTimezone: true }),

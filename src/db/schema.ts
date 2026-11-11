@@ -102,6 +102,9 @@ export const workspaces = pgTable("workspaces", {
   reviewTimeoutRule: text("review_timeout_rule").$type<"ESCALATE" | "DEEMED_APPROVED">().notNull().default("ESCALATE"),
   /** Deadline terms (late deduction, early-finish bonus); null = both off. Part of the canonical hash when set. */
   deadlineTerms: jsonb("deadline_terms").$type<import("@/lib/deadline").DeadlineTerms>(),
+  /** Continuation contracts (next period of a retainer, month 2 of a build): the contract this one continues, and its period number (1 = first). */
+  parentWorkspaceId: text("parent_workspace_id"),
+  periodNo: integer("period_no").notNull().default(1),
   createdAt: created(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -137,6 +140,8 @@ export const wsMilestones = pgTable("ws_milestones", {
   state: text("state").notNull().default("DRAFT"),
   attempts: integer("attempts").notNull().default(0),
   reviewDueAt: timestamp("review_due_at", { withTimezone: true }),
+  /** Continuation contracts: the parent milestone this one was moved from (the parent removes it by a change order). */
+  carriedFrom: text("carried_from"),
 }, (t) => [index("ws_ms_ws").on(t.workspaceId, t.seq)]);
 
 export const wsClauses = pgTable("ws_clauses", {
@@ -187,6 +192,8 @@ export const tranches = pgTable("tranches", {
   warned: jsonb("warned").$type<string[]>().notNull().default([]),
   /** Early-finish bonus pool funded with this tranche (authorized together with amountCents; unused part returned at close). */
   bonusPoolCents: cents("bonus_pool_cents").notNull().default(0),
+  /** Cents that signed change orders took out of this hold and returned to the client (contract plane of reconciliation). */
+  amendedOutCents: cents("amended_out_cents").notNull().default(0),
 }, (t) => [uniqueIndex("tranche_ws_idx").on(t.workspaceId, t.idx)]);
 
 export const evidencePackages = pgTable("evidence_packages", {

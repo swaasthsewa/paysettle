@@ -38,3 +38,22 @@ BEGIN
 END $$;
 DROP TRIGGER IF EXISTS release_adjustments_final ON release_adjustments;
 CREATE TRIGGER release_adjustments_final BEFORE UPDATE OR DELETE ON release_adjustments FOR EACH ROW EXECUTE FUNCTION ps_adjustment_final();
+
+-- Change orders (F2.12): signatures are append-only; a change order's content (items, document, hash, money plan) is
+-- final once proposed. Only the state, the decision fields and the return statuses may move; rows are never deleted.
+DROP TRIGGER IF EXISTS change_order_signatures_immutable ON change_order_signatures;
+CREATE TRIGGER change_order_signatures_immutable BEFORE UPDATE OR DELETE ON change_order_signatures FOR EACH ROW EXECUTE FUNCTION ps_refuse_change();
+CREATE OR REPLACE FUNCTION ps_change_order_final() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF TG_OP = 'DELETE' THEN RAISE EXCEPTION 'PaySettle: change_orders rows are final'; END IF;
+  IF NEW.workspace_id IS DISTINCT FROM OLD.workspace_id OR NEW.no IS DISTINCT FROM OLD.no OR NEW.base_rev_no IS DISTINCT FROM OLD.base_rev_no
+     OR NEW.base_hash IS DISTINCT FROM OLD.base_hash OR NEW.rev_no IS DISTINCT FROM OLD.rev_no OR NEW.items IS DISTINCT FROM OLD.items
+     OR NEW.canonical IS DISTINCT FROM OLD.canonical OR NEW.hash IS DISTINCT FROM OLD.hash OR NEW.money IS DISTINCT FROM OLD.money
+     OR NEW.proposed_by IS DISTINCT FROM OLD.proposed_by OR NEW.total_from_cents IS DISTINCT FROM OLD.total_from_cents
+     OR NEW.total_to_cents IS DISTINCT FROM OLD.total_to_cents THEN
+    RAISE EXCEPTION 'PaySettle: a change order''s content is final once proposed';
+  END IF;
+  RETURN NEW;
+END $$;
+DROP TRIGGER IF EXISTS change_orders_final ON change_orders;
+CREATE TRIGGER change_orders_final BEFORE UPDATE OR DELETE ON change_orders FOR EACH ROW EXECUTE FUNCTION ps_change_order_final();
