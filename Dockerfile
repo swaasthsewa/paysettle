@@ -10,8 +10,10 @@ RUN npm ci
 
 FROM deps AS builder
 COPY . .
-ENV NEXT_TELEMETRY_DISABLED=1 NEXT_OUTPUT=standalone
-RUN npm run build
+# webpack, not Turbopack: Turbopack runs past 8 GiB on the Bryntum trial's 6 MB obfuscated gantt.module.js, while
+# webpack builds it in about 2 GiB. Two build workers and a 3 GiB heap keep the whole build well under 8 GiB.
+ENV NEXT_TELEMETRY_DISABLED=1 NEXT_OUTPUT=standalone NEXT_BUILD_CPUS=2 NODE_OPTIONS=--max-old-space-size=3072
+RUN npx next build --webpack
 
 # Database jobs. Full dependencies and the source, no build: `npm run db:push` (the default), `npm run db:seed`.
 FROM deps AS ops

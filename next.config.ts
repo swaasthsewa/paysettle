@@ -39,7 +39,8 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   /* pdfkit loads its standard fonts from disk through subpath requires; keep it out of the server bundle. */
   serverExternalPackages: ["pdfkit"],
-  experimental: { serverActions: { bodySizeLimit: "16mb" } },
+  /* NEXT_BUILD_CPUS caps the build's worker processes, each with its own heap (the container build sets it). */
+  experimental: { serverActions: { bodySizeLimit: "16mb" }, ...(process.env.NEXT_BUILD_CPUS ? { cpus: Number(process.env.NEXT_BUILD_CPUS) } : {}) },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

@@ -8,13 +8,14 @@
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { compileRules } from "../src/lib/ai/rules";
 import { configFromEnv } from "../src/lib/ai/config";
 import { AiGateway, memoryStore, type AiStore, type CallLog } from "../src/lib/ai/gateway";
 import { EMPTY_PEOPLE } from "../src/lib/ai/redact";
 
 try { process.loadEnvFile(".env.local"); } catch { /* optional */ }
-const dir = path.dirname(new URL(import.meta.url).pathname);
+const dir = path.dirname(fileURLToPath(import.meta.url));
 const load = <T>(f: string): T => JSON.parse(readFileSync(path.join(dir, "golden", f), "utf8")) as T;
 const at = process.argv.indexOf("--sets");
 const arg = process.argv.find((a) => a.startsWith("--sets="))?.slice(7) ?? (at >= 0 ? process.argv[at + 1] : undefined);
