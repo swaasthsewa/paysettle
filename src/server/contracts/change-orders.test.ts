@@ -264,4 +264,30 @@ describe("F2.13 change orders", () => {
     expect(await code(proposeChangeOrder(ppl.c, id, { items: [{ action: "REMOVE", milestoneCode: "M07" }], note: "Too early." }))).toBe("NOT_LOCKED");
     expect((await db.select().from(workspaces).where(eq(workspaces.id, id)))[0].state).toBe("READY_TO_SIGN");
   });
+
+  it("A5 F2.13 an agent proposes over MCP with the real services: nothing changes until both sign; a started milestone is refused", async () => {
+    const { callTool } = await import("../ai/mcp");
+    const { realServices } = await import("../ai/mcp-services");
+    const { changeOrderForTimeline } = await import("./change-orders");
+    const { c, p, id } = await locked(true);
+    await db.update(wsMilestones).set({ state: "SUBMITTED" }).where(and(eq(wsMilestones.workspaceId, id), eq(wsMilestones.code, "M03")));
+    const ctx = (a: Actor) => ({ actor: a, tokenId: "agt_test", spendLimitCents: 0, spentCents: 0, appUrl: "http://app.test" });
+    const frozen = await callTool("propose_change_order", { contractId: id, note: "Move the API date.", changes: [{ action: "REDATE", milestoneCode: "M03", day: 14 }] }, ctx(p), realServices);
+    expect(frozen?.isError).toBe(true);
+    expect((frozen?.structuredContent as { error: { code: string } }).error.code).toBe("MILESTONE_FROZEN");
+    const before = await getWorkspace(c, id);
+    const r = await callTool("propose_change_order", { contractId: id, note: "Records system access opens late.", changes: [{ action: "REDATE", milestoneCode: "M05", day: 26 }] }, ctx(p), realServices);
+    expect(r?.isError).toBe(false);
+    const out = r!.structuredContent as { changeOrderId: string; number: number; state: string; money: { net: string; lines: string[] }; link: string };
+    expect(out).toMatchObject({ number: 1, state: "PROPOSED", money: { net: "$0.00", lines: ["No money moves: only the terms change."] }, link: `http://app.test/contracts/${id}/timeline?co=${out.changeOrderId}` });
+    const after = await getWorkspace(c, id);
+    expect([after.revision, after.milestones.find((m) => m.code === "M05")!.targetDay]).toEqual([before.revision, 21]); // the signed terms still apply
+    const [row] = await db.select().from(changeOrders).where(eq(changeOrders.id, out.changeOrderId));
+    expect([row.proposedBy, row.proposedRole]).toEqual([p.id, "provider"]);
+    const tl = await changeOrderForTimeline(c, id, out.changeOrderId);
+    expect(tl?.milestones.find((m) => m.code === "M05")?.day).toBe(26);
+    expect(tl?.open).toBe(true);
+    expect((await bothSign(c, p, out.changeOrderId)).state).toBe("APPLIED");
+    expect((await getWorkspace(c, id)).milestones.find((m) => m.code === "M05")!.targetDay).toBe(26);
+  });
 });

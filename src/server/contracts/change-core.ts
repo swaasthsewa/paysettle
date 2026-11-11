@@ -15,12 +15,29 @@
  *  - any other tranche state (waiting for PayPal approval, settling, rolled over, paused, closed) refuses money changes.
  * Milestones that are submitted or later (or have any evidence) are frozen and cannot be touched.
  */
+import { z } from "zod";
 import { canonical } from "@/lib/canonical";
 import { BPS_FULL, splitByBps } from "@/lib/money";
 import { trancheOf, type Rail } from "@/lib/policy";
 import type { ProofSpec } from "@/db/schema";
 import { canonicalDoc, nextCode, type ClDraft, type MsDraft, type WsHead } from "./core";
 import { DomainError } from "../types";
+
+/* ───────────── input validation (zod), shared by the change order service and the MCP tool (A5) ───────────── */
+export const zProof = z.object({
+  artifacts: z.array(z.object({ kind: z.enum(["IMAGE", "VIDEO", "PDF", "LOG", "LINK", "SIGNATURE", "ORACLE"]), min: z.number().int().min(0).max(50), note: z.string().max(200).optional() })).max(12),
+  gpsRadiusM: z.number().int().min(1).max(100_000).optional(),
+  oracle: z.string().max(40).optional(),
+  criteria: z.array(z.string().trim().min(1).max(300)).max(20),
+});
+export const zCode = z.string().min(1).max(40);
+export const zDay = z.number().int().min(1).max(365);
+export const zCents = z.number().int().min(0).max(100_000_000);
+export const zRule = z.string().trim().min(1).max(300);
+export const zAddItem = z.object({ action: z.literal("ADD"), milestone: z.object({ title: z.string().trim().min(3).max(140), type: z.enum(["GATE", "PAY"]), day: zDay, amountCents: zCents, proof: zProof, lockRule: zRule, disputeRule: zRule }) });
+export const zEditItem = z.object({ action: z.literal("EDIT"), milestoneCode: zCode, title: z.string().trim().min(3).max(140).optional(), day: zDay.optional(), amountCents: zCents.optional(), proof: zProof.optional(), lockRule: zRule.optional(), disputeRule: zRule.optional() });
+export const zRemoveItem = z.object({ action: z.literal("REMOVE"), milestoneCode: zCode });
+export const zItem = z.union([zAddItem, zEditItem, zRemoveItem]);
 
 /** Milestone states a change order may touch (and only with no evidence submitted). Everything else is frozen. */
 export const UNSTARTED = ["LOCKED", "OPEN"] as const;

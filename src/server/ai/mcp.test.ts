@@ -1,7 +1,7 @@
 /** A5 · MCP JSON-RPC server: initialize, tools/list, tools/call round trips with stubbed module services and human gates. */
 import { describe, expect, it, vi } from "vitest";
 import { handleMcp, toolList, type McpContext, type McpServices } from "./mcp";
-import { NotBuilt, type WorkspaceView } from "../types";
+import { DomainError, NotBuilt, type WorkspaceView } from "../types";
 import { blocks, specSignals } from "../evidence/spec";
 
 const ws = (over: Partial<WorkspaceView> = {}): WorkspaceView => ({
@@ -27,6 +27,7 @@ function services(over: Partial<McpServices> = {}) {
     releaseSpend: vi.fn(async () => undefined),
     createApproval: vi.fn(async () => ({ id: "apr_1", state: "PENDING", createdAt: new Date(), reused: false })),
     audit: vi.fn(async () => undefined),
+    proposeChangeOrder: vi.fn(async () => ({ id: "co_1", no: 2, state: "PROPOSED", currency: "USD", totalFromCents: 1_200_000, totalToCents: 1_260_000, netCents: 60_000, lines: ["+$600.00 to fund as tranche 2 (C01); the client approves it in PayPal as usual."] })),
     ...over,
   };
   return s;
@@ -52,10 +53,10 @@ describe("A5 MCP protocol", () => {
     expect(batch.body).toEqual([{ jsonrpc: "2.0", id: 1, result: {} }]);
   });
 
-  it("A5 tools/list exposes the eight PRD tools with closed JSON Schemas", async () => {
+  it("A5 tools/list exposes the nine tools with closed JSON Schemas", async () => {
     const r = await handleMcp({ jsonrpc: "2.0", id: 4, method: "tools/list" }, ctx(), services());
     const tools = (r.body as { result: { tools: { name: string; inputSchema: { type: string; additionalProperties?: boolean } }[] } }).result.tools;
-    expect(tools.map((t) => t.name)).toEqual(["search_blueprints", "draft_contract", "propose_changes", "get_contract_status", "request_funding", "submit_evidence", "approve_release", "open_dispute"]);
+    expect(tools.map((t) => t.name)).toEqual(["search_blueprints", "draft_contract", "propose_changes", "get_contract_status", "request_funding", "submit_evidence", "approve_release", "propose_change_order", "open_dispute"]);
     for (const t of tools) { expect(t.inputSchema.type).toBe("object"); expect(t.inputSchema.additionalProperties).toBe(false); }
     expect(toolList().find((t) => t.name === "approve_release")?.description).toMatch(/moves no money/);
   });
@@ -166,5 +167,85 @@ describe("A5 MCP tools round trip (stubbed module services)", () => {
     expect(svc.applyChange).toHaveBeenCalledTimes(2);
     const od = (await handleMcp(call("open_dispute", { milestoneId: "ms_2", reason: "Missing sections", narrative: "Sections 4 and 5 are missing from the report." }), ctx(), svc)).body as R;
     expect(od.result.structuredContent).toMatchObject({ disputeId: "dp_1" });
+  });
+});
+
+describe("F2.13 A5 MCP propose_change_order (human gate: both parties sign in the app)", () => {
+  const args = {
+    contractId: "ws_1", note: "Test access opens a week late, so the last steps move.",
+    changes: [
+      { action: "REDATE", milestoneCode: "M05", day: 26 },
+      { action: "REMOVE", milestoneCode: "M07" },
+      { action: "ADD", milestone: { title: "Accessibility fixes", type: "PAY", day: 33, amountCents: 60_000, proof: { artifacts: [{ kind: "PDF", min: 1 }], criteria: ["Serious findings fixed"] }, lockRule: "Client approves.", disputeRule: "Fix within 72 hours." } },
+    ],
+  };
+  it("F2.13 A5 proposes through the change order service and returns the number, money summary and timeline link", async () => {
+    const svc = services();
+    const r = (await handleMcp(call("propose_change_order", args), ctx(), svc)).body as R;
+    expect(r.result.isError).toBe(false);
+    expect(r.result.structuredContent).toMatchObject({
+      changeOrderId: "co_1", number: 2, state: "PROPOSED", signed: false,
+      money: { totalFrom: "$12,000.00", totalTo: "$12,600.00", net: "+$600.00", lines: [expect.stringMatching(/to fund as tranche 2/)] },
+      link: "http://app.test/contracts/ws_1/timeline?co=co_1",
+    });
+    expect(String(r.result.structuredContent.humanAction)).toMatch(/no money moved.*sign it in the app with MFA/i);
+    // re-dating is the UI's EDIT item with only the due day; ADD and REMOVE pass through unchanged
+    expect(svc.proposeChangeOrder).toHaveBeenCalledWith({ id: "u_dan", role: "client" }, "ws_1", {
+      note: args.note,
+      items: [{ action: "EDIT", milestoneCode: "M05", day: 26 }, { action: "REMOVE", milestoneCode: "M07" }, args.changes[2]],
+    });
+    expect(svc.audit).toHaveBeenCalledWith(expect.anything(), "ai.mcp.propose_change_order", "ws_1", expect.objectContaining({ tokenId: "agt_1", changeOrderId: "co_1", no: 2, changes: ["REDATE M05", "REMOVE M07", "ADD Accessibility fixes"] }));
+    expect(svc.fundTranche).not.toHaveBeenCalled();
+    expect(svc.createApproval).not.toHaveBeenCalled();
+  });
+
+  it("F2.13 A5 describes the human gate and is neither read-only, destructive nor idempotent", () => {
+    const t = toolList().find((x) => x.name === "propose_change_order")!;
+    expect(t.description).toMatch(/moves no money and changes nothing/);
+    expect(t.description).toMatch(/both parties .* sign it in the app with MFA/);
+    expect(t.annotations).toEqual({ readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false });
+  });
+
+  it("F2.13 A5 the client's and the provider's agents may propose (as in the contract room); finance may not", async () => {
+    for (const role of ["client", "provider"] as const) {
+      const r = (await handleMcp(call("propose_change_order", args), ctx(role), services())).body as R;
+      expect(r.result.isError).toBe(false);
+    }
+    const svc = services();
+    const denied = (await handleMcp(call("propose_change_order", args), ctx("finance"), svc)).body as R;
+    expect(denied.result.isError).toBe(true);
+    expect(denied.result.content[0].text).toBe("PERMISSION_DENIED: Your role (finance) cannot propose contract changes or change orders (the client or the provider does).");
+    expect(svc.proposeChangeOrder).not.toHaveBeenCalled();
+    expect(svc.audit).not.toHaveBeenCalled();
+  });
+
+  it("F2.13 A5 a call without an agent token is refused before any tool runs", async () => {
+    const { POST } = await import("@/app/api/mcp/route");
+    const res = await POST(new Request("http://app.test/api/mcp", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(call("propose_change_order", args)) }));
+    expect(res.status).toBe(401);
+    expect(((await res.json()) as { error: { code: number } }).error.code).toBe(-32001);
+  });
+
+  it("F2.13 A5 a started milestone cannot be re-dated: the service's DomainError comes back as the tool error", async () => {
+    const svc = services({ proposeChangeOrder: vi.fn(async () => { throw new DomainError("MILESTONE_FROZEN", "M02 “Assessment” has moved on (submitted), so it can no longer be changed. Only milestones that have not started can be changed or removed."); }) });
+    const r = (await handleMcp(call("propose_change_order", { ...args, changes: [{ action: "REDATE", milestoneCode: "M02", day: 9 }] }), ctx(), svc)).body as R;
+    expect(r.result.isError).toBe(true);
+    expect(r.result.structuredContent).toEqual({ error: { code: "MILESTONE_FROZEN", message: expect.stringContaining("Only milestones that have not started can be changed or removed.") } });
+    expect(svc.audit).not.toHaveBeenCalled();
+  });
+
+  it("F2.13 A5 rejects shapes the contract room would not accept (amount edits, extra fields, no note)", async () => {
+    for (const bad of [
+      { ...args, changes: [{ action: "EDIT", milestoneCode: "M05", amountCents: 1 }] },
+      { ...args, changes: [{ action: "REDATE", milestoneCode: "M05", day: 26, amountCents: 5 }] },
+      { ...args, changes: [{ action: "REDATE", milestoneCode: "M05", day: 400 }] },
+      { contractId: "ws_1", changes: args.changes },
+    ]) {
+      const svc = services();
+      const r = (await handleMcp(call("propose_change_order", bad), ctx(), svc)).body as R;
+      expect(r.result.isError).toBe(true);
+      expect(r.result.content[0].text).toMatch(/^Invalid arguments/);
+      expect(svc.proposeChangeOrder).not.toHaveBeenCalled();
+    }
   });
 });

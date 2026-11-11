@@ -32,8 +32,11 @@ the wording of each criterion. Measured numbers and known misses: [`RESULTS.md`]
 - **One cent of ledger drift** is found by three-way reconciliation (ledger, PayPal, contract), which trips the
   tranche's circuit breaker.
 
-**Also:** agent-to-agent contracting over the MCP server at `/api/mcp`. Agents can draft, negotiate, request funding and
-submit evidence; a person approves the hold in PayPal and confirms every release in the app.
+**Also:** agent-to-agent contracting over the MCP server at `/api/mcp`. Agents can draft, negotiate, request funding,
+submit evidence and propose a change order on a signed contract (`propose_change_order`); a person approves the hold in
+PayPal, confirms every release in the app, and both parties sign a change order (with MFA) before the schedule changes.
+The contract timeline (Bryntum Gantt) shows a pending change order against the signed plan as baselines, and a
+continuation chain as one calendar.
 
 ## For judges
 

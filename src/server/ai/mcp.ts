@@ -8,6 +8,9 @@
  *   request_funding → returns the PayPal approval URL; nothing is held until the buyer approves in PayPal.
  *                     Reserved against the token's spend limit (cents) before the order is created.
  *   approve_release → NEVER releases: records a pending request the client confirms in the app (MFA). (P3, P4)
+ *   propose_change_order → F2.13 only PROPOSES a change order on a locked contract (re-date, add or remove milestones
+ *                     that have not started). It signs nothing and moves no money; the contract changes only when both
+ *                     parties sign the change order in the app with MFA, and money then moves through the usual flows.
  * Tools reach other modules only through src/server/<module>/index.ts (injected as McpServices so tests can stub them).
  * A module that is not built yet surfaces as a clear tool error (isError: true), not a protocol failure.
  */
@@ -16,6 +19,8 @@ import { can, type Permission } from "@/lib/rbac";
 import { formatCents } from "@/lib/money";
 import { proofSchema } from "@/lib/ai/schemas";
 import { buildNote, parseNote } from "@/server/evidence/spec";
+import { zAddItem, zCode, zDay, zRemoveItem } from "@/server/contracts/change-core";
+import type { CoItem } from "@/server/contracts/change-core";
 import { DomainError, NotBuilt, type Actor, type Change, type WorkspaceView } from "../types";
 import type { AiResult } from "./index";
 import type { DraftMilestone } from "@/lib/ai/rules";
@@ -37,12 +42,14 @@ export interface McpServices {
   releaseSpend(tokenId: string, cents: number): Promise<void>;
   createApproval(a: Actor, p: { tokenId: string; workspaceId: string; milestoneId: string; note: string; detail?: Record<string, unknown> }): Promise<{ id: string; state: string; createdAt: Date; reused: boolean }>;
   audit(a: Actor, action: string, target: string, detail: Record<string, unknown>): Promise<void>;
+  /** F2.13 proposes a change order (the same service the contract room's form calls) and returns its summary. */
+  proposeChangeOrder(a: Actor, contractId: string, input: { items: CoItem[]; note: string; expectedRev?: number }): Promise<{ id: string; no: number; state: string; currency: string; totalFromCents: number; totalToCents: number; netCents: number; lines: string[] }>;
 }
 
 class ToolError extends Error { constructor(readonly code: string, message: string) { super(message); } }
 /** What each permission lets a person do, in words, for the PERMISSION_DENIED message. */
 const DOES: Partial<Record<Permission, string>> = {
-  "contract.create": "draft a contract", "contract.negotiate": "propose contract changes", "hold.fund": "request funding",
+  "contract.create": "draft a contract", "contract.negotiate": "propose contract changes or change orders (the client or the provider does)", "hold.fund": "request funding",
   "evidence.submit": "submit evidence (the provider does)", "release.approve": "approve a release (only the client does)", "dispute.open": "open a dispute",
 };
 const need = (a: Actor, p: Permission) => { if (!can(a.role, p)) throw new ToolError("PERMISSION_DENIED", `Your role (${a.role}) cannot ${DOES[p] ?? `use the ${p} permission`}.`); };
@@ -58,6 +65,15 @@ const changeSchema = z.union([
   z.object({ action: z.literal("APPEND_CLAUSE"), title: z.string().min(3).max(120), body: z.string().min(3).max(2_000), linkedMilestone: id.optional() }).strict(),
   z.object({ action: z.literal("SET_TOTAL"), totalCents: z.number().int().min(1_000).max(100_000_000) }).strict(),
 ]);
+
+/* F2.13 change order items: the same zod shapes the contract room's form is checked with (change-core.ts), narrowed to
+   re-dating (an EDIT that changes only the due day), adding and removing milestones that have not started */
+const coChangeSchema = z.union([
+  z.object({ action: z.literal("REDATE"), milestoneCode: zCode, day: zDay }).strict(),
+  zAddItem.extend({ milestone: zAddItem.shape.milestone.strict() }).strict(),
+  zRemoveItem.strict(),
+]);
+const toCoItem = (c: z.infer<typeof coChangeSchema>): CoItem => c.action === "REDATE" ? { action: "EDIT", milestoneCode: c.milestoneCode, day: c.day } : (c as CoItem);
 
 interface ToolDef<S extends z.ZodType> {
   name: string; title: string; description: string; input: S;
@@ -187,6 +203,23 @@ export const TOOLS = [
     },
   }),
   tool({
+    name: "propose_change_order", title: "Propose a change order on a signed contract",
+    description: "Propose a change order on a signed, locked contract: re-date milestones, add new ones, or remove ones that have not started, with a note saying why. HUMAN GATE: this moves no money and changes nothing. The contract keeps its signed terms until both parties review the change order and sign it in the app with MFA; money for added work is then funded through PayPal as usual. Returns the change order number, its money summary and a link to the proposed plan on the contract timeline.",
+    input: z.object({ contractId: id, note: z.string().min(5).max(1_000), changes: z.array(coChangeSchema).min(1).max(20) }).strict(),
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+    async run(a, ctx, svc) {
+      need(ctx.actor, "contract.negotiate");
+      const co = await svc.proposeChangeOrder(ctx.actor, a.contractId, { items: a.changes.map(toCoItem), note: a.note });
+      await svc.audit(ctx.actor, "ai.mcp.propose_change_order", a.contractId, { tokenId: ctx.tokenId, changeOrderId: co.id, no: co.no, changes: a.changes.map((c) => c.action === "ADD" ? `ADD ${c.milestone.title}` : `${c.action} ${c.milestoneCode}`), netCents: co.netCents });
+      return {
+        changeOrderId: co.id, number: co.no, state: co.state, signed: false,
+        money: { totalFrom: formatCents(co.totalFromCents, co.currency), totalTo: formatCents(co.totalToCents, co.currency), net: `${co.netCents < 0 ? "−" : co.netCents > 0 ? "+" : ""}${formatCents(Math.abs(co.netCents), co.currency)}`, lines: co.lines },
+        link: `${ctx.appUrl}/contracts/${a.contractId}/timeline?co=${co.id}`,
+        humanAction: "Nothing changed and no money moved. Both parties review the change order and sign it in the app with MFA; until then the signed plan stays in force.",
+      };
+    },
+  }),
+  tool({
     name: "open_dispute", title: "Open a dispute on a milestone",
     description: "Flag one milestone as disputed. Only that milestone's amount is frozen; the rest of the contract continues.",
     input: z.object({ milestoneId: id, reason: z.string().min(3).max(200), narrative: z.string().min(10).max(4_000) }).strict(),
@@ -237,7 +270,7 @@ export async function callTool(name: string, args: unknown, ctx: McpContext, svc
   }
 }
 
-const INSTRUCTIONS = "PaySettle holds a client's money through PayPal and releases it milestone by milestone. You act for the person who minted your token. You can draft and negotiate workspaces, read status, request funding (the buyer approves in PayPal), submit evidence notes and links, ask for a release (the client confirms in the app) and open disputes. You cannot sign, approve or move money yourself.";
+const INSTRUCTIONS = "PaySettle holds a client's money through PayPal and releases it milestone by milestone. You act for the person who minted your token. You can draft and negotiate workspaces, read status, request funding (the buyer approves in PayPal), submit evidence notes and links, ask for a release (the client confirms in the app), propose a change order on a signed contract (both parties sign it in the app) and open disputes. You cannot sign, approve or move money yourself.";
 
 async function one(msg: Rpc, ctx: McpContext, svc: McpServices): Promise<object | null> {
   if (!msg || typeof msg !== "object" || msg.jsonrpc !== "2.0" || typeof msg.method !== "string") return err(msg?.id, -32600, "Invalid Request");
