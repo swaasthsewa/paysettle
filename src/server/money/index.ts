@@ -39,10 +39,16 @@ type TState = Parameters<typeof trancheMachine.next>[0];
 type TEvent = Parameters<typeof trancheMachine.next>[1];
 const appUrl = () => (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
 const stepTranche = (from: string, ev: TEvent) => (trancheMachine.allows(from as TState, ev) ? trancheMachine.next(from as TState, ev) : from);
-/** Rail A1 orders pay the provider, and PayPal refuses (403) to let the platform void a provider's authorization without a
- *  third-party permission. Uncaptured money then returns to the buyer when PayPal's authorization lapses (29 days), so a
- *  return is recorded as such instead of failing. Final captures release the rest without a void and are unaffected. */
-const voidNotPermitted = (e: unknown) => e instanceof RailError && /PayPal 403|PERMISSION_DENIED|NOT_AUTHORIZED/.test(e.message);
+/** Rail A1 orders pay the provider, and PayPal refuses a platform void on the provider's authorization until the provider
+ *  grants the platform permission (partner onboarding, on the roadmap). The uncaptured money is never taken: PayPal
+ *  releases it to the buyer with the tranche's final capture or when the authorization lapses, so the return is recorded
+ *  rather than failed. Only that exact answer is tolerated (403 on the void call, issue PERMISSION_DENIED or error name
+ *  NOT_AUTHORIZED); anything else still fails loudly. */
+const voidNotPermitted = (e: unknown) => {
+  if (!(e instanceof RailError) || !e.message.startsWith("PayPal 403 ") || !e.message.endsWith("/void")) return false;
+  const d = e.detail as { name?: string; details?: { issue?: string }[] } | undefined;
+  return d?.details?.[0]?.issue === "PERMISSION_DENIED" || d?.name === "NOT_AUTHORIZED";
+};
 
 /* ───────────────────────── fund (F3.01) ───────────────────────── */
 

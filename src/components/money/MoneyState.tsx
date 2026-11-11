@@ -14,7 +14,7 @@ const MAP: Record<string, { cls: "held" | "released" | "disputed" | "refunded" |
   IN_FLIGHT: { cls: "held", label: "Paying" },
   PENDING: { cls: "draft", label: "Pending" },
   FAILED: { cls: "disputed", label: "Failed — will retry" },
-  RECORDED: { cls: "refunded", label: "Returned (not captured)" },
+  RECORDED: { cls: "refunded", label: "Kept for client · never captured" },
   RELEASED: { cls: "released", label: "Released" },
   APPROVED: { cls: "held", label: "Approved" },
   SETTLED_BY_VERDICT: { cls: "released", label: "Settled by verdict" },

@@ -14,7 +14,10 @@ export default async function Page() {
   const list = await receiptsFor(v.id);
   const notices = await noticesFor(v.id);
   const paid = list.flatMap((c) => c.lines).filter((l) => l.kind !== "RETURN" && ["COMPLETED", "IN_FLIGHT"].includes(l.status)).reduce((s, l) => s + l.grossCents, 0);
-  const back = list.flatMap((c) => c.lines).filter((l) => l.kind === "RETURN" && ["COMPLETED", "RECORDED", "IN_FLIGHT"].includes(l.status)).reduce((s, l) => s + l.grossCents, 0);
+  const returns = list.flatMap((c) => c.lines).filter((l) => l.kind === "RETURN");
+  const back = returns.filter((l) => ["COMPLETED", "IN_FLIGHT"].includes(l.status)).reduce((s, l) => s + l.grossCents, 0);
+  /* Rail A: a return inside an open authorization is never captured; PayPal releases it from the hold when the tranche closes */
+  const kept = returns.filter((l) => l.status === "RECORDED").reduce((s, l) => s + l.grossCents, 0);
   const held = list.flatMap((c) => c.tranches).reduce((s, t) => s + t.balance.remaining, 0);
   return (
     <>
@@ -24,6 +27,7 @@ export default async function Page() {
           <div className="hstat"><div className="v money">{formatCents(held)}</div><div className="l">still held in PayPal</div></div>
           <div className="hstat"><div className="v money">{formatCents(paid)}</div><div className="l">released to providers</div></div>
           <div className="hstat"><div className="v money">{formatCents(back)}</div><div className="l">returned to you</div></div>
+          {kept > 0 && <div className="hstat"><div className="v money">{formatCents(kept)}</div><div className="l">never captured · PayPal releases it to you when the hold closes</div></div>}
         </div>
       </div>
       {notices.length > 0 && (

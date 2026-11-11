@@ -132,6 +132,16 @@ node tools/screens.mjs client judge    # only some groups
 Uses `SCREENS_BASE_URL` (or `E2E_BASE_URL`, default `http://localhost:3100`) and `CHROME_PATH`. The judge group starts fresh
 playground sessions.
 
+## Known limits and next
+
+- **Voids on Rail A1.** The order pays the provider directly, so PayPal answers `403 PERMISSION_DENIED` when the
+  platform tries to void the provider's authorization. Nothing is lost: the uncaptured part is never taken, and PayPal
+  releases it to the buyer with the tranche's final capture (or when the authorization lapses). The app records such a
+  return as *kept for the client, never captured* and matches only that exact PayPal answer; any other error fails loudly.
+  Measured in [`RESULTS.md`](RESULTS.md).
+- **Next: PayPal partner onboarding (Multiparty),** so each provider grants the platform permission and refunds and voids
+  run on their behalf.
+
 ## Documents
 
 - [`docs/architecture.md`](docs/architecture.md) — modules, rails and data flow (Mermaid), and where each rule of the

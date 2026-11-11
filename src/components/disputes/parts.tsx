@@ -70,7 +70,12 @@ export function Milestones({ c }: { c: DisputeCase }) {
 export function WhereMoney({ c }: { c: DisputeCase }) {
   const cur = c.workspace.currency, amt = money(c.d.amountCents, cur), v = c.verdict;
   if (c.d.state === "SUPERSEDED") return <p>A PayPal dispute on this payment has taken over. PaySettle moves none of the {amt} while PayPal decides.</p>;
-  if (c.d.state === "RESOLVED" && v) return <p><span className="money">{money(v.refundCents, cur)}</span> went back to {c.clientName}; <span className="money">{money(v.releaseCents, cur)}</span> was released to {c.providerName}.</p>;
+  /* Rail A holds an authorization: the refund leg is simply never captured, so it stays with the client and PayPal
+     releases it from the hold when the tranche closes (final capture or void). Rail B moved captured money back. */
+  const authHold = !!c.tranche && c.tranche.rail !== "B";
+  if (c.d.state === "RESOLVED" && v) return authHold
+    ? <p><span className="money">{money(v.releaseCents, cur)}</span> was captured for {c.providerName}. <span className="money">{money(v.refundCents, cur)}</span> stays with {c.clientName}: it is never captured, and PayPal releases it from the hold when the tranche closes.</p>
+    : <p><span className="money">{money(v.refundCents, cur)}</span> went back to {c.clientName}; <span className="money">{money(v.releaseCents, cur)}</span> was released to {c.providerName}.</p>;
   if (v && (c.d.state === "EXECUTING" || c.d.state === "AGREED")) return <p>Settling {amt}: <span className="money">{money(v.refundCents, cur)}</span> back to the client, <span className="money">{money(v.releaseCents, cur)}</span> to the provider.</p>;
   return <p><span className="money">{amt}</span> is frozen in the PayPal hold for {c.milestone.code} until this dispute ends. Settled milestones stay paid; other milestones carry on.</p>;
 }
