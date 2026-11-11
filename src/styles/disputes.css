@@ -8,7 +8,7 @@
 .dz-tl li b { font-size: 14px; }
 @media (max-width: 760px) { .dz-tl { grid-template-columns: minmax(0, 1fr); } }
 
-tr[data-dz-on] td { background: var(--disputed-bg); }
+tr[data-dz-on] td { background: color-mix(in srgb, var(--warn) 16%, transparent); } /* a tint, not the light disputed-bg, so the row reads in dark mode too */
 tr[data-dz-on] td:first-child { border-radius: var(--r-sm) 0 0 var(--r-sm); padding-left: 8px; }
 
 .dz-range { width: 100%; accent-color: var(--g1); min-height: 32px; }

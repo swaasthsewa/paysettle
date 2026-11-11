@@ -39,6 +39,10 @@ type TState = Parameters<typeof trancheMachine.next>[0];
 type TEvent = Parameters<typeof trancheMachine.next>[1];
 const appUrl = () => (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
 const stepTranche = (from: string, ev: TEvent) => (trancheMachine.allows(from as TState, ev) ? trancheMachine.next(from as TState, ev) : from);
+/** Rail A1 orders pay the provider, and PayPal refuses (403) to let the platform void a provider's authorization without a
+ *  third-party permission. Uncaptured money then returns to the buyer when PayPal's authorization lapses (29 days), so a
+ *  return is recorded as such instead of failing. Final captures release the rest without a void and are unaffected. */
+const voidNotPermitted = (e: unknown) => e instanceof RailError && /PayPal 403|PERMISSION_DENIED|NOT_AUTHORIZED/.test(e.message);
 
 /* ───────────────────────── fund (F3.01) ───────────────────────── */
 
@@ -325,8 +329,12 @@ async function returnFunds(a: Actor | null, trancheId: string, items: { mileston
         type = "REFUND"; paypalRef = r.id; status = r.status === "COMPLETED" ? "COMPLETED" : "IN_FLIGHT";
       } else if (after === 0) {
         if (!t.authorizationId) throw new DomainError("NOT_HELD", "PayPal has no authorization for this tranche.");
-        await withRetry(() => rail.voidRemainder(t.authorizationId!, key));
-        type = "VOID"; paypalRef = `void:${t.authorizationId}`; status = "COMPLETED";
+        try { await withRetry(() => rail.voidRemainder(t.authorizationId!, key)); type = "VOID"; paypalRef = `void:${t.authorizationId}`; status = "COMPLETED"; }
+        catch (e) {
+          if (!voidNotPermitted(e)) throw e;
+          type = "VOID"; status = "RECORDED"; // PayPal returns it to the buyer when the authorization lapses
+          await audit(tx, auditActor(a), "money.void_not_permitted", t.id, { idemKey: key, authorizationId: t.authorizationId, windowEndsAt: t.windowEndsAt });
+        }
       } else { type = "VOID"; status = "RECORDED"; } // stays authorized but will never be captured; voided with the last remainder
       await tx.update(refunds).set({ status, paypalRef }).where(eq(refunds.id, id));
       const kind = opts.kind ?? type;
@@ -406,11 +414,14 @@ async function closeLeftovers(a: Actor | null, trancheId: string): Promise<void>
       if (left > 0) {
         if (!t.authorizationId) throw new DomainError("NOT_HELD", "PayPal has no authorization for this tranche.");
         const vkey = rowId ? poolKey : idemKey("void_close", trancheId);
-        await withRetry(() => rail.voidRemainder(t.authorizationId!, vkey));
-        voided = `void:${t.authorizationId}`;
+        let canVoid = true;
+        try { await withRetry(() => rail.voidRemainder(t.authorizationId!, vkey)); }
+        catch (e) { if (!voidNotPermitted(e)) throw e; canVoid = false; }
+        voided = canVoid ? `void:${t.authorizationId}` : null;
         if (bal.pool.remaining > 0 && rowId) pool = await poolReturnTx(tx, t, w, bal.pool.remaining, rowId, poolKey, voided);
-        /* deductions and returns recorded while the hold was open are part of this void */
-        await tx.update(refunds).set({ status: "COMPLETED", paypalRef: voided }).where(and(eq(refunds.trancheId, trancheId), eq(refunds.status, "RECORDED")));
+        /* deductions and returns recorded while the hold was open are part of this void; when PayPal does not let the
+           platform void (see voidNotPermitted) they stay recorded and return to the buyer as the authorization lapses */
+        if (voided) await tx.update(refunds).set({ status: "COMPLETED", paypalRef: voided }).where(and(eq(refunds.trancheId, trancheId), eq(refunds.status, "RECORDED")));
       }
     }
     const ts = stepTranche(t.state, "close");
