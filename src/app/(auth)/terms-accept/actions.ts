@@ -2,13 +2,15 @@
 /**
  * F1.8 baseline handshake actions. Accept → signed record + session starts. Decline → signed record, no session, and the
  * person is signed out with a message (features stay closed until they accept).
+ * P9: a shared demo person (persona picker, sandbox) who declines is signed out, but no DECLINED record is written: the
+ * same seeded person is used by every judge, and one judge's refusal must not stand for the others.
  */
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { audit } from "@/lib/audit";
-import { clientInfo, endSession, homeFor, startSession, viewer } from "@/lib/session";
+import { clientInfo, endSession, homeFor, sharedDemo, startSession, viewer } from "@/lib/session";
 import { recordTermsDecision, TERMS_VERSION } from "@/lib/identity/handshake";
 import { clearHandshake, pendingHandshake } from "@/lib/identity/handshake-session";
 
@@ -16,10 +18,10 @@ async function who() {
   const p = await pendingHandshake();
   if (p) {
     const [u] = await db.select({ id: users.id, role: users.role }).from(users).where(eq(users.id, p.u)).limit(1);
-    return u ? { id: u.id, role: u.role, pending: p } : null;
+    return u ? { id: u.id, role: u.role, demo: p.demo, pending: p } : null;
   }
   const v = await viewer();
-  return v ? { id: v.id, role: v.role, pending: null } : null;
+  return v ? { id: v.id, role: v.role, demo: v.demo, pending: null } : null;
 }
 
 export async function acceptTerms(f: FormData) {
@@ -40,7 +42,7 @@ export async function acceptTerms(f: FormData) {
 
 export async function declineTerms() {
   const w = await who();
-  if (w) {
+  if (w && !sharedDemo(w)) {
     const { ip, userAgent } = await clientInfo();
     await recordTermsDecision({ userId: w.id, role: w.role, decision: "DECLINED", ip, userAgent });
   }

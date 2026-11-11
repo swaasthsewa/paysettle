@@ -2,20 +2,23 @@
 /**
  * F4.05 F4.06 F4.07 — server actions behind the mediator network screens. Every input is checked
  * again (zod) in src/server/mediators; permissions are checked there too (can() / ownership).
+ * P9: a shared demo mediator (persona picker, sandbox) cannot change their own profile or availability: pausing or
+ * narrowing a seeded mediator would change which disputes every other judge can take to Tier 3.
  */
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import { requireViewer } from "@/lib/session";
+import { SHARED_DEMO_READ_ONLY, requireViewer, sharedDemo } from "@/lib/session";
 import { rateLimitKey } from "@/lib/net";
 import { DomainError, NotBuilt, type Actor } from "../types";
 import * as M from "./index";
 import type { ApplicationField } from "./rules";
 
-async function actor(): Promise<Actor & { orgId: string }> {
+async function actor(): Promise<Actor & { orgId: string; demo: boolean }> {
   const v = await requireViewer();
-  return { id: v.id, role: v.role, name: v.name, orgId: v.orgId };
+  return { id: v.id, role: v.role, name: v.name, orgId: v.orgId, demo: v.demo };
 }
+const notShared = (a: { demo: boolean }) => { if (sharedDemo(a)) throw new DomainError("SHARED_DEMO", SHARED_DEMO_READ_ONLY); };
 const say = (e: unknown) => e instanceof DomainError ? e.message : e instanceof NotBuilt ? "That part of PaySettle is not built yet in this environment." : "Something went wrong. Nothing was changed.";
 const go = (path: string, q: Record<string, string>) => `${path}?${new URLSearchParams(q).toString()}`;
 const str = (f: FormData, k: string) => String(f.get(k) ?? "");
@@ -46,14 +49,14 @@ export async function declineOfferAction(f: FormData) {
 /* ── mediator: own profile ── */
 export async function updateProfileAction(f: FormData) {
   const a = await actor();
-  return run("/mediator/profile", "Profile saved.", () => M.updateProfile(a, {
+  return run("/mediator/profile", "Profile saved.", async () => { notShared(a); await M.updateProfile(a, {
     bio: str(f, "bio"), languages: f.getAll("languages").map(String), timezone: str(f, "timezone"), maxOpen: Math.round(Number(str(f, "maxOpen"))),
     declaredConflicts: str(f, "declaredConflicts").split(/\n+/).map((s) => s.trim()).filter(Boolean),
-  }));
+  }); });
 }
 export async function availabilityAction(f: FormData) {
   const a = await actor();
-  return run("/mediator/profile", "Availability saved.", () => M.setAvailability(a, { weeklyHours: Math.round(Number(str(f, "weeklyHours"))), leaveFrom: date(f, "leaveFrom"), leaveTo: date(f, "leaveTo"), paused: str(f, "paused") === "on" }));
+  return run("/mediator/profile", "Availability saved.", async () => { notShared(a); await M.setAvailability(a, { weeklyHours: Math.round(Number(str(f, "weeklyHours"))), leaveFrom: date(f, "leaveFrom"), leaveTo: date(f, "leaveTo"), paused: str(f, "paused") === "on" }); });
 }
 export async function credentialAction(f: FormData) {
   const a = await actor();

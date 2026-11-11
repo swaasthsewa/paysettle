@@ -13,7 +13,7 @@ import { tzOf, when } from "@/components/identity/format";
 import { LicenceForm } from "@/components/identity/licence-form";
 import { LicenceSuggestion } from "@/components/identity/licence-suggestions";
 import { sandboxMode } from "@/lib/clock";
-import { requireViewer } from "@/lib/session";
+import { SHARED_DEMO_READ_ONLY, requireViewer, sharedDemo } from "@/lib/session";
 import { isValidated, missingCredentials, onboardingChip, PROVIDER_CATEGORIES, type ProviderProfile } from "@/lib/identity/provider";
 import { addLicence, removeLicence, saveBusiness, saveMerchant } from "./actions";
 
@@ -34,6 +34,8 @@ export default async function OnboardingPage() {
   const sandbox = sandboxMode();
   const validated = isValidated(state);
   const todayIso = new Date().toISOString().slice(0, 10);
+  const ro = sharedDemo(v); // P9: shared demo provider, settings read-only
+  const roNote = <p className="small muted" role="note">{SHARED_DEMO_READ_ONLY}</p>;
 
   return (
     <>
@@ -62,7 +64,16 @@ export default async function OnboardingPage() {
       <div className="id-grid">
         <section className="c id-6" aria-labelledby="biz-h">
           <div className="c-head"><h2 id="biz-h">Business</h2></div>
-          <ActionForm action={saveBusiness} submit="Save business details" variant="btn btn-d">
+          {ro ? (
+            <>
+              <dl className="kv">
+                <div><dt>Business name</dt><dd>{p.businessName || "Not given"}</dd></div>
+                <div><dt>Country of registration</dt><dd>{p.country || "Not given"}</dd></div>
+                <div><dt>Tax id</dt><dd>{p.taxIdMasked || "Not given"}<small>Stored only masked to its last four characters.</small></dd></div>
+              </dl>
+              {roNote}
+            </>
+          ) : <ActionForm action={saveBusiness} submit="Save business details" variant="btn btn-d">
             <div className="id-form">
               <div className="field id-wide"><label htmlFor="o-name">Business name</label><input id="o-name" name="businessName" type="text" defaultValue={p.businessName ?? ""} maxLength={120} required autoComplete="organization" /></div>
               <div className="field id-wide"><label htmlFor="o-cat">Category</label>
@@ -71,7 +82,7 @@ export default async function OnboardingPage() {
               <div className="field"><label htmlFor="o-tax">Tax id {p.taxIdMasked && <span className="muted">(on file: {p.taxIdMasked})</span>}</label><input id="o-tax" name="taxId" type="text" maxLength={40} autoComplete="off" placeholder={p.taxIdMasked ? "Leave empty to keep" : "e.g. 12-3456789"} /></div>
             </div>
             <p className="small muted">The tax id is stored only masked to its last four characters, plus a one-way fingerprint so the same id cannot open two provider accounts.</p>
-          </ActionForm>
+          </ActionForm>}
         </section>
 
         <section className="c id-6" aria-labelledby="pp-h">
@@ -86,9 +97,9 @@ export default async function OnboardingPage() {
               <div><dt>Payouts</dt><dd>{merchant.receivable ? "On" : "Off (ERR_106)"}<small>{merchant.receivable ? "Approved milestones are captured to this account." : "Unverified merchant: payout features stay off until PayPal confirms the account."}</small></dd></div>
             </dl>
           )}
-          <ActionForm action={saveMerchant} submit={merchant ? "Update PayPal account" : "Link PayPal account"}>
+          {ro ? roNote : <ActionForm action={saveMerchant} submit={merchant ? "Update PayPal account" : "Link PayPal account"}>
             <div className="field"><label htmlFor="m-email">{sandbox ? "Sandbox business account e-mail" : "PayPal business e-mail"}</label><input id="m-email" name="email" type="email" maxLength={254} defaultValue={merchant?.email ?? ""} required autoComplete="email" placeholder="you@business.example.com" /></div>
-          </ActionForm>
+          </ActionForm>}
         </section>
 
         <section className="c id-12" aria-labelledby="lic-h">
@@ -106,7 +117,7 @@ export default async function OnboardingPage() {
                           <b>{l.name}</b><span className="muted">{(l.size / 1024).toFixed(0)} KB · added {when(new Date(l.at), tz)}</span>
                           <span className="chip" data-b={r.b}>{r.label}</span>
                           <code title="SHA-256 fingerprint">{l.sha256.slice(0, 16)}{"…"}</code>
-                          <form action={removeLicence} style={{ marginLeft: "auto" }}><input type="hidden" name="id" value={l.id} /><button className="btn btn-sm btn-gh" type="submit" aria-label={`Remove ${l.name}`}>Remove</button></form>
+                          {!ro && <form action={removeLicence} style={{ marginLeft: "auto" }}><input type="hidden" name="id" value={l.id} /><button className="btn btn-sm btn-gh" type="submit" aria-label={`Remove ${l.name}`}>Remove</button></form>}
                           <div style={{ flexBasis: "100%" }}><LicenceSuggestion licence={l} todayIso={todayIso} audience="provider" /></div>
                         </li>
                       );
@@ -114,7 +125,7 @@ export default async function OnboardingPage() {
                   </ul>
                 )}
             </div>
-            <div className="id-6"><LicenceForm action={addLicence} /></div>
+            <div className="id-6">{ro ? roNote : <LicenceForm action={addLicence} />}</div>
           </div>
         </section>
       </div>
