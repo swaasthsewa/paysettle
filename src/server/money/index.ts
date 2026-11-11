@@ -10,9 +10,9 @@
  * released only; the deduction goes back to the client (Rail A: stays authorized and is voided with the remainder; Rail B:
  * refunded), and the unused pool goes back when the tranche closes.
  */
-import { and, asc, eq, inArray, max } from "drizzle-orm";
+import { and, asc, eq, inArray, max, sql } from "drizzle-orm";
 import { db, type Tx } from "@/db/client";
-import { disputes, ledgerEntries, refunds, releases, tranches, verdicts, wsMilestones } from "@/db/schema";
+import { auditChain, disputes, ledgerEntries, refunds, releases, tranches, verdicts, wsMilestones } from "@/db/schema";
 import { evidenceReviews } from "@/db/schema-evidence";
 import { audit } from "@/lib/audit";
 import { DAY, HOUR, daysBetween, sandboxMode } from "@/lib/clock";
@@ -55,7 +55,10 @@ export async function fundTranche(a: Actor, trancheId: string): Promise<{ approv
   const payee = await payeeOf(db, w.providerId);
   const rail = await railOf(t);
   if (rail.id !== "MOCK" && (!payee || !payee.receivable || !payee.emailConfirmed)) throw new DomainError("PAYEE_NOT_READY", "The provider's PayPal business account is not linked or cannot receive payments yet, so checkout is halted.");
-  const key = idemKey("fund", t.id);
+  /* one idempotency key per funding attempt: retries of an attempt reuse it (never two orders), but after PayPal refused an
+     order the next attempt is a new request with its own key (PayPal ties a key to the first body it saw) */
+  const refusedBefore = (await db.select({ n: sql<number>`count(*)::int` }).from(auditChain).where(and(eq(auditChain.action, "money.order_refused"), eq(auditChain.target, t.id))))[0]?.n ?? 0;
+  const key = refusedBefore ? idemKey("fund", t.id, String(refusedBefore)) : idemKey("fund", t.id);
   const total = fundedAmount(t); // the bonus pool is funded with the tranche (one authorization / capture)
   await audit(db, auditActor(a), "money.fund_requested", t.id, { idemKey: key, rail: rail.id, amountCents: t.amountCents, bonusPoolCents: t.bonusPoolCents, fundCents: total });
   let ref: HoldRef;
