@@ -195,10 +195,10 @@ describe("F5.03 four-eyes dual control", () => {
 
   it("F5.03 requests expire after the 30-minute TTL and cannot be approved", async () => {
     await inTx(async (tx) => {
-      const id = await propose(admin, "FLIP_FLAG", "ai.enabled", { on: false }, "Pause AI while the cost cap is reviewed.", { dbx: tx, now: AGO(31) });
+      const id = await propose(admin, "FLIP_FLAG", "deemed_approval.allowed", { on: true }, "Allow deemed approval for the pilot.", { dbx: tx, now: AGO(31) });
       await expect(approve(ops, id, { dbx: tx })).rejects.toMatchObject({ code: "EXPIRED" });
       expect((await tx.select().from(dualControl).where(eq(dualControl.id, id)))[0].state).toBe("EXPIRED");
-      const id2 = await propose(admin, "FLIP_FLAG", "ai.enabled", { on: false }, "Pause AI while the cost cap is reviewed.", { dbx: tx, now: AGO(40) });
+      const id2 = await propose(admin, "FLIP_FLAG", "deemed_approval.allowed", { on: true }, "Allow deemed approval for the pilot.", { dbx: tx, now: AGO(40) });
       expect(await expireDue({ dbx: tx })).toBeGreaterThanOrEqual(1);
       expect((await tx.select().from(dualControl).where(eq(dualControl.id, id2)))[0].state).toBe("EXPIRED");
     });
@@ -213,6 +213,33 @@ describe("F5.03 four-eyes dual control", () => {
       await veto(ops, id2, "Spike result not in yet.", { dbx: tx });
       await expect(approve(ops, id2, { dbx: tx })).rejects.toMatchObject({ code: "STATE" });
     });
+  });
+
+  it("P9 shared demo: AI cannot be switched off and playground blueprints cannot be withdrawn in sandbox mode", async () => {
+    await inTx(async (tx) => {
+      await expect(propose(admin, "FLIP_FLAG", "ai.enabled", { on: false }, "Pause AI while the cost cap is reviewed.", { dbx: tx })).rejects.toMatchObject({ code: "PROTECTED", message: "Protected in the shared demo." });
+      await expect(propose(ops, "PUBLISH_BLUEPRINT", "UC_WEB_MVP", { active: false }, "Withdraw the web MVP template for a review.", { dbx: tx })).rejects.toMatchObject({ code: "PROTECTED" });
+      // switching AI on still goes through four-eyes as before
+      const on = await propose(admin, "FLIP_FLAG", "ai.enabled", { on: true }, "Make sure AI is on for the demo.", { dbx: tx });
+      await approve(ops, on, { dbx: tx });
+      expect((await tx.select().from(flags).where(eq(flags.key, "ai.enabled")))[0].on).toBe(true);
+      // a request stored before the protection existed is refused at approval too
+      const id = newId("dc");
+      await tx.insert(dualControl).values({ id, action: "FLIP_FLAG", target: "ai.enabled", payload: { on: false }, reason: "Stored before the protection.", initiatorId: "u_admin", expiresAt: new Date(Date.now() + 10 * 60_000) });
+      await expect(approve(ops, id, { dbx: tx })).rejects.toMatchObject({ code: "PROTECTED" });
+    });
+  });
+
+  it("P9 outside the sandbox the same requests are allowed (four-eyes still applies)", async () => {
+    const prev = process.env.PAYSETTLE_ENV;
+    process.env.PAYSETTLE_ENV = "production";
+    try {
+      await inTx(async (tx) => {
+        const id = await propose(admin, "FLIP_FLAG", "ai.enabled", { on: false }, "Pause AI while the cost cap is reviewed.", { dbx: tx });
+        await approve(ops, id, { dbx: tx });
+        expect((await tx.select().from(flags).where(eq(flags.key, "ai.enabled")))[0].on).toBe(false);
+      });
+    } finally { if (prev === undefined) delete process.env.PAYSETTLE_ENV; else process.env.PAYSETTLE_ENV = prev; }
   });
 
   it("F5.03 roles outside the action's permission (judge) cannot propose", async () => {

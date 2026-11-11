@@ -19,6 +19,8 @@ import { can } from "@/lib/rbac";
 import { DomainError, type Actor } from "../types";
 import { auditActor, type Dbx } from "./common";
 import { FLAG_DEFS, isFlagKey } from "./flags";
+import { sandboxMode } from "@/lib/clock";
+import { PLAYGROUND_BLUEPRINTS } from "../playground/blueprints";
 import { processWebhookEvent } from "../money/webhook";
 
 export const DC_TTL_MS = 30 * 60_000;
@@ -57,7 +59,20 @@ const moneyReplay: WebhookReplayHandler = async (e) => {
 };
 const replayHandler = () => hook.__psWebhookReplay ?? moneyReplay;
 
+/*
+ * Shared demo (P9): every judge signs in as the same seeded people, and four-eyes only asks for two different people, so
+ * one judge holding an admin and an ops persona could switch a feature off for everyone. In sandbox mode the switches the
+ * demo depends on stay put: AI stays on, and the blueprints the playground scenarios build from stay in the catalogue.
+ */
+export const PROTECTED_IN_DEMO = "Protected in the shared demo.";
+function assertNotProtected(action: DcAction, target: string, payload: Record<string, unknown>) {
+  if (!sandboxMode()) return;
+  if (action === "FLIP_FLAG" && target === "ai.enabled" && payload.on === false) throw new DomainError("PROTECTED", PROTECTED_IN_DEMO);
+  if (action === "PUBLISH_BLUEPRINT" && payload.active === false && PLAYGROUND_BLUEPRINTS.includes(target)) throw new DomainError("PROTECTED", PROTECTED_IN_DEMO);
+}
+
 async function validateTarget(dbx: Dbx, action: DcAction, target: string, payload: Record<string, unknown>) {
+  assertNotProtected(action, target, payload);
   switch (action) {
     case "CLEAR_BREAKER": {
       const [t] = await dbx.select({ state: tranches.state }).from(tranches).where(eq(tranches.id, target)).limit(1);
@@ -130,6 +145,7 @@ export async function propose(a: Actor, actionIn: string, target: string, payloa
 /** Executes the approved action inside the approval transaction. Returns what happened (stored in dual_control_outcomes). */
 async function execute(tx: Dbx, a: Actor, row: typeof dualControl.$inferSelect): Promise<Record<string, unknown>> {
   const payload = row.payload as Record<string, unknown>;
+  assertNotProtected(row.action as DcAction, row.target, payload); /* also a request proposed before the protection existed */
   switch (row.action as DcAction) {
     case "CLEAR_BREAKER": {
       const [t] = await tx.select({ state: tranches.state }).from(tranches).where(eq(tranches.id, row.target)).limit(1);

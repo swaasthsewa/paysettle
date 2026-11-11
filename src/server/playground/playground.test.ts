@@ -15,6 +15,8 @@ import * as evidence from "../evidence";
 import { SCENARIOS, SCENARIO_IDS, injectFault, runAll, runNext } from "./scenarios";
 import { MAX_OFFSET_HOURS, SandboxOnly, checkTravel, createSim, getSim, resetSim, timeTravel, withSimLock } from "./session";
 import { ownsRun } from "./owner";
+import { PLAYGROUND_BLUEPRINTS } from "./blueprints";
+import { PAIR_BLUEPRINT } from "./pairs-diff";
 import { playgroundState, scenarioFromQuery, scenarioList } from "./state";
 import { SITE, SPOOF_POINT, VALID_POINT, haversineM, jpegWithGps, minimalPdf, readJpegGps } from "./fixtures";
 
@@ -149,6 +151,11 @@ describe("F5.06 scenario engine", () => {
       expect(new Set(s.steps.map((x) => x.id)).size).toBe(s.steps.length);
       for (const st of s.steps) { expect(st.label.length).toBeGreaterThan(3); expect(st.explain.length).toBeGreaterThanOrEqual(10); }
     }
+  });
+
+  it("P9: every blueprint a scenario or Pair A vs Pair B builds from is on the protected list (control/dual.ts)", () => {
+    for (const id of SCENARIO_IDS) for (const code of SCENARIOS[id].blueprints) expect(PLAYGROUND_BLUEPRINTS).toContain(code);
+    expect(PLAYGROUND_BLUEPRINTS).toContain(PAIR_BLUEPRINT);
   });
 
   it("F5.06: the playground's scenario list is data-driven — every defined scenario is listed, in order (S7 appears once added)", () => {
