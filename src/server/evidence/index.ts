@@ -166,7 +166,10 @@ export async function submitEvidence(a: Actor, milestoneId: string, files: { nam
     const declared = normalizeType(f.type);
     const sniffed = sniffType(bytes);
     if (!sniffed) throw new DomainError("TYPE_NOT_ALLOWED", `${name}: only JPEG, PNG, PDF, plain text and MP4 files are accepted.`);
-    const lenient = declared === "" || declared === "application/octet-stream" || (sniffed === "text/plain" && declared.startsWith("text/") && !/html|xml|javascript/.test(declared));
+    /* plain text named .txt/.log keeps whatever label the browser gave it (Windows sends .log as application/dflog or
+       text/x-log); a label claiming markup or script is still refused, and binary types keep the strict check */
+    const textByName = sniffed === "text/plain" && /\.(txt|log)$/i.test(name) && !/html|xml|javascript|svg/.test(declared);
+    const lenient = declared === "" || declared === "application/octet-stream" || textByName || (sniffed === "text/plain" && declared.startsWith("text/") && !/html|xml|javascript/.test(declared));
     if (!lenient && declared !== sniffed) throw new DomainError("TYPE_MISMATCH", `${name} says it is ${declared} but its contents are ${sniffed}.`);
     const sha = sha256(bytes);
     if (seen.has(sha)) { signals.push({ code: "DUPLICATE_FILE", level: "warn", detail: `${name} is identical to another file in this package; counted once.` }); continue; }
