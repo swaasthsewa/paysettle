@@ -5,6 +5,7 @@
 import { desc, inArray } from "drizzle-orm";
 import { db } from "@/db/client";
 import { reconRuns, refunds, releases, users } from "@/db/schema";
+import { reconLines } from "@/db/schema-control";
 import type { SimStepRecord } from "@/db/schema-playground";
 import { liveAvailable } from "@/lib/rails";
 import type { WorkspaceView } from "../types";
@@ -95,7 +96,8 @@ export async function playgroundState(simId: string | null): Promise<PlaygroundS
     ledger.rows.sort((a, b) => a.at.localeCompare(b.at));
     for (const r of ledger.rows) { ledger.totals[r.type] = (ledger.totals[r.type] ?? 0) + r.amountCents; ledger.accounts[r.debit] = (ledger.accounts[r.debit] ?? 0) + r.amountCents; ledger.accounts[r.credit] = (ledger.accounts[r.credit] ?? 0) - r.amountCents; }
   } catch (e) { ledger.waiting = e instanceof WaitingFor ? e.message : `Ledger unavailable: ${(e as Error).message}`; }
-  const [run] = await db.select().from(reconRuns).orderBy(desc(reconRuns.createdAt)).limit(1);
+  // the latest reconciliation run that checked one of this run's tranches (not the platform's latest run)
+  const [run] = tIds.length ? await db.select().from(reconRuns).where(inArray(reconRuns.id, db.select({ id: reconLines.runId }).from(reconLines).where(inArray(reconLines.trancheId, tIds)))).orderBy(desc(reconRuns.createdAt)).limit(1) : [];
   if (run) {
     const mine = (run.exceptions ?? []).filter((x) => tIds.includes(x.trancheId));
     ledger.recon = { id: run.id, verdict: run.verdict, matched: run.matched, inFlight: run.inFlight, at: run.createdAt.toISOString(), exceptions: mine.slice(0, 10), mine: mine.length };

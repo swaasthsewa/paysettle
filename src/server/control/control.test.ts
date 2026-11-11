@@ -8,6 +8,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { db, type Tx } from "@/db/client";
 import { auditChain, dualControl, flags, ledgerEntries, tranches, webhookEvents, workspaces, wsMilestones } from "@/db/schema";
 import type { Db } from "@/db/client";
+import { simWorkspaces } from "@/db/schema-sim";
 import { mockControl } from "@/lib/rails/mock";
 import { railFor } from "@/lib/rails";
 import { feeFor } from "@/lib/money";
@@ -60,6 +61,17 @@ const trancheState = async (tx: Tx, id: string) => (await tx.select({ s: tranche
 beforeEach(() => mockControl.reset());
 
 describe("F5.01 three-way reconciliation", () => {
+  it("F5.01 P9 a default run leaves playground simulations out; a run given their tranche ids checks them", async () => {
+    await inTx(async (tx) => {
+      const f = await fixture(tx);
+      await tx.insert(simWorkspaces).values({ workspaceId: f.ws, simId: newId("sim_test") });
+      const all = await runReconcile(null, undefined, { dbx: tx });
+      expect(all.lines.map((l) => l.trancheId)).not.toContain(f.tr);
+      const own = await runReconcile(null, undefined, { dbx: tx, trancheIds: [f.tr] });
+      expect(own.lines.map((l) => l.trancheId)).toEqual([f.tr]);
+    });
+  });
+
   it("F5.01 a clean tranche reconciles CLEAN across planes A, B and C", async () => {
     await inTx(async (tx) => {
       const f = await fixture(tx);

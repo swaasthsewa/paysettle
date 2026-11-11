@@ -6,8 +6,9 @@ import type { Actor } from "../types";
 import { runReconcile } from "./recon";
 import { approve, propose } from "./dual";
 
-export async function reconcile(a: Actor | null, window?: { from: Date; to: Date }): Promise<{ runId: string; verdict: "CLEAN" | "IN_FLIGHT" | "DRIFT" }> {
-  const r = await runReconcile(a, window);
+/** Every real tranche by default; `trancheIds` limits the run to those tranches (a playground run checks only its own). */
+export async function reconcile(a: Actor | null, window?: { from: Date; to: Date }, opts: { trancheIds?: string[] } = {}): Promise<{ runId: string; verdict: "CLEAN" | "IN_FLIGHT" | "DRIFT" }> {
+  const r = await runReconcile(a, window, { trancheIds: opts.trancheIds });
   return { runId: r.runId, verdict: r.verdict };
 }
 export async function proposeDualControl(a: Actor, action: string, target: string, payload: unknown, reason: string): Promise<string> {

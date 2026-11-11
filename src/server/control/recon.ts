@@ -17,6 +17,7 @@ import { trancheMachine } from "@/lib/fsm";
 import { audit } from "@/lib/audit";
 import { newId } from "@/lib/ids";
 import { DAY } from "@/lib/clock";
+import { excludeSim } from "@/lib/sim";
 import { formatCents } from "@/lib/money";
 import type { Actor } from "../types";
 import { auditActor, mustWrite, notTestOrg, type Dbx } from "./common";
@@ -156,8 +157,9 @@ export async function runReconcile(a: Actor | null, window: { from: Date; to: Da
   const from = window?.from ?? new Date(now.getTime() - DEFAULT_WINDOW_MS), to = window?.to ?? now;
 
   const withLedger = dbx.select({ id: ledgerEntries.trancheId }).from(ledgerEntries);
-  /* explicit tranche ids (tests, a single-tranche check) or every tranche of a real org */
-  const scope = o.trancheIds?.length ? inArray(tranches.id, o.trancheIds) : inArray(tranches.workspaceId, dbx.select({ id: workspaces.id }).from(workspaces).where(notTestOrg(workspaces.orgId)));
+  /* explicit tranche ids (tests, a single-tranche check, a playground run's own check) or every tranche of a real org
+     that is not a playground simulation, so the hourly and Finance runs do not grow with every judge's playground runs */
+  const scope = o.trancheIds?.length ? inArray(tranches.id, o.trancheIds) : inArray(tranches.workspaceId, dbx.select({ id: workspaces.id }).from(workspaces).where(and(notTestOrg(workspaces.orgId), excludeSim(workspaces.id))));
   const ts = await dbx.select().from(tranches)
     .where(and(scope, or(notInArray(tranches.state, ["PLANNED", "AWAITING_APPROVAL"]), inArray(tranches.id, withLedger))));
   const ids = ts.map((t) => t.id);
@@ -218,8 +220,8 @@ export async function reconHistory(limit = 20, dbx: Dbx = db) {
   return dbx.select().from(reconRuns).orderBy(desc(reconRuns.createdAt)).limit(limit);
 }
 /**
- * Lines of one run. The run itself checks every tranche (playground ones too: chaos scenario S5 relies on it), but the
- * default view leaves out tranches of playground simulations; pass includeSim to see them.
+ * Lines of one run. A default run leaves playground simulations out; a playground run (S5) checks only its own tranches.
+ * The default view still leaves out any tranche of a playground simulation (older runs checked them); pass includeSim to see them.
  */
 export async function reconRunLines(runId: string, dbx: Dbx = db, opts: { includeSim?: boolean } = {}) {
   const notSim = sql`not exists (select 1 from tranches st join sim_workspaces sw on sw.workspace_id = st.workspace_id where st.id = ${reconLines.trancheId})`;

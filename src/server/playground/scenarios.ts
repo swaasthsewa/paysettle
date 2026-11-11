@@ -736,7 +736,10 @@ async function stDrift(ctx: StepCtx): Promise<StepOutcome> {
 }
 async function stRecon(ctx: StepCtx): Promise<StepOutcome> {
   const fin = await ctx.as("finance");
-  const r = await moduleCall("control", () => control.reconcile(fin));
+  // only this run's tranches: a run over every tranche would check (and could pause) other judges' runs too
+  const trancheIds = (await view(ctx)).tranches.map((t) => t.id);
+  if (!trancheIds.length) return failed("No tranche to reconcile yet.");
+  const r = await moduleCall("control", () => control.reconcile(fin, undefined, { trancheIds }));
   const v = await view(ctx);
   const t = trancheOf(v, 1);
   await ctx.log("state", `reconcile → run ${r.runId}`, `verdict ${r.verdict}; tranche 1 ${t?.state}`, r.verdict === "DRIFT");
