@@ -1,5 +1,6 @@
 name: ci
 on: [push, pull_request]
+concurrency: { group: "ci-${{ github.sha }}", cancel-in-progress: false }
 permissions:
   contents: read
 jobs:
@@ -35,4 +36,7 @@ jobs:
       - run: npx tsx tools/traceability.ts
       - run: npx tsx scripts/reset-db.ts paysettle_test --base
       - run: npm test
-      - run: npm run build
+      # the same build the container uses (Dockerfile): Turbopack runs out of memory on the Bryntum trial bundle
+      - name: Production build (webpack)
+        run: npx next build --webpack
+        env: { NEXT_TELEMETRY_DISABLED: 1, NEXT_BUILD_CPUS: 2, NODE_OPTIONS: --max-old-space-size=3072 }

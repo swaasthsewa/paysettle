@@ -16,6 +16,7 @@ PayPal Sandbox credentials).
 | Typecheck | `npm run typecheck` | passed | 11 Nov 2026 | `d198cb9` |
 | Lint | `npm run lint` | passed | 11 Nov 2026 | `d198cb9` |
 | Unit tests | `npm run test` | 62 files, 750 passed, 1 skipped | 11 Nov 2026 | `d198cb9` |
+| Unit tests in public CI | GitHub Actions `ci` workflow ([run 43050298087](https://github.com/swaasthsewa/paysettle/actions/runs/43050298087)) | 62 files, 763 passed, 1 skipped; gitleaks full-history scan, `npm audit`, copy/name/vocabulary/secret gates, typecheck, lint and traceability (65/65) also passed in that run | 11 Nov 2026 | `311b051` |
 | Copy, name, vocabulary, secret checks | `npm run gate:copy`, `gate:names`, `gate:vocab`, `gate:secrets` | all clean (632 files) | 11 Nov 2026 | `d198cb9` |
 | Production build (Turbopack) | `npm run build` | **stopped for lack of memory** (the build process reached about 14 GB) | 11 Nov 2026 | `56788b3` |
 | Production build (webpack) | `npx next build --webpack` | passed; this is the build the container uses | 11 Nov 2026 | `d198cb9` |

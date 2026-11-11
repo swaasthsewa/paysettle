@@ -1,5 +1,7 @@
 # PaySettle
 
+[![ci](https://github.com/swaasthsewa/paysettle/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/swaasthsewa/paysettle/actions/workflows/ci.yml) [![licence: MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
+
 **A contract compiler for staged service work.** A vague statement of work goes in. Out comes a milestone contract in
 which every criterion either names a check a third person could make, or is flagged with a measurable rewrite, and every
 PayPal partial capture is tied to the evidence its clause names.
@@ -9,8 +11,8 @@ Built for the PayPal AI Hackathon. **Sandbox only: no real money moves.**
 **Live demo: <https://paysettle.onrender.com>** → **Try the live demo** → **Hackathon Judge** (no password). It runs on
 Render against the PayPal Sandbox; the Judge Playground's **Fast mock** mode needs no PayPal account at all.
 
-Measured on 11 Nov 2026 ([`RESULTS.md`](RESULTS.md)): 750 unit tests and 54 end-to-end journeys pass, 65 of 65
-requirements traced to code and tests; the AI evaluation sets with their targets and their one miss (the evidence
+Measured on 11 Nov 2026 ([`RESULTS.md`](RESULTS.md)): 763 unit tests pass in the public CI run, 54 end-to-end
+journeys pass, 65 of 65 requirements traced to code and tests; the AI evaluation sets with their targets and their one miss (the evidence
 verifier: 0.813 against 0.85, with no spoofed package advised to approve).
 
 ### One criterion, end to end
