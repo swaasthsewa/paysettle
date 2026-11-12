@@ -21,6 +21,7 @@ import { buildChainPlan, buildContractPlan, buildProposedPlan, CHANGE_LABEL, TON
 import { changeOrderForTimeline } from "@/server/contracts/change-orders";
 import { contractChain } from "@/server/contracts/continuation";
 import { DataTable } from "@/components/console/DataTable";
+import { trancheSummaries } from "@/server/money/queries";
 import "@/styles/timeline.css";
 
 export const metadata = { title: "Contract timeline" };
@@ -62,6 +63,8 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   /* the header always describes this contract as signed (money held, released, disputed), whatever view is selected */
   const pay = signedPlan.tasks.flatMap((t) => t.children ?? []).filter((t) => t.kind === "pay");
   const sum = (tone: MsTone) => pay.filter((t) => t.tone === tone).reduce((s, t) => s + t.amountCents, 0);
+  /* held, released and returned come from the ledger: a milestone settled by verdict releases only the agreed share */
+  const money = (await trancheSummaries(id)).filter((t) => t.heldAt).reduce((a, t) => ({ held: a.held + t.balance.remaining, released: a.released + t.balance.released, returned: a.returned + t.balance.returned }), { held: 0, released: 0, returned: 0 });
   const tones: MsTone[] = ["held", "released", "disputed", "refunded", "draft", "gate"];
   const changeSummary = proposed ? changeKinds.filter((k) => proposed.changes[k] > 0).map((k) => `${CHANGE_LABEL[k]}: ${proposed.changes[k]}`).join(" · ") : "";
 
@@ -74,8 +77,9 @@ export default async function Page({ params, searchParams }: { params: Promise<{
           <p className="sub">{ANCHOR[signedPlan.anchorKind]} ({day(signedPlan.anchor)}). Now is {day(signedPlan.now)}{signedPlan.virtual ? " on this contract's virtual clock" : ""}.</p>
         </div>
         <div className="stats">
-          <div className="hstat"><div className="v money">{formatCents(sum("held"), v.currency)}</div><div className="l">Held in PayPal</div></div>
-          <div className="hstat"><div className="v money">{formatCents(sum("released"), v.currency)}</div><div className="l">Released</div></div>
+          <div className="hstat"><div className="v money">{formatCents(money.held, v.currency)}</div><div className="l">Held in PayPal</div></div>
+          <div className="hstat"><div className="v money">{formatCents(money.released, v.currency)}</div><div className="l">Released</div></div>
+          {money.returned > 0 && <div className="hstat"><div className="v money">{formatCents(money.returned, v.currency)}</div><div className="l">Returned or kept for client</div></div>}
           <div className="hstat"><div className="v money">{formatCents(sum("disputed"), v.currency)}</div><div className="l">Disputed or being fixed</div></div>
         </div>
       </div>

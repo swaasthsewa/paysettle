@@ -137,7 +137,7 @@ export function buildContractPlan(v: PlanInput, now: Date, virtualOffsetHours = 
     const task = children.get(m.trancheIdx)!.find((k) => k.id === m.id)!;
     return {
       id: m.id, tranche: `Tranche ${m.trancheIdx}`, code: m.code, title: m.title, type: m.type === "GATE" ? "Gate" : "Payment", from: task.dayFrom, to: m.targetDay,
-      due: at(anchor, m.targetDay), amount: task.amountCents, state: m.state, where: TONE_LABEL[task.tone], open: { href: task.href!, label: "Open" },
+      due: at(anchor, m.targetDay), amount: task.amountCents, state: m.state, where: m.state === "SETTLED_BY_VERDICT" ? "Settled by verdict" : TONE_LABEL[task.tone], open: { href: task.href!, label: "Open" },
     };
   });
   return {
@@ -266,7 +266,7 @@ export function buildChainPlan(periods: ChainPeriod[], now: Date): ContractPlan 
     if (prev) deps.push({ id: `chain-${prev.id}-${id}`, from: prev.id, to: id, implicit: false, cls: "ps-dep ps-dep-chain" });
     for (const k of kids) rows.push({
       id: k.id, tranche: `Period ${per.periodNo}`, code: k.code, title: k.name.replace(/^[^·]+· /, ""), type: k.kind === "gate" ? "Gate" : "Payment", from: k.dayFrom, to: k.dayTo,
-      due: k.endDate, amount: k.amountCents, state: k.state, where: TONE_LABEL[k.tone], open: { href: k.href ?? `/contracts/${per.input.id}`, label: "Open" },
+      due: k.endDate, amount: k.amountCents, state: k.state, where: k.state === "SETTLED_BY_VERDICT" ? "Settled by verdict" : TONE_LABEL[k.tone], open: { href: k.href ?? `/contracts/${per.input.id}`, label: "Open" },
     });
     prevEnd = end;
   }

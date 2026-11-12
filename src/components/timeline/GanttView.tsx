@@ -104,7 +104,7 @@ export default function GanttView({ plan, mode = "plan" }: { plan: ContractPlan;
             { text: "Amount", field: "amountLabel", width: 112, align: "right" },
             {
               text: chain ? "State or where the money is" : "Where the money is", field: "stateLabel", width: 200,
-              renderer: ({ record }: { record: Rec }) => ({ tag: "span", className: `state ${record.get("tone") === "gate" ? "draft" : record.get("tone")}`, text: String(record.get("kind") === "tranche" ? record.get("stateLabel") : TONE_LABEL[record.get("tone") as MsTone] ?? "") }),
+              renderer: ({ record }: { record: Rec }) => ({ tag: "span", className: `state ${record.get("tone") === "gate" ? "draft" : record.get("tone")}`, text: String(record.get("kind") === "tranche" ? record.get("stateLabel") : record.get("state") === "SETTLED_BY_VERDICT" ? "Settled by verdict" : TONE_LABEL[record.get("tone") as MsTone] ?? "") }),
             },
           ]}
           timeRangesFeature={{ showCurrentTimeLine: false, showHeaderElements: true }}
