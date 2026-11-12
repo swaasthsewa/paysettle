@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PaySettle in 16 slides</title>
+<meta name="description" content="PaySettle: milestone contracts with the money held in PayPal. PayPal AI Hackathon 2026.">
+<style>
+@font-face { font-family: Outfit; font-weight: 400; src: url("fonts/outfit-latin-400-normal.woff2"); }
+@font-face { font-family: Outfit; font-weight: 500; src: url("fonts/outfit-latin-500-normal.woff2"); }
+@font-face { font-family: Outfit; font-weight: 600; src: url("fonts/outfit-latin-600-normal.woff2"); }
+@font-face { font-family: Outfit; font-weight: 700; src: url("fonts/outfit-latin-700-normal.woff2"); }
+@font-face { font-family: Outfit; font-weight: 800; src: url("fonts/outfit-latin-800-normal.woff2"); }
+:root {
+  --ink:#111418; --ink2:#4e545c; --ink3:#61676f; --paper:#f4f4f8; --card:#fff; --line:#e3e3ec;
+  --teal:#0d9488; --teal-d:#0f766e; --teal-bg:#e0f2f0; --amber:#f59e0b; --amber-d:#b45309; --amber-bg:#fdf0dc;
+  --green:#116b33; --green-bg:#e3f4e8; --slate:#475569; --slate-bg:#eef1f5; --red:#c5282f; --red-bg:#fce8e9;
+  --grad:linear-gradient(135deg,#0d9488 0%,#14b8a6 45%,#f59e0b 100%);
+  --gradt:linear-gradient(135deg,#0f766e 0%,#0e7490 50%,#b45309 100%);
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:Outfit, "Segoe UI", sans-serif; color:var(--ink); background:#888; }
+.slide { width:1800px; height:1200px; position:relative; overflow:hidden; background:var(--paper); padding:70px 84px 0; margin:0 0 40px; }
+.top { display:flex; align-items:center; justify-content:space-between; margin-bottom:26px; }
+.brand { display:flex; align-items:center; gap:12px; font-weight:700; font-size:28px; letter-spacing:-0.3px; }
+.brand svg { width:40px; height:40px; color:var(--ink); }
+.kicker { font-size:20px; font-weight:600; letter-spacing:2.5px; text-transform:uppercase; color:var(--teal-d); }
+h1 { font-size:70px; line-height:1.04; font-weight:800; letter-spacing:-1.6px; max-width:1500px; }
+h1 .g { background:var(--gradt); -webkit-background-clip:text; background-clip:text; color:transparent; }
+.sub { font-size:28px; color:var(--ink2); margin-top:14px; max-width:1500px; line-height:1.35; }
+.foot { position:absolute; left:84px; right:84px; bottom:34px; display:flex; justify-content:space-between; font-size:18px; color:var(--ink3); border-top:1px solid var(--line); padding-top:16px; }
+.foot b { color:var(--ink); font-weight:600; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:22px; box-shadow:0 1px 2px rgba(17,20,24,.04), 0 10px 30px -14px rgba(17,20,24,.14); }
+.chip { display:inline-flex; align-items:center; gap:8px; border-radius:999px; padding:6px 14px; font-size:18px; font-weight:600; }
+.chip::before { content:""; width:9px; height:9px; border-radius:50%; background:currentColor; }
+.held { background:var(--teal-bg); color:var(--teal-d); } .rel { background:var(--green-bg); color:var(--green); }
+.disp { background:var(--amber-bg); color:var(--amber-d); } .none { background:var(--slate-bg); color:var(--slate); }
+.num { width:46px; height:46px; border-radius:50%; background:var(--grad); color:#fff; font-weight:800; font-size:22px; display:flex; align-items:center; justify-content:center; flex:none; }
+.shot { border-radius:16px; border:1px solid var(--line); box-shadow:0 18px 50px -20px rgba(17,20,24,.35); display:block; }
+
+/* dark cover */
+.dark { background:#0b1514; color:#eef5f4; }
+.dark .foot { border-color:#22302e; color:#8fa5a2; } .dark .foot b { color:#eef5f4; }
+.dark .brand svg { color:#fff; }
+</style>
+</head>
+<body>
+<style>
+  body { background:#e9e9ef; margin:0; }
+  .deck-head { max-width:1200px; margin:0 auto; padding:28px 20px 8px; font-family:Outfit, "Segoe UI", sans-serif; color:#111418; }
+  .deck-head h2 { font-size:28px; margin:0 0 6px; } .deck-head p { margin:0; color:#4e545c; font-size:17px; line-height:1.5; }
+  .deck-head a { color:#0f766e; }
+  .frame { max-width:1200px; margin:18px auto; position:relative; overflow:hidden; border-radius:14px; box-shadow:0 10px 30px -12px rgba(17,20,24,.25); }
+  .frame .slide { position:absolute; left:0; top:0; margin:0; transform-origin:0 0; }
+</style>
+<div class="deck-head">
+  <h2>PaySettle in 16 slides</h2>
+  <p>Milestone contracts with the money held in PayPal: concept, process, architecture, the PayPal money flow, disputes, screens from the live app, and why fooling the AI moves no money.
+  <a href="../">All pages</a> &middot; <a href="https://paysettle.onrender.com">Live demo</a> &middot; <a href="https://github.com/swaasthsewa/paysettle">Code</a>. PayPal Sandbox only: no real money moves.</p>
+</div>
+<script>
+(() => {
+  const FIT = ['s02','s03','s04','s06','s07','s08','s12','s13','s14','s15','s16'];
+  const fit = () => {
+    for (const id of FIT) {
+      const sl = document.getElementById(id); if (!sl || sl.dataset.fitted) continue;
+      const foot = sl.querySelector('.foot');
+      const kids = [...sl.children].filter(e => !e.matches('.top, h1, .sub, .foot, style'));
+      const body = document.createElement('div'); kids[0].before(body); kids.forEach(k => body.append(k));
+      const avail = () => foot.getBoundingClientRect().top - body.getBoundingClientRect().top - 36;
+      let lo = 1, hi = 1.4;
+      for (let i = 0; i < 18; i++) { const z = (lo + hi) / 2; body.style.zoom = z; (body.getBoundingClientRect().height <= avail() && body.scrollWidth <= sl.clientWidth) ? lo = z : hi = z; }
+      body.style.zoom = lo;
+      const left = avail() - body.getBoundingClientRect().height;
+      if (left > 0) body.style.marginTop = Math.min(left / 2, 30) + 'px';
+      sl.dataset.fitted = '1';
+    }
+  };
+  const scale = () => document.querySelectorAll('.frame').forEach(f => {
+    const s = f.clientWidth / 1800; f.style.height = (1200 * s) + 'px'; f.firstElementChild.style.transform = `scale(${s})`;
+  });
+  window.addEventListener('load', async () => {
+    await document.fonts.ready;
+    document.querySelectorAll('section.slide').forEach(sl => { const f = document.createElement('div'); f.className = 'frame'; f.id = 'f-' + sl.id; sl.before(f); f.append(sl); });
+    fit(); scale();
+  });
+  window.addEventListener('resize', scale);
+})();
+</script>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <linearGradient id="ps-a" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0d9488"/><stop offset="1" stop-color="#14b8a6"/></linearGradient>
+    <linearGradient id="ps-b" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f59e0b"/><stop offset="1" stop-color="#f97316"/></linearGradient>
+    <symbol id="mark" viewBox="0 0 40 40">
+      <path d="M20 4a16 16 0 0 0 0 32" fill="none" stroke="url(#ps-a)" stroke-width="5" stroke-linecap="round"/>
+      <path d="M20 36a16 16 0 0 0 0-32" fill="none" stroke="url(#ps-b)" stroke-width="5" stroke-linecap="round"/>
+      <path d="M13.5 20.5l4.5 4.5 8.5-9" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#4e545c"/></marker>
+    <marker id="aht" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#0f766e"/></marker>
+  </defs>
+</svg>
+
+<!-- 01 COVER -->
+<section class="slide dark" id="s01">
+  <div class="top"><div class="brand"><svg><use href="#mark"/></svg>PaySettle</div><div class="kicker" style="color:#5eead4">PayPal AI Hackathon 2026</div></div>
+  <div style="display:flex; gap:70px; align-items:center; margin-top:90px">
+    <div style="flex:1">
+      <svg style="width:150px;height:150px;color:#fff"><use href="#mark"/></svg>
+      <h1 style="font-size:96px; margin-top:34px">Agree what <span style="background:linear-gradient(135deg,#2dd4bf,#f59e0b);-webkit-background-clip:text;background-clip:text;color:transparent">done</span> means.<br>Get paid when it is.</h1>
+      <p class="sub" style="color:#a9bfbc; font-size:32px; margin-top:26px">A contract compiler for staged work, with PayPal as the money layer.</p>
+    </div>
+    <div style="width:620px">
+      <div style="background:#13211f; border:1px solid #24403c; border-radius:22px; padding:30px 32px">
+        <div style="font-size:19px; letter-spacing:2px; text-transform:uppercase; color:#8fa5a2">The brief says</div>
+        <div style="font-size:38px; font-weight:700; margin-top:8px; color:#fca5a5; text-decoration:line-through; text-decoration-thickness:3px">"Fast and modern"</div>
+        <div style="height:1px; background:#24403c; margin:24px 0"></div>
+        <div style="font-size:19px; letter-spacing:2px; text-transform:uppercase; color:#8fa5a2">The contract says</div>
+        <div style="font-size:34px; font-weight:600; margin-top:8px; line-height:1.25; color:#5eead4">Lighthouse mobile score 85 or more on staging, report attached</div>
+        <div style="height:1px; background:#24403c; margin:24px 0"></div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap">
+          <span class="chip held" style="background:#0f3b37;color:#5eead4">held in PayPal</span>
+          <span class="chip" style="background:#3a2a0c;color:#fbbf24">released only on proof</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:22px; position:absolute; left:84px; right:84px; bottom:120px">
+    <div><div style="font-size:46px;font-weight:800">$6,000</div><div style="color:#a9bfbc;font-size:21px">held in PayPal Sandbox, live case</div></div>
+    <div><div style="font-size:46px;font-weight:800">3</div><div style="color:#a9bfbc;font-size:21px">partial captures, one per approval</div></div>
+    <div><div style="font-size:46px;font-weight:800">0–2 s</div><div style="color:#a9bfbc;font-size:21px">from approval to posting in PayPal</div></div>
+    <div><div style="font-size:46px;font-weight:800">$0.00</div><div style="color:#a9bfbc;font-size:21px">reconciliation difference</div></div>
+  </div>
+  <div class="foot"><span><b>paysettle.onrender.com</b> · github.com/swaasthsewa/paysettle</span><span>PayPal Sandbox only · 1 / 16</span></div>
+</section>
+<!-- 02 CONCEPT -->
+<section class="slide" id="s02">
+  <div class="top"><div class="brand"><svg><use href="#mark"/></svg>PaySettle</div><div class="kicker">How it was conceptualised</div></div>
+  <h1 style="font-size:62px">Three things that happened to me, and <span class="g">one missing sentence</span></h1>
+  <div style="display:grid; grid-template-columns:1.15fr 60px 1fr 60px 1fr; align-items:stretch; margin-top:44px">
+    <div class="card" style="padding:28px 30px">
+      <div class="kicker" style="color:var(--amber-d)">1 · What happened</div>
+      <p style="font-size:23px; margin-top:16px; line-height:1.38"><b>A trip paid in advance.</b> The hotel at check-in was not the one booked, and the agency said the hotel decides. The money had already gone.</p>
+      <p style="font-size:23px; margin-top:14px; line-height:1.38"><b>A client who paid late.</b> The work was signed off; the last payment took months of reminders.</p>
+      <p style="font-size:23px; margin-top:14px; line-height:1.38"><b>A project that kept growing.</b> "Small" changes, none written down, all expected free, same deadline.</p>
+    </div>
+    <svg viewBox="0 0 60 60" style="align-self:center"><path d="M8 30H50" stroke="#858b94" stroke-width="4" marker-end="url(#ah)"/></svg>
+    <div class="card" style="padding:28px 30px; background:#0b1514; color:#eef5f4; border:0">
+      <div class="kicker" style="color:#5eead4">2 · One insight</div>
+      <p style="font-size:38px; font-weight:700; margin-top:18px; line-height:1.2">Each had a contract.<br><span style="color:#5eead4">None had a definition of done.</span></p>
+      <p style="font-size:21px; color:#a9bfbc; margin-top:16px; line-height:1.4">Nobody wrote down, in a way anyone could check, what finished meant, what a change costs, or when the money moves.</p>
+    </div>
+    <svg viewBox="0 0 60 60" style="align-self:center"><path d="M8 30H50" stroke="#858b94" stroke-width="4" marker-end="url(#ah)"/></svg>
+    <div class="card" style="padding:28px 30px">
+      <div class="kicker">3 · Not just me</div>
+      <div style="display:flex; gap:16px; align-items:baseline; margin-top:14px"><div style="font-size:52px; font-weight:800; color:var(--amber-d)">85%</div><div style="font-size:20px; line-height:1.3">of freelancers are paid late at least some of the time</div></div>
+      <div style="display:flex; gap:16px; align-items:baseline; margin-top:6px"><div style="font-size:52px; font-weight:800; color:var(--amber-d)">15%</div><div style="font-size:20px; line-height:1.3">are always paid on time</div></div>
+      <div style="display:flex; gap:16px; align-items:baseline; margin-top:6px"><div style="font-size:52px; font-weight:800; color:var(--teal-d)">25%</div><div style="font-size:20px; line-height:1.3">of employers had freelancers miss deadlines</div></div>
+      <div style="font-size:15px; color:var(--ink3); margin-top:12px; line-height:1.35">Remote, <i>The State of Freelance Work 2025</i>: 3,300 freelancers in 10 countries and 1,900 employers (pp. 3, 4, 16, 21)</div>
+    </div>
+  </div>
+  <div style="margin-top:40px">
+    <div class="kicker" style="color:var(--ink3)">So the design protects both sides, with four rules set before the first line of code</div>
+    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:20px; margin-top:16px">
+      <div class="card" style="padding:22px 24px"><div style="font-size:25px;font-weight:700">Agreement first, money second</div><div style="font-size:20px;color:var(--ink2);margin-top:6px">No hold until both sign the same revision.</div></div>
+      <div class="card" style="padding:22px 24px"><div style="font-size:25px;font-weight:700">AI advises, people decide</div><div style="font-size:20px;color:var(--ink2);margin-top:6px">No AI output can sign, capture or book money.</div></div>
+      <div class="card" style="padding:22px 24px"><div style="font-size:25px;font-weight:700">One milestone, one blast radius</div><div style="font-size:20px;color:var(--ink2);margin-top:6px">A dispute freezes only its own share.</div></div>
+      <div class="card" style="padding:22px 24px"><div style="font-size:25px;font-weight:700">Every change is signed</div><div style="font-size:20px;color:var(--ink2);margin-top:6px">A change order, priced and held, or nothing changes.</div></div>
+    </div>
+  </div>
+  <div class="foot"><span><b>PaySettle</b> · PayPal AI Hackathon 2026</span><span>PayPal Sandbox only · 2 / 16</span></div>
+</section>
+<!-- 03 PROCESS FLOW -->
+<section class="slide" id="s03">
+  <div class="top"><div class="brand"><svg><use href="#mark"/></svg>PaySettle</div><div class="kicker">Process flow</div></div>
+  <h1>From a vague brief to <span class="g">money released on proof</span></h1>
+  <p class="sub">Six steps. The chip under each one says where the money is at that moment.</p>
+  <div style="display:grid; grid-template-columns:repeat(6,1fr); gap:0; margin-top:56px; position:relative">
+    <div style="position:absolute; left:6%; right:6%; top:38px; height:6px; border-radius:3px; background:var(--grad)"></div>
+    <!-- step template -->
+    <div style="text-align:center; padding:0 12px; position:relative">
+      <div class="num" style="width:80px;height:80px;font-size:34px;margin:0 auto">1</div>
+      <div style="font-size:34px;font-weight:800;margin-top:20px">Draft</div>
+      <div style="font-size:21px;color:var(--ink2);margin-top:8px;line-height:1.35;min-height:118px">The client writes a brief. AI drafts milestones from a vetted blueprint.</div>
+      <span class="chip none">No money yet</span>
+    </div>
+    <div style="text-align:center; padding:0 12px; position:relative">
+      <div class="num" style="width:80px;height:80px;font-size:34px;margin:0 auto">2</div>
+      <div style="font-size:34px;font-weight:800;margin-top:20px">Sign</div>
+      <div style="font-size:21px;color:var(--ink2);margin-top:8px;line-height:1.35;min-height:118px">A 10-rule policy gate passes. Both sign the same revision and hash.</div>
+      <span class="chip none">No money yet</span>
+    </div>
+    <div style="text-align:center; padding:0 12px; position:relative">
+      <div class="num" style="width:80px;height:80px;font-size:34px;margin:0 auto">3</div>
+      <div style="font-size:34px;font-weight:800;margin-top:20px">Hold</div>
+      <div style="font-size:21px;color:var(--ink2);margin-top:8px;line-height:1.35;min-height:118px">The client approves a PayPal authorization for the tranche.</div>
+      <span class="chip held">Held in PayPal</span>
+    </div>
+    <div style="text-align:center; padding:0 12px; position:relative">
+      <div class="num" style="width:80px;height:80px;font-size:34px;margin:0 auto">4</div>
+      <div style="font-size:34px;font-weight:800;margin-top:20px">Prove</div>
+      <div style="font-size:21px;color:var(--ink2);margin-top:8px;line-height:1.35;min-height:118px">The provider uploads the proof the clause names. Files are hashed and checked.</div>
+      <span class="chip held">Held in PayPal</span>
+    </div>
+    <div style="text-align:center; padding:0 12px; position:relative">
+      <div class="num" style="width:80px;height:80px;font-size:34px;margin:0 auto">5</div>
+      <div style="font-size:34px;font-weight:800;margin-top:20px">Release</div>
+      <div style="font-size:21px;color:var(--ink2);margin-top:8px;line-height:1.35;min-height:118px">The client approves. PayPal captures that milestone's share only.</div>
+      <span class="chip rel">Released</span>
+    </div>
+    <div style="text-align:center; padding:0 12px; position:relative">
+      <div class="num" style="width:80px;height:80px;font-size:34px;margin:0 auto">6</div>
+      <div style="font-size:34px;font-weight:800;margin-top:20px">Continue</div>
+      <div style="font-size:21px;color:var(--ink2);margin-top:8px;line-height:1.35;min-height:118px">Unfinished work carries into the next period on the same chain.</div>
+      <span class="chip held">Next tranche held</span>
+    </div>
+  </div>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:26px; margin-top:56px">
+    <div class="card" style="padding:28px 32px; border-left:8px solid var(--amber)">
+      <div class="kicker" style="color:var(--amber-d)">If they disagree at step 5</div>
+      <div style="font-size:27px; font-weight:700; margin-top:10px">Only that milestone freezes</div>
+      <div style="font-size:22px; color:var(--ink2); margin-top:8px; line-height:1.4">Sealed offers → write-once evidence vault → human mediator. The split is captured; the rest is never taken from the client. Other milestones carry on.</div>
+      <div style="margin-top:14px"><span class="chip disp">Frozen in PayPal</span></div>
+    </div>
+    <div class="card" style="padding:28px 32px; border-left:8px solid var(--teal)">
+      <div class="kicker">If the scope changes</div>
+      <div style="font-size:27px; font-weight:700; margin-top:10px">A change order, signed by both</div>
+      <div style="font-size:22px; color:var(--ink2); margin-top:8px; line-height:1.4">Nothing in the signed plan changes until both sign. Added work is funded as its own tranche, so earlier holds stay untouched.</div>
+      <div style="margin-top:14px"><span class="chip held">New tranche held</span></div>
+    </div>
+  </div>
+  <div class="foot"><span><b>PaySettle</b> · PayPal AI Hackathon 2026</span><span>PayPal Sandbox only · 3 / 16</span></div>
+</section>
+<!-- 04 BLOCK DIAGRAM -->
+<section class="slide" id="s04">
+  <style>
+    #s04 .row { display:grid; gap:18px; } #s04 .lbl { font-size:17px; letter-spacing:2px; text-transform:uppercase; color:var(--ink3); font-weight:600; margin:0 0 10px 4px; }
+    #s04 .b { background:#fff; border:2px solid var(--line); border-radius:16px; padding:16px 20px; }
+    #s04 .b h4 { font-size:25px; font-weight:700; } #s04 .b p { font-size:19px; color:var(--ink2); margin-top:4px; line-height:1.3; }
+    #s04 .down { height:40px; display:flex; justify-content:center; } #s04 .down svg { width:40px; height:40px; }
+  </style>
+  <div class="top"><div class="brand"><svg><use href="#mark"/></svg>PaySettle</div><div class="kicker">Block diagram</div></div>
+  <h1 style="font-size:60px">How the system fits together</h1>
+  <div style="margin-top:28px">
+    <div class="lbl">Who comes in</div>
+    <div class="row" style="grid-template-columns:2.2fr 1fr 1fr 1fr">
+      <div class="b" style="border-color:#c9e9e5; background:#f2fbfa"><h4>8 roles in one app</h4><p>Client · Provider · Operations · Mediator · Finance · Admin · Growth · Judge</p></div>
+      <div class="b" style="border-color:#c9e9e5; background:#f2fbfa"><h4>AI agents</h4><p>any MCP-capable agent</p></div>
+      <div class="b" style="border-color:#fbe0b4; background:#fffaf1"><h4>PayPal</h4><p>webhook events</p></div>
+      <div class="b"><h4>Hourly job</h4><p>clock for checks</p></div>
+    </div>
+    <div class="down"><svg viewBox="0 0 40 40"><path d="M20 4V32" stroke="#858b94" stroke-width="3.5" marker-end="url(#ah)"/></svg></div>
+    <div class="lbl">Entry points</div>
+    <div class="row" style="grid-template-columns:2.2fr 1fr 1fr 1fr">
+      <div class="b"><h4>Next.js app</h4><p>screens and server actions, role-based access, sign-in with TOTP</p></div>
+      <div class="b"><h4>MCP server</h4><p>/api/mcp · 8 tools, scoped tokens, spend limits</p></div>
+      <div class="b"><h4>Webhook endpoint</h4><p>signature verified, applied once</p></div>
+      <div class="b"><h4>Scheduler</h4><p>hold watchdog, reconciliation, audit check</p></div>
+    </div>
+    <div class="down"><svg viewBox="0 0 40 40"><path d="M20 4V32" stroke="#858b94" stroke-width="3.5" marker-end="url(#ah)"/></svg></div>
+    <div class="lbl">Domain modules</div>
+    <div class="row" style="grid-template-columns:repeat(5,1fr)">
+      <div class="b" style="border-color:var(--teal)"><h4>Contracts</h4><p>blueprints, revisions, 10-rule policy gate, change orders</p></div>
+      <div class="b" style="border-color:var(--teal)"><h4>Evidence</h4><p>root hash, GPS, dates, file types, AI advice</p></div>
+      <div class="b" style="border-color:var(--teal)"><h4>Money</h4><p>tranches, holds, partial captures, idempotency</p></div>
+      <div class="b" style="border-color:var(--teal)"><h4>Disputes</h4><p>sealed offers, vault, mediator, two-leg settle</p></div>
+      <div class="b" style="border-color:var(--teal)"><h4>Control</h4><p>3-way reconciliation, breakers, audit chain</p></div>
+    </div>
+    <div class="down"><svg viewBox="0 0 40 40"><path d="M20 4V32" stroke="#858b94" stroke-width="3.5" marker-end="url(#ah)"/></svg></div>
+    <div class="row" style="grid-template-columns:1fr 1.3fr 1fr">
+      <div class="b" style="background:#f6f5ff; border-color:#ddd8fb"><h4>AI gateway → Claude</h4><p>token cap, redaction, untrusted-text marking · <b>advice only</b></p></div>
+      <div class="b" style="background:#0b1514; border-color:#0b1514; color:#eef5f4"><h4>Postgres</h4><p style="color:#a9bfbc">append-only ledger, revisions, verdicts and a hash-chained audit log, enforced by triggers</p></div>
+      <div class="b" style="background:#fffaf1; border-color:#fbe0b4"><h4>Rails → PayPal REST</h4><p>A1 payee = provider (default) · A2 · B · mock rail for tests</p></div>
+    </div>
+  </div>
+  <div class="foot"><span><b>PaySettle</b> · No AI output can write a contract, a ledger row, a signature or a release.</span><span>PayPal Sandbox only · 4 / 16</span></div>
+</section>
+<!-- 05 PAYPAL MONEY FLOW -->
+<section class="slide" id="s05">
+  <div class="top"><div class="brand"><svg><use href="#mark"/></svg>PaySettle</div><div class="kicker">PayPal money flow</div></div>
+  <h1 style="font-size:56px">One hold per tranche. <span class="g">One partial capture per approval.</span></h1>
+  <svg viewBox="0 0 1640 820" style="width:1632px; height:816px; margin-top:22px; font-family:Outfit">
+    <g font-size="24" font-weight="700" text-anchor="middle">
+      <rect x="80" y="0" width="200" height="54" rx="14" fill="#e0f2f0"/><text x="180" y="35" fill="#0f766e">Client</text>
+      <rect x="520" y="0" width="240" height="54" rx="14" fill="#111418"/><text x="640" y="35" fill="#fff">PaySettle</text>
+      <rect x="1000" y="0" width="200" height="54" rx="14" fill="#fdf0dc"/><text x="1100" y="35" fill="#b45309">PayPal</text>
+      <rect x="1400" y="0" width="200" height="54" rx="14" fill="#e3f4e8"/><text x="1500" y="35" fill="#116b33">Provider</text>
+    </g>
+    <g stroke="#cfd3da" stroke-width="2" stroke-dasharray="6 7"><path d="M180 60V800"/><path d="M640 60V800"/><path d="M1100 60V800"/><path d="M1500 60V800"/></g>
+    <g font-size="20" fill="#111418" stroke-width="2.5">
+      <!-- 1 --> <path d="M180 100H632" stroke="#4e545c" marker-end="url(#ah)"/><text x="196" y="90">1  Fund tranche 1 · $6,000</text>
+      <!-- 2 --> <path d="M640 162H1092" stroke="#0f766e" marker-end="url(#aht)"/><text x="656" y="152" fill="#0f766e" font-weight="600">2  POST /v2/checkout/orders · intent AUTHORIZE</text>
+      <!-- 3 --> <path d="M180 224H1092" stroke="#4e545c" marker-end="url(#ah)"/><text x="196" y="214">3  Approves the hold in PayPal checkout</text>
+      <!-- 4 --> <path d="M1100 286H648" stroke="#0f766e" marker-end="url(#aht)"/><text x="690" y="276" fill="#0f766e" font-weight="600">4  Authorization created · webhook verified · $6,000 held</text>
+      <!-- 5 --> <path d="M1500 348H648" stroke="#4e545c" marker-end="url(#ah)"/><text x="690" y="338">5  Uploads the proof M02 names · every file hashed</text>
+      <!-- 6 --> <path d="M180 410H632" stroke="#4e545c" marker-end="url(#ah)"/><text x="196" y="400">6  Approves M02 · signs the evidence hash</text>
+      <!-- 7 --> <path d="M640 472H1092" stroke="#0f766e" marker-end="url(#aht)"/><text x="656" y="462" fill="#0f766e" font-weight="600">7  POST …/authorizations/{id}/capture · $900</text>
+      <text x="656" y="500" fill="#61676f" font-size="18">PayPal-Request-Id stored first: a retry gives exactly one capture</text>
+      <!-- 8 --> <path d="M1100 560H1492" stroke="#116b33" marker-end="url(#ah)"/><text x="1116" y="550" fill="#116b33" font-weight="600">8  $900 to the provider</text>
+      <!-- 9 --> <path d="M1100 622H648" stroke="#0f766e" marker-end="url(#aht)"/><text x="690" y="612" fill="#0f766e" font-weight="600">9  PAYMENT.CAPTURE.COMPLETED · applied once</text>
+    </g>
+    <rect x="470" y="660" width="680" height="120" rx="16" fill="#111418"/>
+    <text x="500" y="702" font-size="22" font-weight="700" fill="#fff">10  Ledger: HOLD · RELEASE · FEE rows (append-only)</text>
+    <text x="500" y="740" font-size="20" fill="#a9bfbc">Reconciliation reads the order from PayPal:</text>
+    <text x="500" y="766" font-size="20" fill="#5eead4" font-weight="600">contract = ledger = PayPal · matched, $0.00</text>
+    <g font-size="19" fill="#4e545c">
+      <text x="1190" y="690">Last milestone: final_capture</text><text x="1190" y="716">releases the rest of the hold.</text>
+      <text x="1190" y="756">Tranches stay inside PayPal's</text><text x="1190" y="782">authorization window.</text>
+    </g>
+    <g font-size="19" fill="#4e545c">
+      <text x="20" y="690">Live case, 12 Nov 2026:</text><text x="20" y="716">each capture posted in PayPal</text><text x="20" y="742">0–2 s after the approval.</text>
+    </g>
+  </svg>
+  <div class="foot"><span><b>PayPal APIs:</b> Orders v2 · Payments v2 (capture, void, reauthorize, refund) · Webhooks · Disputes v1 · Payouts</span><span>PayPal Sandbox only · 5 / 16</span></div>
+</section>
+<!-- 06 COMPILER -->
+<section class="slide" id="s06">
+  <div class="top"><div class="brand"><svg><use href="#mark"/></svg>PaySettle</div><div class="kicker">Feature · the criteria compiler</div></div>
+  <h1>Vague words in. <span class="g">Checkable criteria out.</span></h1>
+  <p class="sub">Before anyone signs, every acceptance criterion must be something a third person could check.</p>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:28px; margin-top:40px">
+    <div class="card" style="padding:28px 32px">
+      <div class="kicker" style="color:var(--red)">Rejected: nobody can check it</div>
+      <ul style="list-style:none; margin-top:14px; font-size:25px; line-height:1.3">
+        <li style="padding:12px 0; border-bottom:1px solid var(--line)">"The website should be fast and modern."</li>
+        <li style="padding:12px 0; border-bottom:1px solid var(--line)">"User-friendly dashboard for the operations team."</li>
+        <li style="padding:12px 0; border-bottom:1px solid var(--line)">"High quality code."</li>
+        <li style="padding:12px 0; border-bottom:1px solid var(--line)">"Kitchen cabinets look nice and are well finished."</li>
+        <li style="padding:12px 0">"Make changes as needed until the client is happy."</li>
+      </ul>
+    </div>
+    <div class="card" style="padding:28px 32px">
+      <div class="kicker" style="color:var(--green)">Accepted: anyone can check it</div>
+      <ul style="list-style:none; margin-top:14px; font-size:25px; line-height:1.3">
+        <li style="padding:12px 0; border-bottom:1px solid var(--line)">Lighthouse mobile score 85 or more on staging, report attached.</li>
+        <li style="padding:12px 0; border-bottom:1px solid var(--line)">CI green on main with all 214 unit tests passing.</li>
+        <li style="padding:12px 0; border-bottom:1px solid var(--line)">Client signs the UAT sign-off sheet for all 12 scripts.</li>
+        <li style="padding:12px 0; border-bottom:1px solid var(--line)">Cabinets installed per drawing K-12; 6 dated photos, one per wall.</li>
+        <li style="padding:12px 0">API p95 under 300 ms at 200 users, load-test report attached.</li>
+      </ul>
+    </div>
+  </div>
+  <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:18px; margin-top:30px; align-items:center">
+    <div class="card" style="padding:18px 22px"><div style="font-size:22px;font-weight:700">1 · Rule linter</div><div style="font-size:18px;color:var(--ink2)">no key, same answer every time, always a reason</div></div>
+    <div class="card" style="padding:18px 22px"><div style="font-size:22px;font-weight:700">2 · AI suggests a rewrite</div><div style="font-size:18px;color:var(--ink2)">a measurable version of the same promise</div></div>
+    <div class="card" style="padding:18px 22px"><div style="font-size:22px;font-weight:700">3 · Linter re-checks it</div><div style="font-size:18px;color:var(--ink2)">the AI can't wave its own text through</div></div>
+    <div class="card" style="padding:18px 22px"><div style="font-size:22px;font-weight:700">4 · Both parties sign</div><div style="font-size:18px;color:var(--ink2)">the criterion becomes the release condition</div></div>
+  </div>
+  <div class="foot"><span><b>Examples from PaySettle's 60-criterion golden set</b> (evals/golden/compile.json)</span><span>PayPal Sandbox only · 6 / 16</span></div>
+</section>
+<!-- 07 DISPUTES -->
+<section class="slide" id="s07">
+  <div class="top"><div class="brand"><svg><use href="#mark"/></svg>PaySettle</div><div class="kicker">Feature · disputes</div></div>
+  <h1>A dispute freezes <span class="g">one milestone</span>, not the project</h1>
+  <div class="card" style="padding:26px 30px; margin-top:36px">
+    <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:10px">
+      <div style="background:var(--green-bg);border-radius:12px;padding:14px"><b style="font-size:21px">M01</b><div style="font-size:17px;color:var(--green)">Gate · done</div></div>
+      <div style="background:var(--green-bg);border-radius:12px;padding:14px"><b style="font-size:21px">M02 · $900</b><div style="font-size:17px;color:var(--green)">Released</div></div>
+      <div style="background:var(--green-bg);border-radius:12px;padding:14px"><b style="font-size:21px">M03 · $1,200</b><div style="font-size:17px;color:var(--green)">Released</div></div>
+      <div style="background:var(--amber-bg);border:3px solid var(--amber);border-radius:12px;padding:11px"><b style="font-size:21px">M04 · $1,500</b><div style="font-size:17px;color:var(--amber-d);font-weight:600">Frozen: in dispute</div></div>
+      <div style="background:var(--teal-bg);border-radius:12px;padding:14px"><b style="font-size:21px">M05 · $900</b><div style="font-size:17px;color:var(--teal-d)">Held · carries on</div></div>
+      <div style="background:var(--teal-bg);border-radius:12px;padding:14px"><b style="font-size:21px">M06 · $900</b><div style="font-size:17px;color:var(--teal-d)">Held · carries on</div></div>
+      <div style="background:var(--teal-bg);border-radius:12px;padding:14px"><b style="font-size:21px">M07 · $600</b><div style="font-size:17px;color:var(--teal-d)">Held · carries on</div></div>
+    </div>
+  </div>
+  <div style="display:grid; grid-template-columns:1.35fr 1fr; gap:28px; margin-top:28px">
+    <div style="display:flex; flex-direction:column; gap:16px">
+      <div class="card" style="padding:22px 26px; display:flex; gap:20px; align-items:flex-start"><div class="num" style="width:58px;height:58px;font-size:26px">1</div><div><div style="font-size:28px;font-weight:700">Sealed offers <span style="font-size:20px;color:var(--ink3);font-weight:500">· 48 h, up to 3 rounds</span></div><div style="font-size:21px;color:var(--ink2);margin-top:4px">Each side seals a split. If they are within 5 points, it settles at the midpoint, and nobody pays a mediation fee.</div></div></div>
+      <div class="card" style="padding:22px 26px; display:flex; gap:20px; align-items:flex-start"><div class="num" style="width:58px;height:58px;font-size:26px">2</div><div><div style="font-size:28px;font-weight:700">Evidence vault <span style="font-size:20px;color:var(--ink3);font-weight:500">· 48 h</span></div><div style="font-size:21px;color:var(--ink2);margin-top:4px">Write-once: both sides file evidence and rebuttals; nothing can be edited later.</div></div></div>
+      <div class="card" style="padding:22px 26px; display:flex; gap:20px; align-items:flex-start"><div class="num" style="width:58px;height:58px;font-size:26px">3</div><div><div style="font-size:28px;font-weight:700">Human mediator <span style="font-size:20px;color:var(--ink3);font-weight:500">· signed verdict</span></div><div style="font-size:21px;color:var(--ink2);margin-top:4px">Decides from the sealed dossier. An AI proposal is advisory only. Settles as two legs: refund, then release.</div></div></div>
+    </div>
+    <div class="card" style="padding:30px; background:#0b1514; color:#eef5f4; border:0">
+      <div class="kicker" style="color:#5eead4">Live case, PayPal Sandbox</div>
+      <div style="display:flex; justify-content:space-between; margin-top:24px; font-size:24px"><span style="color:#a9bfbc">Client offers</span><b>70%</b></div>
+      <div style="display:flex; justify-content:space-between; margin-top:12px; font-size:24px"><span style="color:#a9bfbc">Provider offers</span><b>74%</b></div>
+      <div style="height:1px;background:#24403c;margin:20px 0"></div>
+      <div style="display:flex; justify-content:space-between; font-size:30px"><span>Settled at</span><b style="color:#5eead4">72%</b></div>
+      <div style="margin-top:26px; font-size:40px; font-weight:800">$1,080</div><div style="color:#a9bfbc; font-size:21px">captured to the provider in PayPal</div>
+      <div style="margin-top:18px; font-size:40px; font-weight:800; color:#fbbf24">$420</div><div style="color:#a9bfbc; font-size:21px">never taken from the client</div>
+    </div>
+  </div>
+  <div class="foot"><span><b>PaySettle</b> · PayPal AI Hackathon 2026</span><span>PayPal Sandbox only · 7 / 16</span></div>
+</section>
+<!-- 16 FOOL THE AI -->
+<section class="slide" id="s16">
+  <style>
+    #s16 .layer { display:grid; grid-template-columns:70px 1fr 1.05fr; gap:22px; align-items:center; padding:18px 26px; }
+    #s16 .layer h4 { font-size:27px; font-weight:800; } #s16 .layer p { font-size:19px; color:var(--ink2); margin-top:4px; line-height:1.3; }
+    #s16 .stops { font-size:19px; line-height:1.35; } #s16 .stops b { color:var(--ink); }
+  </style>
+  <div class="top"><div class="brand"><svg><use href="#mark"/></svg>PaySettle</div><div class="kicker">Can it be cheated?</div></div>
+  <h1 style="font-size:60px">Fool the AI. <span class="g">The money still doesn&#8217;t move.</span></h1>
+  <p class="sub" style="font-size:25px">The AI only advises. Money reaches PayPal through signed decisions by people, never through the AI&#8217;s answer.</p>
+  <div style="display:flex; flex-direction:column; gap:12px; margin-top:30px">
+    <div class="card layer" style="background:#f6f5ff; border-color:#ddd8fb"><div class="num" style="background:#6d28d9">1</div><div><h4>AI advises</h4><p>Reads the evidence against the criteria. Can be fooled.</p></div><div class="stops">If fooled: <b>wrong advice, nothing else.</b> Party text is marked untrusted; 0 of 12 hidden instructions followed.</div></div>
+    <div class="card layer"><div class="num">2</div><div><h4>Rule checks</h4><p>File fingerprints, reused-photo match, dates and places, signatures.</p></div><div class="stops">Not open to persuasion: <b>no text in the evidence changes a rule.</b></div></div>
+    <div class="card layer" style="border:2px solid var(--teal)"><div class="num">3</div><div><h4>The client approves</h4><p>With an authenticator code, signed over the evidence fingerprint.</p></div><div class="stops">An agent&#8217;s <b>approve_release only waits</b> for this. By default, silence goes to Operations, not to payment.</div></div>
+    <div class="card layer"><div class="num">4</div><div><h4>Both sides make sealed offers</h4><p>If they disagree. Within 5 points, it settles at the midpoint.</p></div><div class="stops">Offers stay hidden until both are in. <b>Only that milestone</b> is frozen.</div></div>
+    <div class="card layer"><div class="num">5</div><div><h4>A human mediator signs</h4><p>From the sealed evidence file; an AI proposal is advisory.</p></div><div class="stops">Conflict check; <b>a second mediator above $5,000.</b></div></div>
+    <div class="card layer" style="background:#0b1514; color:#eef5f4; border:0"><div class="num" style="background:#f59e0b">$</div><div><h4>PayPal captures</h4><p style="color:#a9bfbc">Verified webhooks, one capture per retry, ledger rows that cannot be edited.</p></div><div class="stops" style="color:#eef5f4"><b style="color:#5eead4">18 cheat attempts run as tests on every push. Money moved: $0.</b></div></div>
+  </div>
+  <div style="font-size:19px; color:var(--ink2); margin-top:16px"><b style="color:var(--amber-d)">Where it can still be fooled:</b> a well-forged photo can fool a person too. The mediator and the evidence vault are the backstop; signed camera photos (C2PA) and independent inspections are next.</div>
+  <div class="foot"><span><b>PaySettle</b> · tests: src/server/cheat.integration.test.ts</span><span>PayPal Sandbox only · 8 / 16</span></div>
+</section>
+<!-- 08 FEATURE HIGHLIGHTS -->
+<section class="slide" id="s08">
+  <style>#s08 .f { padding:24px 26px; } #s08 .f h4 { font-size:26px; font-weight:700; margin-top:12px; line-height:1.15; } #s08 .f p { font-size:19px; color:var(--ink2); margin-top:6px; line-height:1.35; } #s08 .t { font-size:16px; letter-spacing:2px; text-transform:uppercase; font-weight:700; }</style>
+  <div class="top"><div class="brand"><svg><use href="#mark"/></svg>PaySettle</div><div class="kicker">Feature highlights</div></div>
+  <h1 style="font-size:62px">Everything a staged contract needs, <span class="g">in one place</span></h1>
+  <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:18px; margin-top:34px">
+    <div class="card f"><div class="t" style="color:var(--teal-d)">Agree</div><h4>20 vetted blueprints</h4><p>Software, consulting, travel, events, kitchens, solar, roofing and more.</p></div>
+    <div class="card f"><div class="t" style="color:var(--teal-d)">Agree</div><h4>10-rule policy gate</h4><p>Shares add up to 100%; every paid milestone names its proof.</p></div>
+    <div class="card f"><div class="t" style="color:var(--teal-d)">Agree</div><h4>One revision, one hash</h4><p>Both parties sign exactly the same text; risky contracts go to Operations.</p></div>
+    <div class="card f"><div class="t" style="color:var(--teal-d)">Agree</div><h4>Change orders</h4><p>Nothing changes until both sign; added work is funded as its own tranche.</p></div>
+    <div class="card f"><div class="t" style="color:var(--amber-d)">Prove</div><h4>Hashed evidence</h4><p>Files hashed into a root hash; counts, file types, dates and GPS distance checked.</p></div>
+    <div class="card f"><div class="t" style="color:var(--amber-d)">Prove</div><h4>AI verifier advises</h4><p>Approve, request a fix or unclear, per criterion. The client decides.</p></div>
+    <div class="card f"><div class="t" style="color:var(--green)">Pay</div><h4>Partial capture per milestone</h4><p>PayPal releases each milestone's share only, seconds after approval.</p></div>
+    <div class="card f"><div class="t" style="color:var(--green)">Pay</div><h4>Continuation contracts</h4><p>Unfinished work rolls into the next period on the same chain.</p></div>
+    <div class="card f"><div class="t" style="color:var(--amber-d)">Resolve</div><h4>Three-tier disputes</h4><p>Sealed offers, evidence vault, mediator. One milestone frozen.</p></div>
+    <div class="card f"><div class="t" style="color:var(--slate)">Control</div><h4>3-way reconciliation</h4><p>Contract, ledger and PayPal; drift trips a breaker for that tranche.</p></div>
+    <div class="card f"><div class="t" style="color:var(--slate)">Control</div><h4>Append-only records</h4><p>Ledger, verdicts and a hash-chained audit log, enforced by Postgres.</p></div>
+    <div class="card f"><div class="t" style="color:#6d28d9">Agents</div><h4>MCP server, 8 tools</h4><p>Agents draft and operate within spend limits; people approve money.</p></div>
+  </div>
+  <div style="display:flex; gap:14px; margin-top:24px; flex-wrap:wrap">
+    <span class="chip none">8 roles, each with its own home</span><span class="chip none">Bryntum Gantt timeline</span><span class="chip none">AG Grid tables with CSV export</span><span class="chip none">Judge Playground: 6 scenarios</span><span class="chip none">TOTP sign-in</span>
+  </div>
+  <div class="foot"><span><b>PaySettle</b> · PayPal AI Hackathon 2026</span><span>PayPal Sandbox only · 9 / 16</span></div>
+</section>
+<!-- 09 PROVIDER DASHBOARD -->
+<section class="slide" id="s09">
+  <div class="top"><div class="brand"><svg><use href="#mark"/></svg>PaySettle</div><div class="kicker">Screen · provider dashboard</div></div>
+  <h1 style="font-size:58px">For providers: <span class="g">what to deliver next, and what's paid</span></h1>
+  <div style="display:flex; gap:36px; margin-top:34px">
+    <img class="shot" src="../gallery/live-app/01-provider-dashboard.jpg" style="width:1150px">
+    <div style="flex:1; display:flex; flex-direction:column; gap:20px">
+      <div style="display:flex; gap:16px"><div class="num">1</div><div><div style="font-size:25px;font-weight:700">Held in PayPal for you</div><div style="font-size:20px;color:var(--ink2)">Money reserved before you start work.</div></div></div>
+      <div style="display:flex; gap:16px"><div class="num">2</div><div><div style="font-size:25px;font-weight:700">Released, milestone by milestone</div><div style="font-size:20px;color:var(--ink2)">Paid to your PayPal business account on approval.</div></div></div>
+      <div style="display:flex; gap:16px"><div class="num">3</div><div><div style="font-size:25px;font-weight:700">To do: submit evidence</div><div style="font-size:20px;color:var(--ink2)">Each milestone says exactly what proof it needs.</div></div></div>
+      <div style="display:flex; gap:16px"><div class="num">4</div><div><div style="font-size:25px;font-weight:700">Waiting on the client</div><div style="font-size:20px;color:var(--ink2)">A review clock counts down on every submission.</div></div></div>
+      <div style="display:flex; gap:16px"><div class="num">5</div><div><div style="font-size:25px;font-weight:700">Your standing</div><div style="font-size:20px;color:var(--ink2)">Trust tier from clean releases; PayPal payouts on.</div></div></div>
+    </div>
+  </div>
+  <div class="foot"><span><b>Live app</b> · paysettle.onrender.com · signed in as Meera Iyer (provider, demo)</span><span>PayPal Sandbox only · 10 / 16</span></div>
+</section>
+<!-- 10 GANTT -->
+<section class="slide" id="s10">
+  <div class="top"><div class="brand"><svg><use href="#mark"/></svg>PaySettle</div><div class="kicker">Screen · contract timeline (Bryntum Gantt)</div></div>
+  <h1 style="font-size:58px">Every milestone on a calendar, <span class="g">with where its money is</span></h1>
+  <div style="display:grid; grid-template-columns:1140px 1fr; gap:30px; margin-top:32px">
+    <div>
+      <img class="shot" src="../gallery/live-app/07-gantt-signed.jpg" style="width:1140px">
+      <div style="font-size:20px; color:var(--ink2); margin-top:12px"><b style="color:var(--ink)">Signed plan.</b> Released (green), held in PayPal (teal), the gate, each tranche's PayPal hold window, and today.</div>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:22px">
+      <div><img class="shot" src="../gallery/live-app/08-gantt-change-order.jpg" style="width:100%"><div style="font-size:19px; color:var(--ink2); margin-top:8px"><b style="color:var(--ink)">Proposed change order.</b> Upper bars as proposed, thin bars the signed plan: re-dated and added milestones are marked.</div></div>
+      <div><img class="shot" src="../gallery/live-app/09-gantt-chain.jpg" style="width:100%"><div style="font-size:19px; color:var(--ink2); margin-top:8px"><b style="color:var(--ink)">Contract chain.</b> Period 1 and period 2 on one calendar.</div></div>
+    </div>
+  </div>
+  <div class="foot"><span><b>Live app</b> · built with the Bryntum Gantt (sponsor trial) · read-only view</span><span>PayPal Sandbox only · 11 / 16</span></div>
+</section>
+<!-- 11 ROLES -->
+<section class="slide" id="s11">
+  <div class="top"><div class="brand"><svg><use href="#mark"/></svg>PaySettle</div><div class="kicker">Screens · one product, eight roles</div></div>
+  <h1 style="font-size:58px">Each role has its own home, <span class="g">built on the same records</span></h1>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:26px 34px; margin-top:28px">
+    <div><img class="shot" src="../gallery/live-app/03-client-dashboard.jpg" style="width:100%; height:390px; object-fit:cover; object-position:top"><div style="font-size:21px;margin-top:10px"><b>Client</b> · <span style="color:var(--ink2)">what's held, released and waiting for your review</span></div></div>
+    <div><img class="shot" src="../gallery/live-app/10-finance-recon.jpg" style="width:100%; height:390px; object-fit:cover; object-position:top"><div style="font-size:21px;margin-top:10px"><b>Finance</b> · <span style="color:var(--ink2)">contract, ledger and PayPal reconciled per tranche</span></div></div>
+    <div><img class="shot" src="../gallery/live-app/11-ops-dashboard.jpg" style="width:100%; height:390px; object-fit:cover; object-position:top"><div style="font-size:21px;margin-top:10px"><b>Operations</b> · <span style="color:var(--ink2)">risky contracts, holds near PayPal's window, deadlines (AG Grid)</span></div></div>
+    <div><img class="shot" src="../gallery/live-app/12-mediator-schedule.jpg" style="width:100%; height:390px; object-fit:cover; object-position:top"><div style="font-size:21px;margin-top:10px"><b>Mediator</b> · <span style="color:var(--ink2)">every case's deadlines on one schedule</span></div></div>
+  </div>
+  <div class="foot"><span><b>Live app</b> · Client · Provider · Operations · Mediator · Finance · Admin · Growth · Judge</span><span>PayPal Sandbox only · 12 / 16</span></div>
+</section>
+<!-- 12 HOW TO USE -->
+<section class="slide" id="s12">
+  <style>#s12 .lane { display:grid; grid-template-columns:200px repeat(5,1fr); gap:14px; align-items:stretch; } #s12 .who { font-size:28px; font-weight:800; display:flex; align-items:center; } #s12 .st { padding:18px 20px; } #s12 .st b { display:block; font-size:22px; } #s12 .st span { font-size:18px; color:var(--ink2); line-height:1.3; display:block; margin-top:4px; } #s12 .n { font-size:16px; font-weight:800; color:var(--teal-d); letter-spacing:1px; }</style>
+  <div class="top"><div class="brand"><svg><use href="#mark"/></svg>PaySettle</div><div class="kicker">How to use it</div></div>
+  <h1 style="font-size:62px">Two people, <span class="g">one contract</span>, step by step</h1>
+  <div style="margin-top:38px; display:flex; flex-direction:column; gap:16px">
+    <div class="lane">
+      <div class="who" style="color:var(--teal-d)">Client</div>
+      <div class="card st"><div class="n">STEP 1</div><b>Pick a blueprint</b><span>Describe the job in your own words.</span></div>
+      <div class="card st"><div class="n">STEP 2</div><b>Review the AI draft</b><span>Append and prune milestones; invite the provider.</span></div>
+      <div class="card st" style="border:2px solid var(--teal)"><div class="n">STEP 4</div><b>Sign</b><span>The same revision and hash as the provider.</span></div>
+      <div class="card st"><div class="n">STEP 5</div><b>Approve the hold</b><span>In PayPal checkout. The money stays in PayPal.</span></div>
+      <div class="card st"><div class="n">STEP 7</div><b>Review and approve</b><span>Or ask for a fix, or open a dispute on that milestone.</span></div>
+    </div>
+    <div style="height:8px; border-radius:4px; background:var(--grad); margin-left:214px"></div>
+    <div class="lane">
+      <div class="who" style="color:var(--amber-d)">Provider</div>
+      <div class="card st"><div class="n">STEP 0</div><b>Link PayPal</b><span>Onboarding, validated by Operations.</span></div>
+      <div class="card st"><div class="n">STEP 3</div><b>Negotiate</b><span>Propose changes until the policy gate passes.</span></div>
+      <div class="card st" style="border:2px solid var(--teal)"><div class="n">STEP 4</div><b>Sign</b><span>Nothing changes later without both signatures.</span></div>
+      <div class="card st"><div class="n">STEP 6</div><b>Deliver and prove</b><span>Upload exactly the proof the milestone names.</span></div>
+      <div class="card st"><div class="n">STEP 8</div><b>Get paid</b><span>A partial capture lands in seconds; see Payouts.</span></div>
+    </div>
+  </div>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:26px; margin-top:34px">
+    <div class="card" style="padding:24px 28px"><div class="kicker">Steps 9 and 10</div><div style="font-size:23px; margin-top:8px; line-height:1.4">Scope changes go through a <b>change order</b> both sign. At the end of a period, unfinished work <b>continues</b> into the next one on the same chain.</div></div>
+    <div class="card" style="padding:24px 28px; background:#0b1514; color:#eef5f4; border:0"><div class="kicker" style="color:#5eead4">Try it in two minutes</div><div style="font-size:23px; margin-top:8px; line-height:1.4">paysettle.onrender.com → <b>Try the live demo</b> → pick any person (no password) → Judge Playground → S1 → <b>Run all</b>.</div></div>
+  </div>
+  <div class="foot"><span><b>PaySettle</b> · PayPal AI Hackathon 2026</span><span>PayPal Sandbox only · 13 / 16</span></div>
+</section>
+<!-- 13 WHEN TO USE -->
+<section class="slide" id="s13">
+  <style>#s13 li { display:flex; gap:16px; padding:15px 0; border-bottom:1px solid var(--line); font-size:24px; line-height:1.3; } #s13 li:last-child { border:0; } #s13 li i { font-style:normal; font-weight:800; flex:none; width:30px; }</style>
+  <div class="top"><div class="brand"><svg><use href="#mark"/></svg>PaySettle</div><div class="kicker">When to use it, and when not to</div></div>
+  <h1 style="font-size:62px">The right tool for <span class="g">staged work with provable stages</span></h1>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:30px; margin-top:38px">
+    <div class="card" style="padding:28px 34px; border-top:8px solid var(--teal)">
+      <div style="font-size:32px; font-weight:800; color:var(--teal-d)">Use PaySettle when</div>
+      <ul style="list-style:none; margin-top:10px">
+        <li><i style="color:var(--teal)">✓</i>Work is delivered in stages over weeks or months: software, consulting, fit-outs, events, travel.</li>
+        <li><i style="color:var(--teal)">✓</i>Each stage can be proved: a URL, a test report, a signed sheet, dated photos, an inspection certificate.</li>
+        <li><i style="color:var(--teal)">✓</i>The two sides haven't worked together, or work from different places.</li>
+        <li><i style="color:var(--teal)">✓</i>One disagreement shouldn't stop the whole project.</li>
+        <li><i style="color:var(--teal)">✓</i>Work continues month to month and changes along the way.</li>
+      </ul>
+    </div>
+    <div class="card" style="padding:28px 34px; border-top:8px solid var(--amber)">
+      <div style="font-size:32px; font-weight:800; color:var(--amber-d)">Choose something else when</div>
+      <ul style="list-style:none; margin-top:10px">
+        <li><i style="color:var(--amber-d)">✕</i>It's a one-off purchase or an instant digital good: a normal checkout is simpler.</li>
+        <li><i style="color:var(--amber-d)">✕</i>"Done" is pure taste and nothing in it can be checked.</li>
+        <li><i style="color:var(--amber-d)">✕</i>The deal legally needs a licensed escrow agent, such as property.</li>
+        <li><i style="color:var(--amber-d)">✕</i>It's hourly work billed on timesheets, with no deliverable per stage.</li>
+        <li><i style="color:var(--amber-d)">✕</i>You need to move real money today: PaySettle runs on PayPal Sandbox only.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot"><span><b>PaySettle</b> · PayPal AI Hackathon 2026</span><span>PayPal Sandbox only · 14 / 16</span></div>
+</section>
+<!-- 14 DIFFERENTIATORS -->
+<section class="slide" id="s14">
+  <style>
+    #s14 table { width:100%; border-collapse:separate; border-spacing:0; margin-top:26px; font-size:19.5px; line-height:1.28; }
+    #s14 th { font-size:21px; text-align:left; padding:14px 16px; font-weight:700; color:var(--ink2); vertical-align:bottom; }
+    #s14 td { padding:13px 16px; border-top:1px solid var(--line); vertical-align:top; color:var(--ink2); background:#fff; }
+    #s14 td:first-child { font-weight:700; color:var(--ink); background:transparent; width:220px; }
+    #s14 .ps { background:#0b1514 !important; color:#eef5f4 !important; font-weight:500; }
+    #s14 th.ps { color:#5eead4 !important; border-radius:16px 16px 0 0; }
+    #s14 tr:last-child .ps { border-radius:0 0 16px 16px; }
+  </style>
+  <div class="top"><div class="brand"><svg><use href="#mark"/></svg>PaySettle</div><div class="kicker">Why choose PaySettle</div></div>
+  <h1 style="font-size:56px">How it differs from <span class="g">the usual ways to pay for staged work</span></h1>
+  <div style="display:flex; gap:14px; margin-top:20px"><span class="chip held">Clients pay only for checked work</span><span class="chip rel">Providers paid seconds after approval</span><span class="chip none">Operators get records that reconcile to the cent</span></div>
+  <table>
+    <tr><th></th><th>Invoice + e-signature</th><th>Marketplace escrow</th><th>Standalone escrow service</th><th class="ps">PaySettle</th></tr>
+    <tr><td>What "done" means</td><td>Prose in a document</td><td>Free-text milestone description</td><td>The buyer accepts after an inspection period</td><td class="ps">Checkable criteria per milestone, linted before signing</td></tr>
+    <tr><td>Where money waits</td><td>Not held; paid after invoicing</td><td>With the marketplace</td><td>With the escrow agent</td><td class="ps">In PayPal, as an authorization on the client's account</td></tr>
+    <tr><td>How it's released</td><td>The provider invoices and chases</td><td>The client approves a milestone</td><td>The buyer accepts the delivery</td><td class="ps">Signed approval over the evidence hash → partial capture</td></tr>
+    <tr><td>If they disagree</td><td>Negotiation or legal action</td><td>The marketplace's dispute process</td><td>The agent's dispute process</td><td class="ps">One milestone frozen; sealed offers → vault → mediator</td></tr>
+    <tr><td>Scope changes</td><td>Emails or a new document</td><td>Edit or add milestones</td><td>Amend or open a new transaction</td><td class="ps">Change order both sign, funded as its own tranche</td></tr>
+    <tr><td>Proof and records</td><td>Whatever each side keeps</td><td>Messages and files on the platform</td><td>Shipping and transaction documents</td><td class="ps">Hashed evidence, append-only ledger, 3-way reconciliation</td></tr>
+    <tr><td>Your own client</td><td>Yes</td><td>Both must use the marketplace</td><td>Yes</td><td class="ps">Yes: invite your existing client</td></tr>
+    <tr><td>AI agents</td><td>Not designed for them</td><td>Not designed for them</td><td>Not designed for them</td><td class="ps">MCP tools with spend limits; people approve money</td></tr>
+  </table>
+  <div class="foot"><span>Typical features of each category; individual products vary.</span><span>PayPal Sandbox only · 15 / 16</span></div>
+</section>
+<!-- 15 FUTURE -->
+<section class="slide" id="s15">
+  <style>#s15 .t { padding:26px 28px; } #s15 .t h4 { font-size:28px; font-weight:800; line-height:1.15; margin-top:14px; } #s15 .t p { font-size:21px; color:var(--ink2); margin-top:10px; line-height:1.35; } #s15 .t .so { margin-top:14px; font-size:20px; font-weight:600; color:var(--teal-d); }</style>
+  <div class="top"><div class="brand"><svg><use href="#mark"/></svg>PaySettle</div><div class="kicker">Why this is needed next</div></div>
+  <h1 style="font-size:62px">Work is changing. <span class="g">Payment terms have to catch up.</span></h1>
+  <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:22px; margin-top:38px">
+    <div class="card t"><div class="num">1</div><h4>AI makes work fast to produce, and hard to judge</h4><p>When a deliverable takes an hour to generate, "looks fine" stops being proof.</p><div class="so">→ Criteria anyone can check, with proof attached.</div></div>
+    <div class="card t"><div class="num">2</div><h4>Agents will buy and sell services</h4><p>Software agents will draft, negotiate and track work for people and businesses.</p><div class="so">→ Contracts machines can read, with spend limits people set.</div></div>
+    <div class="card t"><div class="num">3</div><h4>Work happens between strangers, across borders</h4><p>Trust can't rest on knowing each other or sharing a court.</p><div class="so">→ Money held by PayPal, released by rules both signed.</div></div>
+    <div class="card t"><div class="num">4</div><h4>Work is continuous, not one-off</h4><p>Retainers and long projects change month to month.</p><div class="so">→ Change orders and contracts that roll into the next period.</div></div>
+    <div class="card t"><div class="num">5</div><h4>Every payment must explain itself</h4><p>Finance teams and auditors expect a trail from promise to payment.</p><div class="so">→ Evidence hash, ledger and PayPal, reconciled to the cent.</div></div>
+    <div class="card t" style="background:#0b1514; color:#eef5f4; border:0"><div class="num">→</div><h4>The rails are ready</h4><p style="color:#a9bfbc">PayPal already offers authorizations, partial captures and verified webhooks. What was missing is the definition of done.</p><div class="so" style="color:#5eead4">PaySettle adds that layer.</div></div>
+  </div>
+  <div class="foot"><span><b>paysettle.onrender.com</b> · github.com/swaasthsewa/paysettle · MIT</span><span>PayPal Sandbox only · 16 / 16</span></div>
+</section>
+</body>
+</html>

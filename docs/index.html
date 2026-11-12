@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PaySettle · pages</title>
+<meta name="description" content="PaySettle: milestone contracts with the money held in PayPal. Slides, role manuals, gallery and architecture. PayPal AI Hackathon 2026.">
+<style>
+  @font-face { font-family: Outfit; font-weight: 400; src: url("slides/fonts/outfit-latin-400-normal.woff2"); }
+  @font-face { font-family: Outfit; font-weight: 600; src: url("slides/fonts/outfit-latin-600-normal.woff2"); }
+  @font-face { font-family: Outfit; font-weight: 800; src: url("slides/fonts/outfit-latin-800-normal.woff2"); }
+  :root { --ink:#111418; --ink2:#4e545c; --line:#e3e3ec; --teal:#0f766e; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:Outfit, "Segoe UI", system-ui, sans-serif; color:var(--ink); background:#f4f4f8; }
+  main { max-width:1040px; margin:0 auto; padding:48px 24px 64px; }
+  .brand { display:flex; align-items:center; gap:12px; font-weight:800; font-size:26px; }
+  .brand svg { width:40px; height:40px; }
+  h1 { font-size:44px; line-height:1.1; margin:26px 0 10px; font-weight:800; letter-spacing:-0.8px; }
+  .lead { font-size:19px; color:var(--ink2); line-height:1.5; margin:0; max-width:760px; }
+  .links { display:flex; gap:12px; flex-wrap:wrap; margin:22px 0 34px; }
+  .links a { background:#fff; border:1px solid var(--line); border-radius:999px; padding:8px 16px; color:var(--teal); text-decoration:none; font-weight:600; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:18px; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:18px; overflow:hidden; text-decoration:none; color:inherit; display:flex; flex-direction:column; box-shadow:0 1px 2px rgba(17,20,24,.04), 0 8px 24px -14px rgba(17,20,24,.15); }
+  .card:hover { border-color:var(--teal); }
+  .card img { width:100%; aspect-ratio:3/2; object-fit:cover; object-position:top; display:block; border-bottom:1px solid var(--line); background:#fff; }
+  .card div { padding:16px 18px 18px; }
+  .card b { font-size:20px; display:block; } .card span { color:var(--ink2); font-size:16px; line-height:1.45; display:block; margin-top:4px; }
+  footer { margin-top:40px; color:var(--ink2); font-size:15px; line-height:1.5; }
+</style>
+</head>
+<body>
+<main>
+  <div class="brand">
+    <svg viewBox="0 0 40 40" aria-hidden="true">
+      <defs>
+        <linearGradient id="a" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0d9488"/><stop offset="1" stop-color="#14b8a6"/></linearGradient>
+        <linearGradient id="b" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f59e0b"/><stop offset="1" stop-color="#f97316"/></linearGradient>
+      </defs>
+      <path d="M20 4a16 16 0 0 0 0 32" fill="none" stroke="url(#a)" stroke-width="5" stroke-linecap="round"/>
+      <path d="M20 36a16 16 0 0 0 0-32" fill="none" stroke="url(#b)" stroke-width="5" stroke-linecap="round"/>
+      <path d="M13.5 20.5l4.5 4.5 8.5-9" fill="none" stroke="#111418" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    PaySettle
+  </div>
+  <h1>Agree what done means. Get paid when it is.</h1>
+  <p class="lead">Milestone contracts with the money held in PayPal: each capture is tied to the evidence its clause names, and a dispute freezes one milestone, not the project. Built for the PayPal AI Hackathon 2026. PayPal Sandbox only: no real money moves.</p>
+  <div class="links">
+    <a href="https://paysettle.onrender.com">Live demo, no account</a>
+    <a href="https://youtu.be/G4lLq1aySiY">Video (2:58)</a>
+    <a href="https://github.com/swaasthsewa/paysettle">Code</a>
+    <a href="https://github.com/swaasthsewa/paysettle/blob/main/RESULTS.md">Measured results</a>
+  </div>
+  <div class="grid">
+    <a class="card" href="slides/"><img src="gallery/slides/01-paysettle.jpg" alt=""><div><b>PaySettle in 16 slides</b><span>Concept, process flow, block diagram, the PayPal money flow, disputes, live screens, and why fooling the AI moves no money.</span></div></a>
+    <a class="card" href="manuals/index.html"><img src="gallery/live-app/03-client-dashboard.jpg" alt=""><div><b>Role manuals</b><span>One manual per role, with screenshots: client, provider, Operations, mediator, Finance, admin, Growth and judge.</span></div></a>
+    <a class="card" href="https://github.com/swaasthsewa/paysettle/blob/main/docs/gallery/README.md"><img src="gallery/live-app/07-gantt-signed.jpg" alt=""><div><b>Gallery</b><span>Slides, screens from the live app, frames from the video and the architecture diagrams.</span></div></a>
+    <a class="card" href="gallery/architecture/modules-and-data-flow.png"><img src="gallery/slides/04-block-diagram.jpg" alt=""><div><b>Architecture</b><span>Modules and data flow, and a milestone end to end. The written version is in <i>docs/architecture.md</i>.</span></div></a>
+  </div>
+  <footer>Source: <a href="https://github.com/swaasthsewa/paysettle">github.com/swaasthsewa/paysettle</a> (MIT). Slides use the Outfit typeface (SIL Open Font License 1.1).</footer>
+</main>
+</body>
+</html>

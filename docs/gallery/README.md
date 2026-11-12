@@ -4,7 +4,7 @@ Images of PaySettle in four sets: explainer slides, screens from the live app, f
 architecture. Select an image to open it at full size. The role manuals have their own screenshots in
 [`docs/screens/`](../screens); this gallery is separate from them.
 
-- [Explainer slides](#explainer-slides) (15)
+- [Explainer slides](#explainer-slides) (16)
 - [Live app](#live-app) (12)
 - [From the video](#from-the-video) (10)
 - [Architecture](#architecture) (2)
@@ -17,11 +17,12 @@ and a network hint are blurred.
 
 | | | |
 |---|---|---|
-| [<img src="slides/01-paysettle.jpg" width="280" alt="PaySettle: agree what done means, get paid when it is">](slides/01-paysettle.jpg)<br>**1 · PaySettle** | [<img src="slides/02-how-it-was-conceptualised.jpg" width="280" alt="How it was conceptualised">](slides/02-how-it-was-conceptualised.jpg)<br>**2 · How it was conceptualised** | [<img src="slides/03-process-flow.jpg" width="280" alt="Process flow">](slides/03-process-flow.jpg)<br>**3 · Process flow** |
+| [<img src="slides/01-paysettle.jpg" width="280" alt="PaySettle: agree what done means, get paid when it is">](slides/01-paysettle.jpg)<br>**1 · PaySettle** | [<img src="slides/02-how-it-was-conceptualised.jpg" width="280" alt="Three things that happened, and one missing sentence">](slides/02-how-it-was-conceptualised.jpg)<br>**2 · How it was conceptualised** | [<img src="slides/03-process-flow.jpg" width="280" alt="Process flow">](slides/03-process-flow.jpg)<br>**3 · Process flow** |
 | [<img src="slides/04-block-diagram.jpg" width="280" alt="Block diagram">](slides/04-block-diagram.jpg)<br>**4 · Block diagram** | [<img src="slides/05-paypal-money-flow.jpg" width="280" alt="PayPal money flow">](slides/05-paypal-money-flow.jpg)<br>**5 · PayPal money flow** | [<img src="slides/06-criteria-compiler.jpg" width="280" alt="Criteria compiler">](slides/06-criteria-compiler.jpg)<br>**6 · Criteria compiler** |
 | [<img src="slides/07-disputes-one-milestone.jpg" width="280" alt="A dispute freezes one milestone">](slides/07-disputes-one-milestone.jpg)<br>**7 · Disputes: one milestone** | [<img src="slides/08-feature-highlights.jpg" width="280" alt="Feature highlights">](slides/08-feature-highlights.jpg)<br>**8 · Feature highlights** | [<img src="slides/09-provider-dashboard.jpg" width="280" alt="Provider dashboard">](slides/09-provider-dashboard.jpg)<br>**9 · Provider dashboard** |
 | [<img src="slides/10-gantt-timeline.jpg" width="280" alt="Contract timeline, Bryntum Gantt">](slides/10-gantt-timeline.jpg)<br>**10 · Contract timeline (Gantt)** | [<img src="slides/11-eight-roles.jpg" width="280" alt="Eight roles">](slides/11-eight-roles.jpg)<br>**11 · Eight roles** | [<img src="slides/12-how-to-use.jpg" width="280" alt="How to use it">](slides/12-how-to-use.jpg)<br>**12 · How to use it** |
 | [<img src="slides/13-when-to-use.jpg" width="280" alt="When to use it, and when not to">](slides/13-when-to-use.jpg)<br>**13 · When to use it** | [<img src="slides/14-why-paysettle.jpg" width="280" alt="How PaySettle differs">](slides/14-why-paysettle.jpg)<br>**14 · How it differs** | [<img src="slides/15-why-needed-next.jpg" width="280" alt="Why this is needed next">](slides/15-why-needed-next.jpg)<br>**15 · Why it's needed next** |
+| [<img src="slides/16-fool-the-ai.jpg" width="280" alt="Fool the AI, and the money still does not move">](slides/16-fool-the-ai.jpg)<br>**16 · Can it be cheated?** | | |
 
 ## Live app
 
