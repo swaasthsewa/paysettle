@@ -36,7 +36,7 @@ export interface TrancheInput {
   tranche: { id: string; workspaceId: string; idx: number; rail: string; amountCents: number; state: string; paypalOrderId: string | null; authorizationId: string | null; captureId: string | null; heldAt: Date | null; /** F2.13 cents signed change orders returned from this hold */ amendedOutCents?: number };
   milestones: { amountCents: number; state: string; type: string; active: boolean }[];
   ledger: { type: string; amountCents: number; paypalRef: string | null; milestoneId: string | null; at: Date }[];
-  rail: { kind: "mock" | "paypal"; txns: PaypalTxn[] | null; error?: string };
+  rail: { kind: "mock" | "paypal"; txns: PaypalTxn[] | null; error?: string; source?: string };
   now: Date; windowFrom: Date;
 }
 export interface Evaluation { status: LineStatus; issues: Issue[]; notes: string[]; planeA: PlaneA; planeB: PlaneB; planeC: PlaneC }
@@ -81,7 +81,7 @@ export function evaluateTranche(i: TrancheInput): Evaluation {
   }
 
   /* Plane C — PayPal (or the simulated rail) */
-  const planeC: PlaneC = { available: false, source: i.rail.kind === "mock" ? "Simulated PayPal (mock rail)" : "PayPal reporting API", authorizedCents: 0, capturedCents: 0, returnedCents: 0, txns: 0 };
+  const planeC: PlaneC = { available: false, source: i.rail.kind === "mock" ? "Simulated PayPal (mock rail)" : i.rail.source ?? "PayPal reporting API", authorizedCents: 0, capturedCents: 0, returnedCents: 0, txns: 0 };
   let cInFlight = false;
   if (!i.rail.txns) {
     notes.push(`PayPal plane not available: ${i.rail.error ?? "no data"}.`);
@@ -121,12 +121,12 @@ export function evaluateTranche(i: TrancheInput): Evaluation {
       for (const [key, g] of groups) {
         if (g.last < i.windowFrom) { notes.push(`Ledger ref ${key} is older than the window and was not re-checked.`); continue; }
         const onlyHold = g.types.size === 1 && g.types.has("HOLD");
-        if (onlyHold && i.rail.kind === "paypal") continue; /* authorizations are not part of the reporting feed */
+        if (onlyHold && i.rail.kind === "paypal") continue; /* the hold itself is checked through the captures and voids against it */
         /* on Rail A1 PayPal never moves the fee (it is invoiced separately); a mock-funded tranche has no such invoice, so its fee rows are checked like any other */
         if (g.types.size === 1 && g.types.has("FEE") && t.rail === "A1" && i.rail.kind === "paypal") { notes.push(`Fee ref ${key} is invoiced separately on Rail A1.`); continue; }
         const isVoid = key.startsWith("void:");
         const cands = txns.filter((x) => x.id === key || (onlyHold && x.type === "AUTHORIZATION" && x.ref === key) || (isVoid && x.type === "VOID" && x.ref === key.slice(5)));
-        if (isVoid && cands.length === 0 && !i.ledger.some((e) => e.type === "VOID" && e.paypalRef === key)) { notes.push(`${formatCents(g.sum)} returned and recorded; PayPal voids it together with the last remainder.`); continue; }
+        if (isVoid && cands.length === 0 && !i.ledger.some((e) => e.type === "VOID" && e.paypalRef === key)) { notes.push(`${formatCents(g.sum)} kept for the client: never captured; PayPal releases it from the hold when the tranche closes.`); continue; }
         cands.forEach((x) => used.add(x.id));
         const actual = sum(cands);
         if (actual !== g.sum) {
@@ -134,6 +134,13 @@ export function evaluateTranche(i: TrancheInput): Evaluation {
           issue("C", g.sum, actual, cands.length ? `PayPal shows ${formatCents(actual)} for ${key}; the ledger says ${formatCents(g.sum)}.` : `No PayPal transaction found for ledger ref ${key} (${formatCents(g.sum)}).`,
             at, !cands.length && i.rail.kind === "paypal" ? REPORTING_LAG_MS : IN_FLIGHT_MS);
         }
+      }
+      /* the authorization itself (order-based plane C only): it must equal what the ledger put on hold */
+      const auths = linked.filter((x) => x.type === "AUTHORIZATION");
+      if (auths.length && i.rail.kind === "paypal") {
+        const authSum = sum(auths);
+        if (authSum !== hold) issue("C", hold, authSum, `PayPal authorized ${formatCents(authSum)}; the ledger holds ${formatCents(hold)}.`, maxAt(auths.map((x) => new Date(x.at))));
+        auths.forEach((x) => used.add(x.id));
       }
       for (const x of linked) {
         if (used.has(x.id) || x.amountCents === 0 || new Date(x.at) < i.windowFrom) continue;
@@ -178,8 +185,13 @@ export async function runReconcile(a: Actor | null, window: { from: Date; to: Da
     let rail: Rail | null = null;
     try {
       rail = pick(id);
-      const txns = await rail.transactions(from.toISOString(), to.toISOString());
-      railData.set(id, { kind: rail.id === "MOCK" ? "mock" : "paypal", txns: txns.filter((x) => { const d = new Date(x.at); return d >= from && d <= to; }) });
+      /* PayPal: read each order this platform created (Payments API). The reporting feed only lists the platform's own
+         account, and on Rail A1 the provider is the payee, so the feed would never see the money and every A1 tranche
+         would turn to drift once the reporting lag passed. */
+      const orders = ts.filter((t) => railKey(t) === id && t.paypalOrderId).map((t) => t.paypalOrderId!);
+      const byOrder = rail.id !== "MOCK" && rail.orderTransactions;
+      const txns = byOrder ? await rail.orderTransactions!(orders) : await rail.transactions(from.toISOString(), to.toISOString());
+      railData.set(id, { kind: rail.id === "MOCK" ? "mock" : "paypal", source: byOrder ? "PayPal Payments API (orders)" : undefined, txns: txns.filter((x) => { const d = new Date(x.at); return d >= from && d <= to; }) });
     } catch (e) {
       railData.set(id, { kind: rail?.id === "MOCK" ? "mock" : "paypal", txns: null, error: e instanceof Error ? e.message : String(e) });
     }

@@ -44,6 +44,8 @@ export interface Rail {
   extend(authorizationId: string, amountCents: number, currency: string, idemKey: string): Promise<{ authorizationId: string }>;
   status(orderId: string): Promise<HoldState>;
   transactions(sinceIso: string, untilIso: string): Promise<PaypalTxn[]>;
+  /** Plane C read per order (Payments API): what PayPal holds for orders this platform created, whoever the payee is. */
+  orderTransactions?(orderIds: string[]): Promise<PaypalTxn[]>;
   /** F4.10: send the evidence dossier for a PayPal dispute. Same key → same result (P2). Never moves money. */
   provideEvidence(disputeId: string, dossier: EvidenceDossier, idemKey: string): Promise<EvidenceRef>;
 }

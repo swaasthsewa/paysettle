@@ -143,6 +143,32 @@ export class PayPalRail implements Rail {
       amountCents: Math.abs(toCents(t.transaction_amount.value)), ref: t.paypal_reference_id ?? "", at: t.transaction_initiation_date,
     }));
   }
+  /**
+   * Plane C straight from the Payments API: each order's authorizations, captures, refunds and void. The platform created
+   * these orders, so it can read them even when the provider is the payee (Rail A1), which the reporting feed never shows
+   * the platform. Also immediate: no reporting lag. An order PayPal no longer returns is skipped (the watchdog handles it).
+   */
+  async orderTransactions(orderIds: string[]): Promise<PaypalTxn[]> {
+    type Money = { value: string };
+    type Pay = { id: string; status: string; amount: Money; create_time?: string; update_time?: string };
+    const out: PaypalTxn[] = [];
+    for (const oid of [...new Set(orderIds)]) {
+      let o: { purchase_units?: { payments?: { authorizations?: Pay[]; captures?: Pay[]; refunds?: Pay[] } }[] };
+      try { o = await pp("GET", `/v2/checkout/orders/${oid}`); } catch (e) { if (e instanceof RailError && e.kind !== "TRANSIENT") continue; throw e; }
+      for (const pu of o.purchase_units ?? []) {
+        const p = pu.payments ?? {};
+        const auth = p.authorizations?.[0];
+        const caps = (p.captures ?? []).filter((c) => ["COMPLETED", "PARTIALLY_REFUNDED", "REFUNDED"].includes(c.status));
+        for (const a of p.authorizations ?? []) {
+          out.push({ id: a.id, type: "AUTHORIZATION", amountCents: toCents(a.amount.value), ref: oid, at: a.create_time ?? a.update_time ?? "" });
+          if (a.status === "VOIDED") out.push({ id: `void:${a.id}`, type: "VOID", amountCents: toCents(a.amount.value) - caps.reduce((s, c) => s + toCents(c.amount.value), 0), ref: a.id, at: a.update_time ?? a.create_time ?? "" });
+        }
+        for (const c of caps) out.push({ id: c.id, type: "CAPTURE", amountCents: toCents(c.amount.value), ref: auth?.id ?? oid, at: c.create_time ?? c.update_time ?? "" });
+        for (const r of p.refunds ?? []) if (r.status === "COMPLETED") out.push({ id: r.id, type: "REFUND", amountCents: toCents(r.amount.value), ref: oid, at: r.create_time ?? r.update_time ?? "" });
+      }
+    }
+    return out;
+  }
   private toState(o: OrderResp): HoldState {
     const p = o.purchase_units?.[0]?.payments;
     const auth = p?.authorizations?.[0], caps = p?.captures ?? [];
