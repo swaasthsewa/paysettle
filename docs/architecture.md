@@ -61,7 +61,22 @@ flowchart LR
   POL --> DB
   CT & EV & MO & DI & CTL & AI --> DB
 
-  classDef p fill:#eef6f5,stroke:#0f766e
+  classDef p fill:#e0f2f0,stroke:#0f766e,color:#0b1514
+  classDef app fill:#ffffff,stroke:#475569,color:#111418
+  classDef dom fill:#ffffff,stroke:#0d9488,stroke-width:2px,color:#111418
+  classDef lib fill:#f8fafc,stroke:#64748b,color:#111418
+  classDef ext fill:#fdf0dc,stroke:#b45309,color:#111418
+  classDef db fill:#0f766e,stroke:#5eead4,stroke-width:2px,color:#ffffff
+  class UI,SITE,PG,MCP,WH,CRON app
+  class CT,EV,MO,DI,AI,CTL dom
+  class RAILS,POL,GW lib
+  class PP,LLM ext
+  class DB db
+  style People fill:none,stroke:#8b949e,color:#6e7781
+  style App fill:none,stroke:#8b949e,color:#6e7781
+  style Domain fill:none,stroke:#8b949e,color:#6e7781
+  style Lib fill:none,stroke:#8b949e,color:#6e7781
+  linkStyle default stroke:#8b949e,stroke-width:1.5px
 ```
 
 ### A milestone, end to end

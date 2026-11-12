@@ -29,6 +29,16 @@ PaySettle settles that question before any money moves.
 6. **Keep going.** Unfinished milestones carry over into the next period on the same contract chain; every PayPal
    event is signature-verified, and every tranche is reconciled to the cent across contract, ledger and PayPal.
 
+## Gallery
+
+| | |
+|---|---|
+| [<img src="docs/gallery/slides/03-process-flow.jpg" width="420" alt="Process flow: draft, sign, hold, prove, release, continue">](docs/gallery/slides/03-process-flow.jpg) | [<img src="docs/gallery/slides/05-paypal-money-flow.jpg" width="420" alt="PayPal money flow: one authorization per tranche, one partial capture per approval">](docs/gallery/slides/05-paypal-money-flow.jpg) |
+| [<img src="docs/gallery/slides/09-provider-dashboard.jpg" width="420" alt="Provider dashboard on the live app">](docs/gallery/slides/09-provider-dashboard.jpg) | [<img src="docs/gallery/slides/10-gantt-timeline.jpg" width="420" alt="Contract timeline built with the Bryntum Gantt">](docs/gallery/slides/10-gantt-timeline.jpg) |
+
+**[All 39 images →](docs/gallery/README.md)**: 15 explainer slides (concept, block diagram, criteria compiler, disputes,
+when to use it, how it differs), 12 live-app screens, 10 frames from the video and the architecture diagrams.
+
 ## At a glance
 
 | Measured | Result | Against | n | Source |
@@ -73,6 +83,18 @@ shows them in US Eastern time, the evening before.
 Rail A1 (payee = provider) is the default; a custodial Payouts variant (A2) and a delayed-disbursement variant (B) exist
 for the sandbox. A deterministic **mock rail** with the same interface runs everything without credentials, with fault
 injection for the Judge Playground.
+
+## Sponsor tools
+
+| Tool | What PaySettle uses it for | Where |
+|---|---|---|
+| **AG Grid Community** (`ag-grid-community`, `ag-grid-react`) | Every console table, on 12 screens, including the ledger, reconciliation, fees, operations queues, provider health, admin audit and webhooks, and the mediator deadline list. Sorting, filtering, column choice and CSV export, in the app's own theme. | [`src/components/console/DataTable.tsx`](src/components/console/DataTable.tsx), [`src/components/grid/`](src/components/grid) |
+| **Bryntum Gantt** (sponsor trial package, `@bryntum/gantt-trial` with `@bryntum/gantt-react`) | The contract timeline: each milestone on a calendar with where its money is, each tranche's PayPal hold window, a proposed change order drawn over the signed plan, and a continuation chain as one calendar. The trial's Scheduler shows every mediator's open cases against their deadlines. Read-only. | [`src/components/timeline/GanttView.tsx`](src/components/timeline/GanttView.tsx), [`SchedulerView.tsx`](src/components/timeline/SchedulerView.tsx) |
+| **Render** | Hosts the live demo: a Docker web service and a Postgres database, defined as a Blueprint, with a health check and auto-deploy on push. | [`render.yaml`](render.yaml), [`Dockerfile`](Dockerfile), <https://paysettle.onrender.com> |
+
+The timeline and the tables are in the gallery: [timeline](docs/gallery/live-app/07-gantt-signed.jpg),
+[change order](docs/gallery/live-app/08-gantt-change-order.jpg), [mediator schedule](docs/gallery/live-app/12-mediator-schedule.jpg),
+[reconciliation](docs/gallery/live-app/10-finance-recon.jpg).
 
 ## What the AI decides, and what it never decides
 
@@ -143,7 +165,8 @@ Hourly job ──► watchdog · reconciliation · audit check ──┤
        revisions, verdicts, audit chain)        ──► PayPal REST (Sandbox)
 ```
 
-Modules, data flow and where each constitution rule (P1–P12) is enforced: [`docs/architecture.md`](docs/architecture.md).
+Modules, data flow and where each constitution rule (P1–P12) is enforced: [`docs/architecture.md`](docs/architecture.md)
+([diagram as an image](docs/gallery/architecture/modules-and-data-flow.png)).
 **Agents:** the MCP server exposes eight tools (search blueprints, draft, propose changes, status, request funding,
 submit evidence, approve release, open dispute) behind scoped bearer tokens with spend limits; a person still approves
 every hold and release.
@@ -183,6 +206,7 @@ change demo data; run them against a disposable database. Dated results: [`RESUL
 
 - [`RESULTS.md`](RESULTS.md): every measured number, with the command, date and commit.
 - [`docs/architecture.md`](docs/architecture.md): modules, rails and data flow.
+- [`docs/gallery/`](docs/gallery/README.md): explainer slides, live-app screens, video frames and architecture images.
 - [`docs/manuals/`](docs/manuals/index.html): one manual per role, with screenshots ([`docs/screens/`](docs/screens)).
 - [`REUSE.md`](REUSE.md): components reused from the author's earlier projects.
 
