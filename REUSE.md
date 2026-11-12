@@ -6,7 +6,7 @@ no data, content, branding or client material from those projects is included.
 
 | Source project (author's own) | What was reused | How | Where in PaySettle |
 |---|---|---|---|
-| Eyes Opener (open-source eye-care app) | App shell: collapsible rail with no-flash boot, top bar, menu groups, trail, search, theme toggle, line icons; design tokens and shell CSS; security headers; Dockerfile; name-leak check | Copied, renamed, re-themed | `src/components/shell/*`, `src/components/nav.tsx`, `src/app/globals.css`, `next.config.ts`, `Dockerfile`, `tools/no-old-name.mjs` |
+| Eyes Opener (owner's WIP project, eye-care app) | App shell: collapsible rail with no-flash boot, top bar, menu groups, trail, search, theme toggle, line icons; design tokens and shell CSS; security headers; Dockerfile; name-leak check | Copied, renamed, re-themed | `src/components/shell/*`, `src/components/nav.tsx`, `src/app/globals.css`, `next.config.ts`, `Dockerfile`, `tools/no-old-name.mjs` |
 | Eyes Opener | Landing-page structure (hero, chapters, flow, closing, motion) | Structure only; all copy and art new | `src/app/(site)/*` |
 | SangamIQ (planning product) | TOTP second factor with recovery codes (RFC 6238), scrypt password hashing | Copied (pure functions) | `src/lib/identity/totp.ts`, `src/lib/identity/password.ts` |
 | SangamIQ | Session design (hashed token, idle and absolute limits), lockout, traceability gate | Ported pattern | `src/lib/session.ts`, `src/app/(auth)/login/actions.ts`, `tools/traceability.ts` |

@@ -1,155 +1,191 @@
 # PaySettle
 
-[![ci](https://github.com/swaasthsewa/paysettle/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/swaasthsewa/paysettle/actions/workflows/ci.yml) [![licence: MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
+[![ci](https://github.com/swaasthsewa/paysettle/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/swaasthsewa/paysettle/actions/workflows/ci.yml) [![licence: MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE) [![live demo](https://img.shields.io/badge/live%20demo-paysettle.onrender.com-0d9488)](https://paysettle.onrender.com) [![video](https://img.shields.io/badge/video-2%3A58-f97316)](https://youtu.be/G4lLq1aySiY)
 
-**A contract compiler for staged service work.** A vague statement of work goes in. Out comes a milestone contract in
-which every criterion either names a check a third person could make, or is flagged with a measurable rewrite, and every
-PayPal partial capture is tied to the evidence its clause names.
+**A vague statement of work in; a signed milestone contract out, where every PayPal capture is tied to the evidence
+its clause names.** Agree what *done* means. Get paid when it is.
 
-Built for the PayPal AI Hackathon. **Sandbox only: no real money moves.**
+**[▶ Watch the video (2:58)](https://youtu.be/G4lLq1aySiY)** · **[Live demo, no account](https://paysettle.onrender.com)** ·
+[Measured results](RESULTS.md) · [How it works](docs/architecture.md) · [Run it in 3 commands](#run-it-in-3-commands-no-keys)
 
-**Live demo: <https://paysettle.onrender.com>** → **Try the live demo** → **Hackathon Judge** (no password). It runs on
-Render against the PayPal Sandbox; the Judge Playground's **Fast mock** mode needs no PayPal account at all.
+![A dispute settled by sealed offers on the live app: $1,080 captured for the provider in PayPal Sandbox, $420 never taken from the client](docs/readme/hero-settled.gif)
 
-Measured on 11 Nov 2026 ([`RESULTS.md`](RESULTS.md)): 763 unit tests pass in the public CI run, 54 end-to-end
-journeys pass, 65 of 65 requirements traced to code and tests; the AI evaluation sets with their targets and their one miss (the evidence
-verifier: 0.813 against 0.85, with no spoofed package advised to approve).
+Built for the **PayPal AI Hackathon** (submission period 1 Oct – 12 Nov 2026). **PayPal Sandbox only: no real money
+moves.** Parts reused from the author's earlier projects are listed in [`REUSE.md`](REUSE.md).
 
-### One criterion, end to end
+## What it does
 
-| Step | What happens |
+Freelancers and small agencies are paid in stages, and most fights are about one question: *is this milestone done?*
+PaySettle settles that question before any money moves.
+
+1. **Draft.** The client writes a brief. The AI drafts milestones from a vetted blueprint, and the criteria compiler
+   rejects taste words: “fast and modern” becomes “Lighthouse mobile score 85 or more on staging, report attached”.
+2. **Sign.** Client and provider sign the same revision and hash. Nothing changes later unless both sign a change order.
+3. **Hold.** The client approves a hold in PayPal: an authorization per tranche. The money stays in PayPal.
+4. **Prove and release.** The provider uploads the proof the clause names. Files are hashed; rule checks and an AI
+   verifier advise; the client decides. Approval makes a **partial capture** of that milestone's share only.
+5. **Disagree on one milestone, not the project.** A dispute freezes one milestone's share. Sealed offers settle it in
+   days when both sides are within 5 points; otherwise an evidence vault, then a mediator.
+6. **Keep going.** Unfinished milestones carry over into the next period on the same contract chain; every PayPal
+   event is signature-verified, and every tranche is reconciled to the cent across contract, ledger and PayPal.
+
+## At a glance
+
+| Measured | Result | Against | n | Source |
+|---|---|---|---|---|
+| A real case on the live app, PayPal Sandbox (12 Nov 2026) | $6,000 held; 3 partial captures ($900, $1,200, $1,080); a dispute settled at 72% | — | 1 contract, 2 tranches | [RESULTS.md](RESULTS.md#hosted-demo-and-paypal-sandbox) |
+| PayPal posting time after the step in PaySettle | 0–2 s for each of the 4 money steps | — | 4 | [RESULTS.md](RESULTS.md#hosted-demo-and-paypal-sandbox) |
+| Three-way reconciliation of that case | both tranches **matched**, $0.00 difference | contract, ledger, PayPal | 2 tranches | [RESULTS.md](RESULTS.md#hosted-demo-and-paypal-sandbox) |
+| Unit and integration tests in public CI | 782 passed, 1 skipped | — | 64 files | [CI run 43145022882](https://github.com/swaasthsewa/paysettle/actions/runs/43145022882) |
+| Requirements traced to code and tests | 65 / 65 | — | 65 | same CI run |
+| End-to-end journeys (Playwright, with axe accessibility scans) | 54 / 54 | — | 54 | [RESULTS.md](RESULTS.md#gates) (11 Nov) |
+| Criteria compiler: vague vs checkable | agreement 1.0 | plain one-prompt LLM: also 1.0 | 60 | [RESULTS.md](RESULTS.md#compiler-vs-plain-llm-npm-run-evalcompare-n--60) |
+| Evidence verifier | agreement 0.813, **spoofed packages advised to approve: 0** | target 0.85 (**missed**) | 16 | [RESULTS.md](RESULTS.md#ai-golden-sets-npm-run-eval) |
+| Prompt injection hidden in evidence | instructions followed: 0 | 0 | 12 | same |
+| Mediation proposals within 10 points of the labelled split | 0.8 | target 0.8 | 10 | same |
+| AI cost | about $0.012 a call | — | 43 calls | same |
+
+## The real case, in PayPal
+
+Recorded for the video on the live site, then checked in PayPal's own records. Times are IST; PayPal's Activity page
+shows them in US Eastern time, the evening before.
+
+| Step in PaySettle | PayPal | Amount | PaySettle | PayPal |
+|---|---|---|---|---|
+| Tranche 1 approved by the buyer | order `4AT27605L6365991Y`, authorization `4EP18648Y5694440C` | $6,000.00 held | 06:39:44 | 06:39:45 |
+| M02 approved by the client | capture `0CH93334JW441980B` | $900.00 | 06:43:07 | 06:43:09 |
+| Change order funded as tranche 2 | order `53E92477EN885981U`, authorization `81R51860WR7095409` | $600.00 held | 06:45:18 | 06:45:18 |
+| M03 approved by the client | capture `55U67317S0232474M` | $1,200.00 | 06:46:15 | 06:46:16 |
+| M04 dispute settled at 72% | capture `5CL88405R5549173G` | $1,080.00 to the provider; $420.00 never captured | 06:48:23 | 06:48:24 |
+
+## PayPal APIs used
+
+| API | What PaySettle does with it |
 |---|---|
-| **In** | “The website should be fast and modern.” |
-| **Rejected** | “Uses taste words (fast, modern) with no number, threshold or measurable target to check them against.” |
-| **Rewrite** | “The website should be fast and modern — measured as: pages load in ≤ 2 s on a mid-range phone (Lighthouse report attached); matches the approved design file screen by screen / room by room (dated photos or screenshots of each attached)” |
-| **Both sign** | The parties edit the suggestion into the clause they want. In the Web / SaaS MVP blueprint it reads “Lighthouse mobile performance ≥ 85 on staging”, and milestone M05 names its proof: a Lighthouse report (mobile ≥ 85), an accessibility scan and a dependency scan. Client and provider sign the same revision and hash. |
-| **Evidence** | The provider uploads those files. Rule checks and the AI verifier report what matches; the AI only advises. |
-| **Release** | The client confirms they inspected the evidence and approves (an authenticator code field is there; it is optional in the sandbox), and PaySettle makes a PayPal partial capture of that milestone's share (15%) against the authorization that holds the money. The rest stays held. |
+| Orders v2, `intent=AUTHORIZE` | One order per tranche; the buyer approves the hold in PayPal's checkout. On Rail A1 the provider is the payee. |
+| Payments v2 · authorizations `capture` | One **partial capture** per approved milestone; `final_capture` on the last one releases the rest. |
+| Payments v2 · `void`, `reauthorize`; captures `refund` | Returns, the end of the hold window, refunds on the custodial rails. |
+| `PayPal-Request-Id` | A stored idempotency key on every money call: a retry after a 503 gives exactly one capture. |
+| Webhooks + `verify-webhook-signature` | Every event verified and applied once (de-duplicated on transmission id); failures wait in a dead-letter queue. |
+| Payments v2 · orders `GET` | Reconciliation's PayPal side: each order's authorizations, captures, refunds and voids. |
+| Disputes v1 | A PayPal dispute on a held or released payment supersedes the in-app dispute; evidence is sent through the rail. |
 
-The rejection and rewrite above are the rule-based compiler's real output for that sentence (try it:
-`npm run eval:compare -- --text "The website should be fast and modern."`). With `AI_API_KEY` set, the AI proposes the
-wording; a taste word or hedge with nothing measurable is still rejected. The Judge Playground's **S1** runs the sign,
-evidence and partial-capture steps for milestones M02–M04 of the same blueprint. Where the compiler runs today: the
-signed-in endpoint `POST /api/ai/compile`, the eval harness, the landing page and the public AI scorecard at `/trust/ai`;
-the negotiation screen does not call it yet, and the policy gate checks that each paying milestone names its proof, not
-the wording of each criterion. Measured numbers and known misses: [`RESULTS.md`](RESULTS.md).
+Rail A1 (payee = provider) is the default; a custodial Payouts variant (A2) and a delayed-disbursement variant (B) exist
+for the sandbox. A deterministic **mock rail** with the same interface runs everything without credentials, with fault
+injection for the Judge Playground.
 
-### Payments that survive failure (Judge Playground S5)
+## What the AI decides, and what it never decides
 
-- **A PayPal 503 on a release** is retried with the same idempotency key (`PayPal-Request-Id`): one capture, one payout.
-- **The same webhook posted twice** is recognised by its transmission id; the second copy changes nothing.
-- **One cent of ledger drift** is found by three-way reconciliation (ledger, PayPal, contract), which trips the
-  tranche's circuit breaker.
+| AI (Claude, `claude-sonnet-5-5`, through one gateway) | What it decides |
+|---|---|
+| Contract drafter | Proposes milestones and criteria from the brief and a vetted blueprint; the parties edit and sign. |
+| Criteria compiler | Flags criteria nobody could check and proposes a measurable rewrite; the rule linter re-checks every rewrite. |
+| Evidence verifier | Advises *approve*, *request a fix* or *unclear*, criterion by criterion, citing the files. |
+| Mediation proposal | Proposes a split with reasons for the mediator. |
 
-**Also:** agent-to-agent contracting over the MCP server at `/api/mcp`. Agents can draft, negotiate, request funding,
-submit evidence and propose a change order on a signed contract (`propose_change_order`); a person approves the hold in
-PayPal, confirms every release in the app, and both parties sign a change order (with MFA) before the schedule changes.
-The contract timeline (Bryntum Gantt) shows a pending change order against the signed plan as baselines, and a
-continuation chain as one calendar.
+| Never AI (code and people) | Where |
+|---|---|
+| Signatures, contract revisions, the policy gate (R01–R10) and the risk score | rules, both parties |
+| Every hold, capture, refund and payout | the client in PayPal and in the app; the money module |
+| Ledger, audit chain (hash-linked, append-only in Postgres) | database triggers |
+| Dispute outcome | sealed offers, or a human mediator's signed verdict |
+
+The gateway caps tokens per day, redacts personal data and marks uploaded text as untrusted. Constitution rule P3: no AI
+output can write a contract, a ledger row, a signature or a release.
+
+**Why not just ask a model?** On our 60-criterion golden set a plain one-prompt LLM classifies as well as the compiler
+(both 1.0; the set is too easy to separate them). What the compiler adds is how it runs: its rule path needs no key,
+answers the same every time and always gives a reason, and AI rewrites must pass the same linter. More important, the
+model never touches money: a release needs a signed contract, matching evidence and the client's approval.
 
 ## For judges
 
-1. Open the hosted demo at <https://paysettle.onrender.com> or run it locally (below), then press **Try the live demo**.
-2. Pick **Hackathon Judge** — no password in the sandbox. You land on the **Judge Playground**.
-3. Choose **Fast mock**, press **Start** on **S1 Happy path**, then **Run all**. Every step should show ✓; the four views
-   below show the client, the provider, the ledger and the PayPal wire log for the same contract.
-4. Try **S2** (spoofed GPS evidence), **S4** (dispute and verdict) and **S5** (503 retry, duplicate webhook, ledger drift).
-5. Use **Switch person** in the menu to see any role: Priya Shah / Dan Okafor (client), Meera Iyer / Arjun Rao (provider),
-   Olivia Grant (Operations), Marcus Bell / Lena Park (mediator), Farah Ali (Finance), Alex Chen (admin), Maya Lopez (Growth).
+1. Open <https://paysettle.onrender.com> → **Try the live demo** → **Hackathon Judge** (no password).
+2. In the **Judge Playground**, choose **Fast mock**, start **S1 Happy path**, press **Run all**: every step shows ✓, and
+   four panes show the client, the provider, the ledger and reconciliation, and the PayPal wire log. Your run is yours:
+   other judges' runs do not appear or interfere.
+3. Try **S2** (spoofed GPS evidence), **S4** (dispute and verdict) and **S5** (a PayPal 503 retried once, a duplicate
+   webhook ignored, one cent of ledger drift caught by reconciliation).
+4. **The real PayPal path:** **Switch person** → **Priya Shah** → a contract → **Fund tranche** → approve in PayPal
+   Sandbox with a sandbox *personal* account (create one in the PayPal Developer Dashboard).
+5. Every role has its own home: Priya Shah / Dan Okafor (client), Meera Iyer / Arjun Rao (provider), Olivia Grant
+   (Operations), Marcus Bell / Lena Park (mediator), Farah Ali (Finance), Alex Chen (admin), Maya Lopez (Growth). Shared
+   demo people can be used but not reconfigured. Manuals with screenshots: [`docs/manuals/`](docs/manuals/index.html).
 
-Manuals per role, with screenshots: [`docs/manuals/index.html`](docs/manuals/index.html).
+## Run it in 3 commands (no keys)
 
-## Run it locally
+Needs Node.js 22 and Docker (or your own Postgres 16 with `DATABASE_URL` set).
 
 ```bash
-# 1 · Postgres 16 (Docker or a local install)
-docker compose up -d db            # or use your own Postgres; set DATABASE_URL
-# 2 · install and configure
-npm install
-cp .env.example .env.local         # add PayPal Sandbox and AI keys if you have them (optional)
-# 3 · database and demo data
+docker compose up -d db && npm install && cp .env.example .env.local
 npm run db:push && npm run db:guards && npm run db:seed
-# 4 · start
-npm run dev                        # http://localhost:3000 → “Try the live demo”
-# or a production build
-npm run build && npm start         # also on port 3000
+npm run dev        # http://localhost:3000 → Try the live demo → Hackathon Judge → Fast mock → S1 → Run all
 ```
 
-Without PayPal credentials the app uses the deterministic mock rail; without an AI key, AI panels say “AI unavailable”
-and the rule-based checks still run. Keep `PAYSETTLE_ENV=sandbox` for the demo sign-in and the Judge Playground.
+Without PayPal credentials the app uses the mock rail; without an AI key the AI panels say “AI unavailable” and the rule
+checks still run. Keep `PAYSETTLE_ENV=sandbox` for the demo sign-in and the Judge Playground.
+
+**With keys:** set `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `PAYPAL_WEBHOOK_ID` (PayPal Sandbox app) and `AI_API_KEY`
+(Anthropic; `AI_MODEL` defaults to `claude-sonnet-5-5`, `AI_DAILY_TOKEN_CAP` caps spend) in `.env.local`, then restart.
+
+## How it works
+
+```
+Client / Provider / Ops / Mediator / Finance / Admin ──► Next.js app (screens, server actions)
+AI agents ──(scoped tokens)──► MCP server /api/mcp ──────┤
+PayPal ──(verified webhooks)──► /api/webhooks/paypal ────┤
+Hourly job ──► watchdog · reconciliation · audit check ──┤
+                                                         ▼
+     contracts · evidence · money · disputes · control (src/server)  ──► AI gateway ──► Claude
+                         │                    │
+                         ▼                    ▼
+       Postgres (append-only ledger,     rails: PayPal A1 · A2 · B, or mock
+       revisions, verdicts, audit chain)        ──► PayPal REST (Sandbox)
+```
+
+Modules, data flow and where each constitution rule (P1–P12) is enforced: [`docs/architecture.md`](docs/architecture.md).
+**Agents:** the MCP server exposes eight tools (search blueprints, draft, propose changes, status, request funding,
+submit evidence, approve release, open dispute) behind scoped bearer tokens with spend limits; a person still approves
+every hold and release.
+
+## Known limits
+
+- **Voids and fees on Rail A1.** The order pays the provider, so PayPal answers `403 PERMISSION_DENIED` when the platform
+  voids the provider's authorization. Nothing is lost: the uncaptured part is never taken, and PayPal releases it with the
+  tranche's final capture or when the authorization lapses. The app records it as *kept for the client, never captured*.
+  For the same reason the 2.5% platform fee is recorded in the ledger, not collected inside PayPal.
+- **The evidence verifier** is below its target (0.813 against 0.85) and does not read PDFs. It only advises.
+- **The compiler** is not called from the negotiation screen; it runs at `POST /api/ai/compile`, in the evals, on the
+  landing page and at `/trust/ai`. The golden set was written by the team; real criteria from past projects are pending.
+- **The mock rail** keeps its records in memory, so seeded mock contracts show “No PayPal data” in reconciliation after a
+  restart; real PayPal tranches are read from PayPal.
+- **Sandbox only.** The Turbopack production build needs more than 16 GB; the container uses the webpack build.
+
+**Next:** PayPal partner onboarding (Multiparty), so each provider grants the platform permission and refunds, voids and
+the platform fee run inside PayPal.
 
 ## Verify
 
 ```bash
 npm run db:reset:test  # once: the unit tests use their own database, paysettle_test (or TEST_DATABASE_URL)
 npm run verify         # typecheck · lint · unit tests · copy lint · name, vocabulary and secret checks · production build
-npm run hooks          # once per clone: turn on the pre-commit secret check
 npm run gate:trace     # every requirement id appears in code and in a test
 npm run eval           # golden sets; the AI sets are skipped without AI_API_KEY
 npm run eval:compare   # criteria compiler vs a plain LLM baseline (see evals/README.md)
+E2E_BASE_URL=http://localhost:3000 npm run test:e2e   # Playwright journeys against a running, seeded server
 ```
 
-The production build uses Turbopack and needs a lot of memory: on a machine with a 16 GB limit it was stopped for lack
-of memory. `npx next build --webpack` builds the same app with far less. Results with dates: [`RESULTS.md`](RESULTS.md).
-
-After changing dependencies, rebuild the lock file in a folder with no `node_modules` (copy `package.json` there, run
-`npm install --package-lock-only`, copy `package-lock.json` back). An install over an existing `node_modules` can drop
-other platforms' native packages from the lock file, and `npm ci` on Linux then cannot start the tests.
-
-### End-to-end tests (Playwright)
-
-The journeys run against an already running, seeded server; they never start one.
-
-```bash
-# server from "Run it locally" on :3000, or any URL
-E2E_BASE_URL=http://localhost:3000 npm run test:e2e
-# options: CHROME_PATH=/usr/bin/google-chrome (defaults to it when present) · E2E_WORKERS=1 (default)
-npx playwright show-report e2e/.report   # HTML report
-```
-
-| Spec | Covers |
-|---|---|
-| `e2e/personas.spec.ts` | every persona signs in, lands on its home; the menu matches the role; every menu page renders |
-| `e2e/playground.spec.ts` | S1, S2, S4, S5 in Fast mock: Run all, every step ✓ |
-| `e2e/client-journey.spec.ts` | client reviews evidence, checks and AI advice, approves with the confirmation box, sees the release |
-| `e2e/provider.spec.ts` | provider onboarding, PayPal account, contracts and a contract room |
-| `e2e/negotiation.spec.ts` | prune and restore a milestone; policy gate and revision update |
-| `e2e/mediator.spec.ts` | case queue and the case workbench |
-| `e2e/finance.spec.ts` | run reconciliation; ledger |
-| `e2e/site.spec.ts` | landing page and the waitlist form (random e-mail) |
-| `e2e/a11y.spec.ts` | axe (WCAG 2.1 A/AA) on landing, sign-in, client overview, contract room, milestone page, playground; fails on serious or critical findings; writes `e2e/a11y-report.json` |
-
-The tests change demo data (they approve milestones, start playground sessions and run reconciliation). They prepare what
-they need, so they can run repeatedly, but run them against a disposable database — or re-seed — before a demo.
-
-### Screenshots
-
-```bash
-node tools/screens.mjs                 # all roles → docs/screens/*.png (≈40 images)
-node tools/screens.mjs client judge    # only some groups
-```
-
-Uses `SCREENS_BASE_URL` (or `E2E_BASE_URL`, default `http://localhost:3100`) and `CHROME_PATH`. The judge group starts fresh
-playground sessions.
-
-## Known limits and next
-
-- **Voids on Rail A1.** The order pays the provider directly, so PayPal answers `403 PERMISSION_DENIED` when the
-  platform tries to void the provider's authorization. Nothing is lost: the uncaptured part is never taken, and PayPal
-  releases it to the buyer with the tranche's final capture (or when the authorization lapses). The app records such a
-  return as *kept for the client, never captured* and matches only that exact PayPal answer; any other error fails loudly.
-  Measured in [`RESULTS.md`](RESULTS.md).
-- **Next: PayPal partner onboarding (Multiparty),** so each provider grants the platform permission and refunds and voids
-  run on their behalf.
+Every push runs [ci](.github/workflows/ci.yml): typecheck, lint, the copy, name, vocabulary and secret gates, a gitleaks
+full-history scan, `npm audit`, the traceability gate and the unit tests against Postgres. The end-to-end journeys
+change demo data; run them against a disposable database. Dated results: [`RESULTS.md`](RESULTS.md).
 
 ## Documents
 
-- [`docs/architecture.md`](docs/architecture.md) — modules, rails and data flow (Mermaid), and where each rule of the
-  constitution (P1–P12) is enforced.
-- [`docs/manuals/`](docs/manuals/index.html) — one manual per role (client, provider, Operations, mediator, Finance, admin,
-  Growth, judge).
-- [`REUSE.md`](REUSE.md) — components reused from the author's own earlier projects.
+- [`RESULTS.md`](RESULTS.md): every measured number, with the command, date and commit.
+- [`docs/architecture.md`](docs/architecture.md): modules, rails and data flow.
+- [`docs/manuals/`](docs/manuals/index.html): one manual per role, with screenshots ([`docs/screens/`](docs/screens)).
+- [`REUSE.md`](REUSE.md): components reused from the author's earlier projects.
 
 ## Licence
 
-MIT — see [`LICENSE`](LICENSE).
+MIT, see [`LICENSE`](LICENSE).
