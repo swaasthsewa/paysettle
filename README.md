@@ -192,7 +192,7 @@ hash-linked audit log shows a naive edit.
    Sandbox with a sandbox *personal* account (create one in the PayPal Developer Dashboard).
 5. Every role has its own home: Priya Shah / Dan Okafor (client), Meera Iyer / Arjun Rao (provider), Olivia Grant
    (Operations), Marcus Bell / Lena Park (mediator), Farah Ali (Finance), Alex Chen (admin), Maya Lopez (Growth). Shared
-   demo people can be used but not reconfigured. Manuals with screenshots: [`docs/manuals/`](docs/manuals/index.html).
+   demo people can be used but not reconfigured. Manuals with screenshots: [role manuals](https://swaasthsewa.github.io/paysettle/manuals/).
 
 ## Run it in 3 commands (no keys)
 
@@ -227,8 +227,8 @@ Hourly job ──► watchdog · reconciliation · audit check ──┤
 
 Modules, data flow and where each constitution rule (P1–P12) is enforced: [`docs/architecture.md`](docs/architecture.md)
 ([diagram as an image](docs/gallery/architecture/modules-and-data-flow.png)).
-**Agents:** the MCP server exposes eight tools (search blueprints, draft, propose changes, status, request funding,
-submit evidence, approve release, open dispute) behind scoped bearer tokens with spend limits; a person still approves
+**Agents:** the MCP server exposes nine tools (search blueprints, draft, propose changes, propose a change order, status,
+request funding, submit evidence, approve release, open dispute) behind scoped bearer tokens with spend limits; a person still approves
 every hold and release.
 
 PaySettle is one Next.js 16 application (App Router, React 19, TypeScript strict) on Postgres 16 through Drizzle. Screens,
@@ -371,7 +371,7 @@ change demo data; run them against a disposable database. Dated results: [`RESUL
 - [`RESULTS.md`](RESULTS.md): every measured number, with the command, date and commit.
 - [`docs/architecture.md`](docs/architecture.md): modules, rails and data flow.
 - [`docs/gallery/`](docs/gallery/README.md): explainer slides, live-app screens, video frames and architecture images.
-- [`docs/manuals/`](docs/manuals/index.html): one manual per role, with screenshots ([`docs/screens/`](docs/screens)).
+- [Role manuals](https://swaasthsewa.github.io/paysettle/manuals/): one manual per role, with screenshots (source in [`docs/manuals/`](docs/manuals), images in [`docs/screens/`](docs/screens)).
 - [`REUSE.md`](REUSE.md): components reused from the author's earlier projects.
 
 ## Licence
