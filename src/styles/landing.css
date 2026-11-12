@@ -45,6 +45,8 @@
 @media (max-width: 900px) {
   .lp2-hero { align-items: flex-start; min-height: max(640px, 100svh - var(--s-nav-h, 64px)); }
   .lp2-hero-in { padding: 44px 0 300px; }
+  /* the field gets its own strip under the copy: it never runs behind the text or the buttons */
+  .lp2-canvas { top: auto; height: 300px; }
   .lp2-hero-in > * { max-width: 100%; }
   .lp2-h1 { font-size: clamp(40px, 11vw, 64px); }
   .lp2-legend { margin-top: 28px; }

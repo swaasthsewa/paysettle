@@ -35,8 +35,9 @@ export function startSettleField(canvas: HTMLCanvasElement): SettleField {
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
     wide = W > 900;
     const x0 = wide ? W * 0.53 : W * 0.06, x1 = wide ? W * 0.95 : W * 0.94, span = x1 - x0;
-    const cy = wide ? H * 0.5 : H * 0.66;
-    const top = wide ? H * 0.2 : H * 0.46, bot = wide ? H * 0.8 : H * 0.88;
+    /* narrow screens: the canvas is only the strip under the copy (landing.css), so the field uses all of it */
+    const cy = wide ? H * 0.5 : H * 0.52;
+    const top = wide ? H * 0.2 : H * 0.14, bot = wide ? H * 0.8 : H * 0.9;
     client = { x: x0, y: cy };
     vault = { x: x0 + span * 0.24, y: cy };
     provider = { x: x1, y: cy };
