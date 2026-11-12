@@ -171,6 +171,110 @@ Modules, data flow and where each constitution rule (P1–P12) is enforced: [`do
 submit evidence, approve release, open dispute) behind scoped bearer tokens with spend limits; a person still approves
 every hold and release.
 
+PaySettle is one Next.js 16 application (App Router, React 19, TypeScript strict) on Postgres 16 through Drizzle. Screens,
+server actions, route handlers and background jobs live in the same deployable; domain logic sits in `src/server/<module>`
+and talks to PayPal only through the rail interface in `src/lib/rails`.
+
+### Modules and data flow
+
+```mermaid
+flowchart LR
+  subgraph People["People and agents"]
+    C[Client]:::p
+    P[Provider]:::p
+    O[Ops · Mediator · Finance · Admin]:::p
+    J[Judge]:::p
+    AG[AI agents<br/>scoped bearer tokens]:::p
+  end
+
+  subgraph App["Next.js app (src/app)"]
+    UI["Screens and server actions<br/>(app)/client · provider · contracts · disputes<br/>ops · mediator · finance · admin · marketing"]
+    SITE["Public site and waitlist<br/>(site)/*, /api/waitlist"]
+    PG["Judge Playground<br/>/playground, /api/sandbox/*"]
+    MCP["MCP server<br/>/api/mcp"]
+    WH["PayPal webhooks<br/>/api/webhooks/paypal"]
+    CRON["Hourly job<br/>/api/cron"]
+  end
+
+  subgraph Domain["Domain modules (src/server)"]
+    CT["contracts<br/>blueprints, append-and-prune,<br/>policy gate R01–R10, risk, signatures, lock"]
+    EV["evidence<br/>hashing, signals, review timers,<br/>approve / request fix, oracles"]
+    MO["money<br/>fund, confirm, release, refund,<br/>watchdog, rollover, webhooks"]
+    DI["disputes<br/>sealed offers, vault, verdict,<br/>two-leg settlement"]
+    AI["ai<br/>draft, criteria compiler, verifier,<br/>mediation proposal, agent tokens"]
+    CTL["control<br/>reconciliation, breaker, four-eyes,<br/>flags, health, analytics"]
+  end
+
+  subgraph Lib["Core libraries (src/lib)"]
+    RAILS["rails<br/>railFor() → MOCK · A1 · A2 · B"]
+    POL["policy · fsm · rbac · money · ids<br/>canonical · audit · clock · session"]
+    GW["ai gateway<br/>token cap, redaction,<br/>untrusted-text marking"]
+  end
+
+  DB[("Postgres<br/>workspaces, revisions, signatures,<br/>tranches, ledger, releases, disputes,<br/>verdicts, audit_chain …<br/>+ immutability triggers")]
+  PP[["PayPal REST (Sandbox)<br/>Orders v2 · Payments v2<br/>Payouts · Webhooks · Reporting"]]
+  LLM[["LLM provider<br/>Claude (Anthropic Messages API)"]]
+
+  C & P & O --> UI
+  J --> PG
+  AG --> MCP
+  UI --> CT & EV & MO & DI & CTL
+  PG --> CT & EV & MO & DI & CTL
+  MCP --> CT & EV & MO & DI
+  WH --> MO
+  CRON --> MO & CTL
+  CT & EV & DI --> AI
+  AI --> GW --> LLM
+  MO & DI --> RAILS --> PP
+  PP -. webhooks .-> WH
+  CTL -- reconciliation reads --> RAILS
+  CT & EV & MO & DI & CTL & AI --> POL
+  POL --> DB
+  CT & EV & MO & DI & CTL & AI --> DB
+
+  classDef p fill:#e0f2f0,stroke:#0f766e,color:#0b1514
+  classDef app fill:#ffffff,stroke:#475569,color:#111418
+  classDef dom fill:#ffffff,stroke:#0d9488,stroke-width:2px,color:#111418
+  classDef lib fill:#f8fafc,stroke:#64748b,color:#111418
+  classDef ext fill:#fdf0dc,stroke:#b45309,color:#111418
+  classDef db fill:#0f766e,stroke:#5eead4,stroke-width:2px,color:#ffffff
+  class UI,SITE,PG,MCP,WH,CRON app
+  class CT,EV,MO,DI,AI,CTL dom
+  class RAILS,POL,GW lib
+  class PP,LLM ext
+  class DB db
+  style People fill:none,stroke:#8b949e,color:#6e7781
+  style App fill:none,stroke:#8b949e,color:#6e7781
+  style Domain fill:none,stroke:#8b949e,color:#6e7781
+  style Lib fill:none,stroke:#8b949e,color:#6e7781
+  linkStyle default stroke:#8b949e,stroke-width:1.5px
+```
+
+### A milestone, end to end
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant Cl as Client
+  participant Pr as Provider
+  participant PS as PaySettle
+  participant PP as PayPal
+  Cl->>PS: clone blueprint, negotiate (revisions), sign rev N + hash
+  Pr->>PS: countersign rev N + same hash (R09)
+  PS->>PS: lock → tranches within the hold window (risk ≥ 75 → Ops clears first)
+  Cl->>PS: fund tranche 1
+  PS->>PP: POST /v2/checkout/orders (intent AUTHORIZE, PayPal-Request-Id = idemKey)
+  Cl->>PP: approve the order
+  PS->>PP: POST /v2/checkout/orders/{id}/authorize → ledger HOLD
+  Pr->>PS: submit evidence (files hashed to a root, signals computed)
+  PS->>PS: AI verifier (advisory) + rule-based checks
+  Cl->>PS: approve, signed over the evidence root hash (P4)
+  PS->>PP: POST /v2/payments/authorizations/{id}/capture (partial capture of this milestone)
+  PS->>PS: ledger RELEASE + FEE (integer cents, double entry)
+  PP-->>PS: webhook PAYMENT.CAPTURE.COMPLETED → verified, de-duplicated
+  Note over PS,PP: Hourly: reconciliation compares contract (A), ledger (B), PayPal (C), drift trips the tranche breaker
+```
+
 ## Known limits
 
 - **Voids and fees on Rail A1.** The order pays the provider, so PayPal answers `403 PERMISSION_DENIED` when the platform
