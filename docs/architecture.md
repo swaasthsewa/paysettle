@@ -80,13 +80,13 @@ sequenceDiagram
   PS->>PP: POST /v2/checkout/orders (intent AUTHORIZE, PayPal-Request-Id = idemKey)
   Cl->>PP: approve the order
   PS->>PP: POST /v2/checkout/orders/{id}/authorize → ledger HOLD
-  Pr->>PS: submit evidence (files hashed to a root; signals computed)
+  Pr->>PS: submit evidence (files hashed to a root, signals computed)
   PS->>PS: AI verifier (advisory) + rule-based checks
   Cl->>PS: approve, signed over the evidence root hash (P4)
   PS->>PP: POST /v2/payments/authorizations/{id}/capture (partial capture of this milestone)
   PS->>PS: ledger RELEASE + FEE (integer cents, double entry)
   PP-->>PS: webhook PAYMENT.CAPTURE.COMPLETED → verified, de-duplicated
-  Note over PS,PP: Hourly: reconciliation compares contract (A), ledger (B), PayPal (C); drift trips the tranche breaker
+  Note over PS,PP: Hourly: reconciliation compares contract (A), ledger (B), PayPal (C), drift trips the tranche breaker
 ```
 
 ### Rails
