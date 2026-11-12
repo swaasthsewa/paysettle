@@ -64,8 +64,9 @@ when to use it, how it differs, can it be cheated), 12 live-app screens, 10 fram
 | A real case on the live app, PayPal Sandbox (12 Nov 2026) | $6,000 held; 3 partial captures ($900, $1,200, $1,080); a dispute settled at 72% | — | 1 contract, 2 tranches | [RESULTS.md](RESULTS.md#hosted-demo-and-paypal-sandbox) |
 | PayPal posting time after the step in PaySettle | 0–2 s for each of the 4 money steps | — | 4 | [RESULTS.md](RESULTS.md#hosted-demo-and-paypal-sandbox) |
 | Three-way reconciliation of that case | both tranches **matched**, $0.00 difference | contract, ledger, PayPal | 2 tranches | [RESULTS.md](RESULTS.md#hosted-demo-and-paypal-sandbox) |
-| Unit and integration tests in public CI | 782 passed, 1 skipped | — | 64 files | [CI run 43145022882](https://github.com/swaasthsewa/paysettle/actions/runs/43145022882) |
-| Requirements traced to code and tests | 65 / 65 | — | 65 | same CI run |
+| Unit and integration tests in public CI | 803 passed, 1 skipped | — | 66 files | [CI run 43242033869](https://github.com/swaasthsewa/paysettle/actions/runs/43242033869) |
+| Cheat attempts: fooling the AI, forged webhooks, edited records | money moved without the signed decision: $0 | — | 18 | [Can it be cheated?](#can-it-be-cheated) |
+| Requirements traced to code and tests | 65 / 65 | — | 65 | [CI run 43242033869](https://github.com/swaasthsewa/paysettle/actions/runs/43242033869) |
 | End-to-end journeys (Playwright, with axe accessibility scans) | 54 / 54 | — | 54 | [RESULTS.md](RESULTS.md#gates) (11 Nov) |
 | Criteria compiler: vague vs checkable | agreement 1.0 | plain one-prompt LLM: also 1.0 | 60 | [RESULTS.md](RESULTS.md#compiler-vs-plain-llm-npm-run-evalcompare-n--60) |
 | Evidence verifier | agreement 0.813, **spoofed packages advised to approve: 0** | target 0.85 (**missed**) | 16 | [RESULTS.md](RESULTS.md#ai-golden-sets-npm-run-eval) |
