@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>For sponsor judges · PaySettle manual</title>
+<style>
+:root{--ink:#14161c;--muted:#5a6070;--line:#e2e4ea;--bg:#f6f7f9;--card:#fff;--accent:#0f766e;--warn:#8a5c05;--warn-bg:#fdf1dc}
+*{box-sizing:border-box}body{margin:0;font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg)}
+a{color:var(--accent)}a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.skip{position:absolute;left:-999px}.skip:focus{left:12px;top:12px;background:#fff;padding:8px 12px;z-index:2}
+header,main,footer{max-width:980px;margin:0 auto;padding:0 24px}
+header{padding-top:32px}header p.kicker{margin:0;color:var(--accent);font-weight:600}
+h1{font-size:34px;line-height:1.2;margin:6px 0 8px}h2{font-size:24px;margin:40px 0 12px;padding-top:8px;border-top:1px solid var(--line)}h3{font-size:18px;margin:24px 0 8px}
+.lead{font-size:18px;color:var(--muted);max-width:720px}
+nav.toc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 20px;margin:20px 0}
+nav.toc ul{margin:6px 0;padding-left:0;list-style:none;columns:2}nav.toc li{margin:2px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin:16px 0}
+.note{background:var(--warn-bg);border-left:4px solid var(--warn);border-radius:8px;padding:12px 16px;margin:16px 0}
+ol.steps>li{margin:6px 0}
+figure{margin:16px 0 24px}figure img{width:100%;height:auto;max-height:900px;object-fit:cover;object-position:top;border:1px solid var(--line);border-radius:10px;background:#fff}
+figcaption{color:var(--muted);font-size:14px;margin-top:6px}
+table{border-collapse:collapse;width:100%;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:15px}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}th{background:#eef0f4;font-weight:600}
+code{font:14px ui-monospace,SFMono-Regular,Menlo,monospace;background:#eef0f4;padding:1px 5px;border-radius:4px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.grid a.card{display:block;text-decoration:none;color:var(--ink)}.grid a.card:hover{border-color:var(--accent)}
+.grid a.card b{display:block;font-size:18px;color:var(--accent)}
+footer{color:var(--muted);font-size:14px;padding:40px 24px 56px}
+</style>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header>
+<p class="kicker">PaySettle · AG Grid, Bryntum and Render</p>
+<h1>For sponsor judges</h1>
+<p class="lead">A one-minute path for each sponsor tool: which person to pick, which page to open and what to look at.</p>
+<p><a href="index.html">All manuals</a> · <a href="https://paysettle.onrender.com">Live demo</a> · <a href="https://github.com/swaasthsewa/paysettle">Code</a></p>
+</header>
+<main id="content">
+<nav class="toc" aria-label="On this page"><b>On this page</b><ul><li><a href="#signin">Signing in</a></li><li><a href="#aggrid">AG Grid</a></li><li><a href="#bryntum">Bryntum</a></li><li><a href="#render">Render</a></li></ul></nav>
+
+<h2 id="signin">Signing in</h2>
+<p>Open <a href="https://paysettle.onrender.com">the live demo</a>, choose <b>Try the live demo</b> (or go to <code>/login</code>) and pick the person named
+below under "Explore the live demo". No password is needed in the sandbox. To change person, use <b>Switch person</b> in the menu.</p>
+
+<h2 id="aggrid">AG Grid: one minute</h2>
+<p><b>Package:</b> AG Grid Community (<code>ag-grid-community</code>, <code>ag-grid-react</code>). <b>Where:</b> every console
+table, on 12 screens, through one shared wrapper with the app's own theme
+(<a href="https://github.com/swaasthsewa/paysettle/blob/7e97ed1583267dce9c9977b0e2f8ab7ea62ce08e/src/components/console/DataTable.tsx"><code>src/components/console/DataTable.tsx</code></a>,
+<a href="https://github.com/swaasthsewa/paysettle/tree/7e97ed1583267dce9c9977b0e2f8ab7ea62ce08e/src/components/grid"><code>src/components/grid/</code></a>).</p>
+<ol class="steps">
+<li>Sign in as <b>Farah Ali</b> (Finance) and open <b>Reconciliation</b> (<code>/finance/recon</code>): each tranche's contract,
+ledger and PayPal planes side by side; then <b>Ledger</b> (<code>/finance/ledger</code>): the invariant per tranche.</li>
+<li>In any grid: click a column header to <b>sort</b>, type in the search box to <b>filter</b>, use <b>Columns</b> to choose
+columns, and <b>Export CSV</b> to download what you see.</li>
+<li>Switch to <b>Olivia Grant</b> (Operations) and open <b>Overview</b> (<code>/ops</code>): contract clearance, holds near
+PayPal's window and escalated reviews, each a grid with its own SLA and risk columns.</li>
+</ol>
+<table><thead><tr><th>Person</th><th>Screens with AG Grid</th></tr></thead><tbody>
+<tr><td>Farah Ali (Finance)</td><td>Overview, Ledger, Reconciliation, Fees</td></tr>
+<tr><td>Olivia Grant (Operations)</td><td>Overview, Provider health</td></tr>
+<tr><td>Alex Chen (admin)</td><td>Audit chain, Webhooks and dead-letter queue, Identity auditor, Blog studio</td></tr>
+<tr><td>Marcus Bell (mediator)</td><td>Schedule: the deadlines list</td></tr>
+<tr><td>Priya Shah (client)</td><td>A contract's Timeline: the schedule as a table</td></tr>
+</tbody></table>
+<figure><img src="../screens/52-finance-reconciliation.png" alt="Finance reconciliation grid" loading="lazy"><figcaption>Farah Ali · Reconciliation: contract, ledger and PayPal per tranche — <a href="../screens/52-finance-reconciliation.png">open full size</a></figcaption></figure>
+<figure><img src="../screens/30-ops-overview.png" alt="Operations overview grids" loading="lazy"><figcaption>Olivia Grant · Operations overview: clearance, holds near the window, escalations — <a href="../screens/30-ops-overview.png">open full size</a></figcaption></figure>
+
+<h2 id="bryntum">Bryntum: one minute</h2>
+<p><b>Package:</b> Bryntum Gantt (the sponsor trial, <code>@bryntum/gantt-trial</code> with <code>@bryntum/gantt-react</code>),
+which also provides the Scheduler. <b>Where:</b> the contract timeline and the mediators' schedule, read-only
+(<a href="https://github.com/swaasthsewa/paysettle/blob/7e97ed1583267dce9c9977b0e2f8ab7ea62ce08e/src/components/timeline/GanttView.tsx"><code>GanttView.tsx</code></a>,
+<a href="https://github.com/swaasthsewa/paysettle/blob/7e97ed1583267dce9c9977b0e2f8ab7ea62ce08e/src/components/timeline/SchedulerView.tsx"><code>SchedulerView.tsx</code></a>).</p>
+<ol class="steps">
+<li>Sign in as <b>Priya Shah</b> (client), open <b>Contracts</b> → <b>Travel booking web app</b> → <b>Timeline</b>. The
+<b>Signed plan</b> tab shows every milestone on a calendar with where its money is (held in PayPal, released, gate), each
+tranche's PayPal hold window and today.</li>
+<li>Open the <b>Proposed change order</b> tab: the proposed plan drawn over the signed plan as baselines, with re-dated and
+added milestones marked. Nothing changes until both parties sign.</li>
+<li>Open <b>Contract chain (2 periods)</b>: period 1 and its continuation into period 2 on one calendar.</li>
+<li>Switch to <b>Marcus Bell</b> (mediator) and open <b>Schedule</b> (<code>/mediator/schedule</code>): the Bryntum Scheduler
+shows every open case per mediator against its deadline (sealed offers, evidence vault, verdict).</li>
+</ol>
+<figure><img src="../gallery/live-app/07-gantt-signed.jpg" alt="Contract timeline, signed plan" loading="lazy"><figcaption>Priya Shah · Timeline · Signed plan — <a href="../gallery/live-app/07-gantt-signed.jpg">open full size</a></figcaption></figure>
+<figure><img src="../gallery/live-app/08-gantt-change-order.jpg" alt="Contract timeline, proposed change order" loading="lazy"><figcaption>Proposed change order over the signed plan — <a href="../gallery/live-app/08-gantt-change-order.jpg">open full size</a></figcaption></figure>
+<figure><img src="../gallery/live-app/12-mediator-schedule.jpg" alt="Mediator schedule" loading="lazy"><figcaption>Marcus Bell · Schedule (Bryntum Scheduler) — <a href="../gallery/live-app/12-mediator-schedule.jpg">open full size</a></figcaption></figure>
+
+<h2 id="render">Render</h2>
+<p>The live demo runs on Render as a Docker web service with a Postgres database, defined as a Blueprint
+(<a href="https://github.com/swaasthsewa/paysettle/blob/7e97ed1583267dce9c9977b0e2f8ab7ea62ce08e/render.yaml"><code>render.yaml</code></a>) with a health check
+(<a href="https://paysettle.onrender.com/api/health"><code>/api/health</code></a>) and automatic deploys.</p>
+
+</main>
+<footer>PaySettle — PayPal AI Hackathon build. Sandbox only: PayPal Sandbox or simulated money; nothing real moves. Screens were captured from the live demo on 12 Nov 2026; your numbers will differ.</footer>
+</body>
+</html>

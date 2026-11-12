@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Can it be cheated? · PaySettle manual</title>
+<style>
+:root{--ink:#14161c;--muted:#5a6070;--line:#e2e4ea;--bg:#f6f7f9;--card:#fff;--accent:#0f766e;--warn:#8a5c05;--warn-bg:#fdf1dc}
+*{box-sizing:border-box}body{margin:0;font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg)}
+a{color:var(--accent)}a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.skip{position:absolute;left:-999px}.skip:focus{left:12px;top:12px;background:#fff;padding:8px 12px;z-index:2}
+header,main,footer{max-width:980px;margin:0 auto;padding:0 24px}
+header{padding-top:32px}header p.kicker{margin:0;color:var(--accent);font-weight:600}
+h1{font-size:34px;line-height:1.2;margin:6px 0 8px}h2{font-size:24px;margin:40px 0 12px;padding-top:8px;border-top:1px solid var(--line)}h3{font-size:18px;margin:24px 0 8px}
+.lead{font-size:18px;color:var(--muted);max-width:720px}
+nav.toc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 20px;margin:20px 0}
+nav.toc ul{margin:6px 0;padding-left:0;list-style:none;columns:2}nav.toc li{margin:2px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin:16px 0}
+.note{background:var(--warn-bg);border-left:4px solid var(--warn);border-radius:8px;padding:12px 16px;margin:16px 0}
+ol.steps>li{margin:6px 0}
+figure{margin:16px 0 24px}figure img{width:100%;height:auto;max-height:900px;object-fit:cover;object-position:top;border:1px solid var(--line);border-radius:10px;background:#fff}
+figcaption{color:var(--muted);font-size:14px;margin-top:6px}
+table{border-collapse:collapse;width:100%;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:15px}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}th{background:#eef0f4;font-weight:600}
+code{font:14px ui-monospace,SFMono-Regular,Menlo,monospace;background:#eef0f4;padding:1px 5px;border-radius:4px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.grid a.card{display:block;text-decoration:none;color:var(--ink)}.grid a.card:hover{border-color:var(--accent)}
+.grid a.card b{display:block;font-size:18px;color:var(--accent)}
+footer{color:var(--muted);font-size:14px;padding:40px 24px 56px}
+</style>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header>
+<p class="kicker">PaySettle · fooling the AI moves no money</p>
+<h1>Can it be cheated?</h1>
+<p class="lead">18 attempts to get paid without the right person's say-so, each run as a test on every push, and what each one moved: nothing that was not signed for.</p>
+<p><a href="index.html">All manuals</a> · <a href="https://paysettle.onrender.com">Live demo</a> · <a href="https://github.com/swaasthsewa/paysettle">Code</a></p>
+</header>
+<main id="content">
+<nav class="toc" aria-label="On this page"><b>On this page</b><ul><li><a href="#why">Why the AI is never the judge</a></li><li><a href="#attempts">The 18 attempts</a></li><li><a href="#boundary">The AI boundary</a></li><li><a href="#limits">Where it can still be fooled</a></li></ul></nav>
+
+<h2 id="why">Why the AI is never the judge</h2>
+<p>If an AI's verdict releases the money, whoever fools the AI is paid. In PaySettle the AI only advises, so fooling it gets
+you wrong advice and nothing else. Money reaches PayPal only through a signed decision: the client's approval with an
+authenticator code over the evidence fingerprint, sealed offers from both sides that meet, or a human mediator's signed
+verdict (co-signed by a second mediator above $5,000).</p>
+
+<h2 id="attempts">The 18 attempts</h2>
+<p>Each attempt runs on the real modules with the mock PayPal rail, as a test on every push. Where the AI is involved, a
+scripted model is fully fooled and advises approve. Select an attempt's number to read its test.
+<b>Result: <a href="https://github.com/swaasthsewa/paysettle/actions/runs/43242033869">CI run 43242033869</a>, 18 of 18 passed.</b></p>
+<table><thead><tr><th>#</th><th>Attempt</th><th>What happens</th><th>Money moved</th></tr></thead><tbody><tr><td><a href="https://github.com/swaasthsewa/paysettle/blob/7e97ed1583267dce9c9977b0e2f8ab7ea62ce08e/src/server/cheat.integration.test.ts#L170">C01</a></td><td>Instructions to the AI hidden in evidence text</td><td>Text fenced as untrusted; the fooled AI advises approve; a release without the client's signature is refused</td><td><b>$0</b></td></tr><tr><td><a href="https://github.com/swaasthsewa/paysettle/blob/7e97ed1583267dce9c9977b0e2f8ab7ea62ce08e/src/server/cheat.integration.test.ts#L203">C02</a></td><td>Instructions in a file name, photo metadata or PDF metadata</td><td>Markup stripped; metadata never sent as text; the fooled AI advises approve</td><td><b>$0</b></td></tr><tr><td><a href="https://github.com/swaasthsewa/paysettle/blob/7e97ed1583267dce9c9977b0e2f8ab7ea62ce08e/src/server/cheat.integration.test.ts#L237">C03</a></td><td>A photo with its GPS position rewritten to the site</td><td>Passes the location check (a hint, not proof); the fooled AI advises approve</td><td><b>$0</b></td></tr><tr><td><a href="https://github.com/swaasthsewa/paysettle/blob/7e97ed1583267dce9c9977b0e2f8ab7ea62ce08e/src/server/cheat.integration.test.ts#L257">C04</a></td><td>A backdated photo</td><td>Flagged as outside the expected dates; the fooled AI advises approve</td><td><b>$0</b></td></tr><tr><td><a href="https://github.com/swaasthsewa/paysettle/blob/7e97ed1583267dce9c9977b0e2f8ab7ea62ce08e/src/server/cheat.integration.test.ts#L272">C05</a></td><td>A photo reused from another job, even with one pixel changed</td><td>Refused as a duplicate</td><td><b>$0</b></td></tr><tr><td><a href="https://github.com/swaasthsewa/paysettle/blob/7e97ed1583267dce9c9977b0e2f8ab7ea62ce08e/src/server/cheat.integration.test.ts#L302">C06</a></td><td>Empty files, or files unrelated to the job</td><td>Empty and wrong-type packages refused; unrelated files of the right type wait for the client</td><td><b>$0</b></td></tr><tr><td><a href="https://github.com/swaasthsewa/paysettle/blob/7e97ed1583267dce9c9977b0e2f8ab7ea62ce08e/src/server/cheat.integration.test.ts#L322">C07</a></td><td>The AI advises approve; the client stays silent</td><td>After 72 hours the milestone goes to Operations (the default; only a deemed-approval rule both parties signed would release it)</td><td><b>$0 until the client approves</b></td></tr><tr><td><a href="https://github.com/swaasthsewa/paysettle/blob/7e97ed1583267dce9c9977b0e2f8ab7ea62ce08e/src/server/cheat.integration.test.ts#L347">C08</a></td><td>An agent calls approve_release over MCP</td><td>Records a pending request only; a wrong authenticator code is refused</td><td><b>$0 until the client approves</b></td></tr><tr><td><a href="https://github.com/swaasthsewa/paysettle/blob/7e97ed1583267dce9c9977b0e2f8ab7ea62ce08e/src/server/cheat.integration.test.ts#L383">C09</a></td><td>An agent asks for more than its spend limit</td><td>Refused before any PayPal order exists</td><td><b>$0</b></td></tr><tr><td><a href="https://github.com/swaasthsewa/paysettle/blob/7e97ed1583267dce9c9977b0e2f8ab7ea62ce08e/src/server/cheat.integration.test.ts#L406">C10</a></td><td>A forged PayPal webhook</td><td>Signature check fails; the event is quarantined</td><td><b>$0</b></td></tr><tr><td><a href="https://github.com/swaasthsewa/paysettle/blob/7e97ed1583267dce9c9977b0e2f8ab7ea62ce08e/src/server/cheat.integration.test.ts#L443">C11</a></td><td>A replayed PayPal webhook</td><td>Applied once</td><td><b>One hold, not two</b></td></tr><tr><td><a href="https://github.com/swaasthsewa/paysettle/blob/7e97ed1583267dce9c9977b0e2f8ab7ea62ce08e/src/server/cheat.integration.test.ts#L465">C12</a></td><td>A flood of retries on one release after PayPal outages</td><td>One idempotency key</td><td><b>Exactly one capture</b></td></tr><tr><td><a href="https://github.com/swaasthsewa/paysettle/blob/7e97ed1583267dce9c9977b0e2f8ab7ea62ce08e/src/server/cheat.integration.test.ts#L493">C13</a></td><td>The contract edited after signing</td><td>Signature voided; a stale hash refused; a locked contract cannot be edited; a change order needs both signatures</td><td><b>$0</b></td></tr><tr><td><a href="https://github.com/swaasthsewa/paysettle/blob/7e97ed1583267dce9c9977b0e2f8ab7ea62ce08e/src/server/cheat.integration.test.ts#L556">C14</a></td><td>Ledger, release, verdict or audit rows edited in the database</td><td>Refused by append-only triggers; an audit-log row edited with the triggers switched off breaks the hash chain at that row</td><td><b>$0</b></td></tr><tr><td><a href="https://github.com/swaasthsewa/paysettle/blob/7e97ed1583267dce9c9977b0e2f8ab7ea62ce08e/src/server/cheat.integration.test.ts#L595">C15</a></td><td>Peeking at the other side's sealed offer</td><td>Neither number is shown until the offers meet</td><td><b>$0 until they meet</b></td></tr><tr><td><a href="https://github.com/swaasthsewa/paysettle/blob/7e97ed1583267dce9c9977b0e2f8ab7ea62ce08e/src/server/cheat.integration.test.ts#L633">C16</a></td><td>A mediator with a conflict of interest</td><td>Not assigned; a verdict over $5,000 waits for a second, conflict-free mediator</td><td><b>$0 until co-signed</b></td></tr><tr><td><a href="https://github.com/swaasthsewa/paysettle/blob/7e97ed1583267dce9c9977b0e2f8ab7ea62ce08e/src/server/cheat.integration.test.ts#L679">C17</a></td><td>A signed verdict's amounts edited in the database while it waits for its co-signature</td><td>Refused by the database; the co-signature pays exactly the signed split</td><td><b>Only the signed split</b></td></tr><tr><td><a href="https://github.com/swaasthsewa/paysettle/blob/7e97ed1583267dce9c9977b0e2f8ab7ea62ce08e/src/server/cheat.integration.test.ts#L703">C18</a></td><td>A client approval written straight into the database with a forged signature</td><td>The release checks the approval's keyed signature and refuses</td><td><b>$0</b></td></tr></tbody></table>
+
+<h2 id="boundary">The AI boundary</h2>
+<p>A static test (<a href="https://github.com/swaasthsewa/paysettle/blob/7e97ed1583267dce9c9977b0e2f8ab7ea62ce08e/src/lib/ai/boundary.test.ts"><code>src/lib/ai/boundary.test.ts</code></a>) follows every import from the AI code and fails
+the build if any of it can reach code that moves money or writes a contract, ledger row, signature, release or verdict. The
+MCP bindings may hand agents only entry points that a person still gates.</p>
+
+<h2 id="limits">Where it can still be fooled</h2>
+<div class="note">
+<ul>
+<li>A well-forged photo can fool the client as well as the AI. The mediator and the evidence vault are the backstop;
+reading signed camera photos (C2PA) and independent inspections for physical work are next.</li>
+<li>In the sandbox demo, a client without an authenticator can approve without a code; outside the sandbox the code is required.</li>
+<li>Sealed offers are hidden from the other party, not encrypted in the database.</li>
+<li>Someone with write access to the database could move money between the milestones of a locked contract (same total):
+the contract's fingerprint shows the change, but it is not yet re-checked before funding or release, because a rollover
+moves milestones between tranches without a new revision.</li>
+<li>Someone with full database administrator rights can switch off triggers, as on any database; the hash-linked audit log
+shows a naive edit.</li>
+</ul>
+</div>
+
+</main>
+<footer>PaySettle — PayPal AI Hackathon build. Sandbox only: PayPal Sandbox or simulated money; nothing real moves. Screens were captured from the live demo on 12 Nov 2026; your numbers will differ.</footer>
+</body>
+</html>

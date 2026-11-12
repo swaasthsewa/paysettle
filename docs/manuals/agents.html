@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI agents · PaySettle manual</title>
+<style>
+:root{--ink:#14161c;--muted:#5a6070;--line:#e2e4ea;--bg:#f6f7f9;--card:#fff;--accent:#0f766e;--warn:#8a5c05;--warn-bg:#fdf1dc}
+*{box-sizing:border-box}body{margin:0;font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg)}
+a{color:var(--accent)}a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.skip{position:absolute;left:-999px}.skip:focus{left:12px;top:12px;background:#fff;padding:8px 12px;z-index:2}
+header,main,footer{max-width:980px;margin:0 auto;padding:0 24px}
+header{padding-top:32px}header p.kicker{margin:0;color:var(--accent);font-weight:600}
+h1{font-size:34px;line-height:1.2;margin:6px 0 8px}h2{font-size:24px;margin:40px 0 12px;padding-top:8px;border-top:1px solid var(--line)}h3{font-size:18px;margin:24px 0 8px}
+.lead{font-size:18px;color:var(--muted);max-width:720px}
+nav.toc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 20px;margin:20px 0}
+nav.toc ul{margin:6px 0;padding-left:0;list-style:none;columns:2}nav.toc li{margin:2px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin:16px 0}
+.note{background:var(--warn-bg);border-left:4px solid var(--warn);border-radius:8px;padding:12px 16px;margin:16px 0}
+ol.steps>li{margin:6px 0}
+figure{margin:16px 0 24px}figure img{width:100%;height:auto;max-height:900px;object-fit:cover;object-position:top;border:1px solid var(--line);border-radius:10px;background:#fff}
+figcaption{color:var(--muted);font-size:14px;margin-top:6px}
+table{border-collapse:collapse;width:100%;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:15px}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}th{background:#eef0f4;font-weight:600}
+code{font:14px ui-monospace,SFMono-Regular,Menlo,monospace;background:#eef0f4;padding:1px 5px;border-radius:4px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.grid a.card{display:block;text-decoration:none;color:var(--ink)}.grid a.card:hover{border-color:var(--accent)}
+.grid a.card b{display:block;font-size:18px;color:var(--accent)}
+footer{color:var(--muted);font-size:14px;padding:40px 24px 56px}
+</style>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header>
+<p class="kicker">PaySettle · agents over MCP, people approve money</p>
+<h1>AI agents</h1>
+<p class="lead">How an AI agent works with PaySettle: it drafts, negotiates, asks for funding and submits evidence within a spend limit, and a person approves every payment.</p>
+<p><a href="index.html">All manuals</a> · <a href="https://paysettle.onrender.com">Live demo</a> · <a href="https://github.com/swaasthsewa/paysettle">Code</a></p>
+</header>
+<main id="content">
+<nav class="toc" aria-label="On this page"><b>On this page</b><ul><li><a href="#idea">The idea</a></li><li><a href="#tools">The nine tools</a></li><li><a href="#tokens">Tokens and spend limits</a></li><li><a href="#walkthrough">Walkthrough: S6</a></li><li><a href="#tested">How it is tested</a></li></ul></nav>
+
+<h2 id="idea">The idea</h2>
+<p>AI agents will draft, negotiate and track work for people. PaySettle lets an agent do that work through its own MCP server,
+within a spend limit its person sets, while <b>a person approves every hold and every release</b>. The agent can ask; it
+cannot pay.</p>
+
+<h2 id="tools">The nine tools</h2>
+<table><thead><tr><th>Tool</th><th>What it does</th><th>Money?</th></tr></thead><tbody>
+<tr><td><code>search_blueprints</code></td><td>Finds vetted milestone plans for a job</td><td>No</td></tr>
+<tr><td><code>draft_contract</code></td><td>Drafts a contract from a blueprint and a brief</td><td>No</td></tr>
+<tr><td><code>propose_changes</code></td><td>Proposes edits while the contract is negotiated</td><td>No</td></tr>
+<tr><td><code>propose_change_order</code></td><td>Proposes a change to a signed contract; both parties must sign it</td><td>No</td></tr>
+<tr><td><code>get_contract_status</code></td><td>Reads where the contract and its money are</td><td>No</td></tr>
+<tr><td><code>request_funding</code></td><td>Creates the PayPal order and returns the approval link; nothing is held until the buyer approves in PayPal</td><td>Within the spend limit; a person approves</td></tr>
+<tr><td><code>submit_evidence</code></td><td>Submits the proof a milestone names</td><td>No</td></tr>
+<tr><td><code>approve_release</code></td><td>Records a pending release request; the client confirms in the app with an authenticator code</td><td>No: a person releases</td></tr>
+<tr><td><code>open_dispute</code></td><td>Opens a dispute on one milestone</td><td>No</td></tr>
+</tbody></table>
+
+<h2 id="tokens">Agent tokens and spend limits</h2>
+<p>A person mints an agent token on <b>AI &amp; agents</b> (<code>/account/ai</code>), with a label and a spend limit. The token
+acts only as that person, only within the limit, and can be revoked there.</p>
+<figure><img src="../screens/83-account-ai-agents.png" alt="AI and agents page" loading="lazy"><figcaption>AI &amp; agents: AI status, what is sent to the AI provider, and agent tokens — <a href="../screens/83-account-ai-agents.png">open full size</a></figcaption></figure>
+
+<h2 id="walkthrough">Walkthrough: playground scenario S6</h2>
+<p>Sign in as <b>Hackathon Judge</b>, open the <b>Judge Playground</b>, choose <b>Fast mock</b> and start <b>S6 Agentic —
+Consulting sprint over MCP</b>. Press <b>Run next step</b> to go one at a time:</p>
+<ol class="steps">
+<li><b>Mint agent tokens for both parties</b>: the client's agent and the provider's agent each get a scoped token.</li>
+<li><b>Agent: draft_contract</b>: the client's agent drafts a consulting sprint from a vetted blueprint.</li>
+<li><b>Provider agent: propose_changes</b>: the provider's agent proposes edits.</li>
+<li><b>People review and sign</b>: both people sign the same revision and hash. Agents cannot sign.</li>
+<li><b>Agent: request_funding</b>: the client's agent creates the PayPal order within its spend limit.</li>
+<li><b>Person approves the hold</b>: the client approves in PayPal; only now is the money held.</li>
+<li><b>Provider agent: submit_evidence</b>: the provider's agent submits the proof.</li>
+<li><b>Agent: approve_release</b>: the client's agent asks for the release; a pending request is recorded and no money moves.</li>
+<li><b>Person approves with MFA → release</b>: the client confirms with an authenticator code, and PayPal captures that milestone.</li>
+</ol>
+<p>The <b>Wire log</b> view shows each MCP call next to the PayPal calls it led to.</p>
+
+<h2 id="tested">How it is tested</h2>
+<p>Cheat attempts C08 (an agent calls <code>approve_release</code>) and C09 (an agent goes past its spend limit) run on every push;
+see <a href="cheat.html">Can it be cheated?</a>. A static test fails the build if any AI code can reach code that moves money.
+More: blog post <a href="https://paysettle.onrender.com/blog/letting-an-ai-agent-buy-a-service-safely">"Letting an AI agent buy a service safely"</a> on the live site.</p>
+
+</main>
+<footer>PaySettle — PayPal AI Hackathon build. Sandbox only: PayPal Sandbox or simulated money; nothing real moves. Screens were captured from the live demo on 12 Nov 2026; your numbers will differ.</footer>
+</body>
+</html>

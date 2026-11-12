@@ -2,11 +2,21 @@
 
 [![ci](https://github.com/swaasthsewa/paysettle/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/swaasthsewa/paysettle/actions/workflows/ci.yml) [![licence: MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE) [![live demo](https://img.shields.io/badge/live%20demo-paysettle.onrender.com-0d9488)](https://paysettle.onrender.com) [![video](https://img.shields.io/badge/video-2%3A58-f97316)](https://youtu.be/G4lLq1aySiY)
 
-**A vague statement of work in; a signed milestone contract out, where every PayPal capture is tied to the evidence
-its clause names.** Agree what *done* means. Get paid when it is.
+**Milestone contracts with the money held in PayPal. Agree what *done* means; get paid when it is.**
+
+What PaySettle combines:
+
+- **Any staged job, physical work included.** 20 vetted blueprints, from a web MVP to a kitchen fit-out, roofing, solar,
+  events and travel, with proof to match: test reports, dated photos, inspection certificates.
+- **A dispute pauses one stage and ends with a person, not an AI verdict.** Sealed offers first, then an evidence vault,
+  then a human mediator (a second one co-signs above $5,000). The rest of the project carries on.
+- **The whole life of a contract.** Change orders both sides sign, funded as their own hold; unfinished work continues into
+  the next period on the same contract chain.
+- **Every payment reconciled to the cent with PayPal's own records**, and [fooling the AI moves no money](https://swaasthsewa.github.io/paysettle/manuals/cheat.html).
 
 **[▶ Watch the video (2:58)](https://youtu.be/G4lLq1aySiY)** · **[Live demo, no account](https://paysettle.onrender.com)** ·
 [In 16 slides](https://swaasthsewa.github.io/paysettle/slides/) · [Role manuals](https://swaasthsewa.github.io/paysettle/manuals/) ·
+[For sponsor judges](#for-sponsor-judges) · [AI agents](https://swaasthsewa.github.io/paysettle/manuals/agents.html) ·
 [Measured results](RESULTS.md) · [How it works](docs/architecture.md) · [Run it in 3 commands](#run-it-in-3-commands-no-keys)
 
 ![A dispute settled by sealed offers on the live app: $1,080 captured for the provider in PayPal Sandbox, $420 never taken from the client](docs/readme/hero-settled.gif)
@@ -115,6 +125,33 @@ The timeline and the tables are in the gallery: [timeline](docs/gallery/live-app
 [change order](docs/gallery/live-app/08-gantt-change-order.jpg), [mediator schedule](docs/gallery/live-app/12-mediator-schedule.jpg),
 [reconciliation](docs/gallery/live-app/10-finance-recon.jpg).
 
+## For sponsor judges
+
+One minute each, on the [live demo](https://paysettle.onrender.com): choose **Try the live demo** and pick the person named
+(no password). Full guide with screenshots: [For sponsor judges](https://swaasthsewa.github.io/paysettle/manuals/sponsors.html).
+
+| Sponsor | Sign in as | Open | Look for |
+|---|---|---|---|
+| **AG Grid** | Farah Ali (Finance) | **Reconciliation**, then **Ledger** | contract, ledger and PayPal per tranche; sort by a header, filter, **Columns**, **Export CSV** |
+| **AG Grid** | Olivia Grant (Operations) | **Overview** | clearance, holds near PayPal's window and escalations as grids with SLA and risk columns |
+| **Bryntum** | Priya Shah (client) | **Contracts → Travel booking web app → Timeline** | **Signed plan** (where each milestone's money is), **Proposed change order** (drawn over the signed plan), **Contract chain (2 periods)** |
+| **Bryntum** | Marcus Bell (mediator) | **Schedule** | the Scheduler: every open case per mediator against its deadline |
+| **Render** | — | [`/api/health`](https://paysettle.onrender.com/api/health), [`render.yaml`](render.yaml) | the live demo itself: a Docker web service and Postgres, deployed as a Blueprint |
+
+| [<img src="docs/gallery/live-app/10-finance-recon.jpg" width="420" alt="AG Grid: Finance reconciliation">](docs/gallery/live-app/10-finance-recon.jpg) | [<img src="docs/gallery/live-app/08-gantt-change-order.jpg" width="420" alt="Bryntum Gantt: a proposed change order over the signed plan">](docs/gallery/live-app/08-gantt-change-order.jpg) |
+|---|---|
+| AG Grid · Finance reconciliation | Bryntum Gantt · a change order over the signed plan |
+
+## AI agents: they ask, people pay
+
+An agent can work with PaySettle through its own MCP server (nine tools) with a token its person mints on
+**AI & agents**, within a spend limit. In Judge Playground scenario **S6**, the client's agent drafts a consulting sprint,
+the provider's agent proposes changes, both **people** sign, the agent requests funding (only a PayPal approval link), the
+**client** approves the hold in PayPal, the provider's agent submits the evidence, and the agent's `approve_release` only
+records a request until the **client** confirms with an authenticator code. Walkthrough and the nine tools:
+[AI agents](https://swaasthsewa.github.io/paysettle/manuals/agents.html) · blog post
+[Letting an AI agent buy a service safely](https://paysettle.onrender.com/blog/letting-an-ai-agent-buy-a-service-safely).
+
 ## What the AI decides, and what it never decides
 
 | AI (Claude, `claude-sonnet-5-5`, through one gateway) | What it decides |
@@ -150,6 +187,7 @@ verdict (co-signed by a second mediator above $5,000).
 that decision. Each runs on the real modules with the mock rail; where the AI is involved, a scripted model is fully
 fooled and advises approve. A static test ([`src/lib/ai/boundary.test.ts`](src/lib/ai/boundary.test.ts)) fails the build
 if any AI code can reach code that moves money. Both run on every push ([CI run, 18 of 18 and 3 of 3 passed](https://github.com/swaasthsewa/paysettle/actions/runs/43237084081)).
+The same list as a page, each attempt linked to its test: [Can it be cheated?](https://swaasthsewa.github.io/paysettle/manuals/cheat.html)
 
 | # | Attempt | What happens | Money moved |
 |---|---|---|---|
@@ -372,6 +410,7 @@ change demo data; run them against a disposable database. Dated results: [`RESUL
 - [`RESULTS.md`](RESULTS.md): every measured number, with the command, date and commit.
 - [`docs/architecture.md`](docs/architecture.md): modules, rails and data flow.
 - [`docs/gallery/`](docs/gallery/README.md): explainer slides, live-app screens, video frames and architecture images.
+- Highlights for judges: [Can it be cheated?](https://swaasthsewa.github.io/paysettle/manuals/cheat.html) · [AI agents](https://swaasthsewa.github.io/paysettle/manuals/agents.html) · [For sponsor judges](https://swaasthsewa.github.io/paysettle/manuals/sponsors.html).
 - [Role manuals](https://swaasthsewa.github.io/paysettle/manuals/): one manual per role, with screenshots (source in [`docs/manuals/`](docs/manuals), images in [`docs/screens/`](docs/screens)).
 - [`REUSE.md`](REUSE.md): components reused from the author's earlier projects.
 
