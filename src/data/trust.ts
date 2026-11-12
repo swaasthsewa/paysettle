@@ -268,6 +268,18 @@ export const THEMES: readonly Theme[] = [
         status: "built",
         links: [{ href: "/trust/ai#evals", label: "Prompt-injection test results" }],
       },
+      {
+        id: "ai-fooled",
+        question: "Someone fools the AI completely, and it advises paying for work that was never done.",
+        built: "Then the advice is wrong, and still no money moves. The AI cannot sign, capture or write to the ledger. A release needs the client's own approval, signed with an authenticator code over the fingerprint of the evidence. A disagreement is settled by both parties' sealed offers or by a human mediator's signed verdict. An agent's approve_release request only waits for the client. Eighteen cheat attempts, from hidden instructions to forged PayPal notices, edited ledger rows and forged approvals, run as tests on every push, and none moves money without that signed decision.",
+        setAside: [
+          { option: "Letting the AI's verdict release the money", why: "Then whoever fools the AI is paid. A fooled adviser costs a second look; a fooled judge costs the money." },
+          { option: "A second AI to check the first", why: "It helps, but two models can be fooled together. The final step stays with people and with rules the evidence cannot change." },
+        ],
+        next: "Forged photos can still fool a person. Reading content credentials (C2PA) and independent inspections for physical work are next.",
+        status: "progress",
+        links: [{ href: "/trust/ai#evals", label: "AI test sets" }, { href: "/playground", label: "Judge Playground, scenarios S2 and S5", as: JUDGE }],
+      },
     ],
   },
   {

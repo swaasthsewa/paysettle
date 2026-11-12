@@ -6,12 +6,30 @@
 its clause names.** Agree what *done* means. Get paid when it is.
 
 **[▶ Watch the video (2:58)](https://youtu.be/G4lLq1aySiY)** · **[Live demo, no account](https://paysettle.onrender.com)** ·
+[In 16 slides](https://swaasthsewa.github.io/paysettle/slides/) · [Role manuals](https://swaasthsewa.github.io/paysettle/manuals/) ·
 [Measured results](RESULTS.md) · [How it works](docs/architecture.md) · [Run it in 3 commands](#run-it-in-3-commands-no-keys)
 
 ![A dispute settled by sealed offers on the live app: $1,080 captured for the provider in PayPal Sandbox, $420 never taken from the client](docs/readme/hero-settled.gif)
 
 Built for the **PayPal AI Hackathon** (submission period 1 Oct – 12 Nov 2026). **PayPal Sandbox only: no real money
 moves.** Parts reused from the author's earlier projects are listed in [`REUSE.md`](REUSE.md).
+
+## Why this exists
+
+Three things happened to the author:
+
+- **A trip paid in advance.** The hotel at check-in was not the one booked, and the agency said the hotel decides. The
+  money had already gone.
+- **A client who paid late.** The work was signed off; the last payment took months of reminders.
+- **A project that kept growing.** "Small" changes, none written down, all expected free, with the same deadline.
+
+Each had a contract. None had a definition of done: nobody wrote down, in a way anyone could check, what finished meant,
+what a change costs, or when the money moves. It is common, and it cuts both ways. In Remote's survey of 3,300
+freelancers in 10 countries, 85% are paid late at least some of the time and only 15% are always paid on time; among
+1,900 employers, 25% had freelancers miss deadlines
+([Remote, *The State of Freelance Work 2025*](https://remote.com/resources/research/contractor-management-report),
+pp. 4, 16, 21). PaySettle protects both sides: the client pays only for checked work, and the provider knows the money is
+held before the work starts.
 
 ## What it does
 
@@ -36,8 +54,8 @@ PaySettle settles that question before any money moves.
 | [<img src="docs/gallery/slides/03-process-flow.jpg" width="420" alt="Process flow: draft, sign, hold, prove, release, continue">](docs/gallery/slides/03-process-flow.jpg) | [<img src="docs/gallery/slides/05-paypal-money-flow.jpg" width="420" alt="PayPal money flow: one authorization per tranche, one partial capture per approval">](docs/gallery/slides/05-paypal-money-flow.jpg) |
 | [<img src="docs/gallery/slides/09-provider-dashboard.jpg" width="420" alt="Provider dashboard on the live app">](docs/gallery/slides/09-provider-dashboard.jpg) | [<img src="docs/gallery/slides/10-gantt-timeline.jpg" width="420" alt="Contract timeline built with the Bryntum Gantt">](docs/gallery/slides/10-gantt-timeline.jpg) |
 
-**[All 39 images →](docs/gallery/README.md)**: 15 explainer slides (concept, block diagram, criteria compiler, disputes,
-when to use it, how it differs), 12 live-app screens, 10 frames from the video and the architecture diagrams.
+**[All 40 images →](docs/gallery/README.md)**: 16 explainer slides (concept, block diagram, criteria compiler, disputes,
+when to use it, how it differs, can it be cheated), 12 live-app screens, 10 frames from the video and the architecture diagrams.
 
 ## At a glance
 
@@ -119,6 +137,48 @@ output can write a contract, a ledger row, a signature or a release.
 (both 1.0; the set is too easy to separate them). What the compiler adds is how it runs: its rule path needs no key,
 answers the same every time and always gives a reason, and AI rewrites must pass the same linter. More important, the
 model never touches money: a release needs a signed contract, matching evidence and the client's approval.
+
+## Can it be cheated?
+
+If an AI's verdict releases the money, whoever fools the AI is paid. Here the AI only advises, so fooling it gets you
+wrong advice and nothing else. Money reaches PayPal only through a signed decision: the client's approval with an
+authenticator code over the evidence fingerprint, sealed offers from both sides that meet, or a human mediator's signed
+verdict (co-signed by a second mediator above $5,000).
+
+[`src/server/cheat.integration.test.ts`](src/server/cheat.integration.test.ts) tries 18 ways to get paid without
+that decision. Each runs on the real modules with the mock rail; where the AI is involved, a scripted model is fully
+fooled and advises approve. A static test ([`src/lib/ai/boundary.test.ts`](src/lib/ai/boundary.test.ts)) fails the build
+if any AI code can reach code that moves money. Both run on every push ([CI run, 18 of 18 and 3 of 3 passed](https://github.com/swaasthsewa/paysettle/actions/runs/43237084081)).
+
+| # | Attempt | What happens | Money moved |
+|---|---|---|---|
+| C01 | Instructions to the AI hidden in evidence text | Text is fenced as untrusted; the fooled AI advises approve; release without the client's signature is refused | $0 |
+| C02 | Instructions in a file name, photo metadata or PDF metadata | Markup stripped; metadata never sent as text; the fooled AI advises approve | $0 |
+| C03 | A photo with its GPS position rewritten to the site | Passes the location check (a hint, not proof); the fooled AI advises approve | $0 |
+| C04 | A backdated photo | Flagged as outside the expected dates; the fooled AI advises approve | $0 |
+| C05 | A photo reused from another job, even with one pixel changed | Refused as a duplicate | $0 |
+| C06 | Empty files, or files unrelated to the job | Empty and wrong-type packages refused; unrelated files of the right type wait for the client | $0 |
+| C07 | The AI advises approve; the client stays silent | After 72 hours the milestone goes to Operations (the default; only a deemed-approval rule both parties signed would release it) | $0 until the client approves |
+| C08 | An agent calls `approve_release` over MCP | Records a pending request only; a wrong authenticator code is refused | $0 until the client approves |
+| C09 | An agent asks for more than its spend limit | Refused before any PayPal order exists | $0 |
+| C10 | A forged PayPal webhook | Signature check fails; the event is quarantined | $0 |
+| C11 | A replayed PayPal webhook | Applied once | One hold, not two |
+| C12 | A flood of retries on one release after PayPal outages | One idempotency key | Exactly one capture |
+| C13 | The contract edited after signing | Signature voided; a stale hash refused; a locked contract can't be edited; a change order needs both signatures | $0 |
+| C14 | Ledger, release, verdict or audit rows edited in the database | Refused by append-only triggers; an audit-log row edited with the triggers switched off breaks the hash chain at that row | $0 |
+| C15 | Peeking at the other side's sealed offer | Neither number is shown until the offers meet | $0 until they meet |
+| C16 | A mediator with a conflict of interest | Not assigned; a verdict over $5,000 waits for a second, conflict-free mediator | $0 until co-signed |
+| C17 | A signed verdict's amounts edited in the database while it waits for its co-signature | Refused by the database; the co-signature pays exactly the signed split | Only the signed split |
+| C18 | A client approval written straight into the database with a forged signature | The release checks the approval's keyed signature and refuses | $0 |
+
+**Where it can still be fooled.** A well-forged photo can fool the client as well as the AI; the mediator and the
+evidence vault are the backstop, and reading signed camera photos (C2PA) and independent inspections for physical work
+are next. In the sandbox demo, a client without an authenticator can approve without a code; outside the sandbox the code
+is required. Sealed offers are hidden from the other party, not encrypted in the database. Someone with write access to the
+database could move money between the milestones of a locked contract (same total): the contract's fingerprint shows the
+change, but it is not yet re-checked before funding or release, because a rollover moves milestones between tranches
+without a new revision. Someone with full database administrator rights can switch off triggers, as on any database; the
+hash-linked audit log shows a naive edit.
 
 ## For judges
 
