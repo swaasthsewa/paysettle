@@ -27,6 +27,7 @@ import { RailError, type HoldRef, type HoldState } from "@/lib/rails";
 import { canWrite } from "@/lib/rbac";
 import { offsetFor, workspaceNow } from "../clock";
 import { DomainError, type Actor } from "../types";
+import { verifyApprovalSignature } from "../evidence/signing";
 import {
   FEE_ACCOUNT, FUNDED, SETTLE_DAY, SYSTEM, auditActor, balanceOf, claimMark, clientAccount, fundedAmount, hasMark, holdAccount,
   isRailB, loadMilestone, loadTranche, loadWorkspace, movedByMilestone, notify, openReady, payeeOf, poolAccount, providerAccount, railMessage,
@@ -148,12 +149,19 @@ export async function releaseMilestone(a: Actor, milestoneId: string, p: { amoun
   if (kind === "VERDICT" && !["mediator", "ops", "admin"].includes(a.role) && !(a.role === "judge" && sandboxMode()))
     throw new DomainError("FORBIDDEN", "Only a mediator's verdict can release disputed money.");
 
-  await assertApproval(m.id, kind, p.approvalSig);
+  const approval = await assertApproval(m.id, kind, p.approvalSig);
 
   const [existing] = await db.select().from(releases).where(and(eq(releases.milestoneId, m.id), eq(releases.kind, kind))).limit(1);
   if (existing && (existing.status === "COMPLETED" || existing.status === "IN_FLIGHT")) {
     await afterRelease(a, m.id, existing.trancheId); // finish a deduction return or pool close that did not complete earlier
     return { releaseId: existing.id, netCents: existing.netCents, feeCents: existing.feeCents };
+  }
+  /* P4: before anything is recorded or sent to the rail, the recorded approval's signature must be the deployment key's
+     HMAC over this milestone and the approved evidence root (a row written straight into the database does not have it).
+     A queued release retried later checks the same stored signature again. */
+  if (approval && !verifyApprovalSignature(m.id, approval.rootHash, p.approvalSig)) {
+    await audit(db, auditActor(a), "money.approval_signature_invalid", m.id, { reviewId: approval.id, kind });
+    throw new DomainError("APPROVAL_SIGNATURE_INVALID", "The recorded approval for this milestone does not carry a valid signature over its evidence, so nothing is released. The client approves the evidence again in the app.");
   }
 
   const t = await trancheFor(db, w.id, m.trancheIdx);
@@ -267,18 +275,19 @@ async function afterRelease(a: Actor | null, milestoneId: string, trancheId: str
  *    client's signed approval; gates use the same row) or DEEMED_APPROVED (the deemed-approval rule the client signed into
  *    the contract), whose signature equals approvalSig.
  *  - VERDICT: a verdicts row for the dispute on this milestone whose signature equals approvalSig.
- * Otherwise APPROVAL_REQUIRED and nothing is recorded or moved.
+ * Otherwise APPROVAL_REQUIRED and nothing is recorded or moved. For MILESTONE the review is returned so the caller can
+ * also check that the signature is the deployment key's HMAC over the milestone and the review's root hash.
  */
-async function assertApproval(milestoneId: string, kind: "MILESTONE" | "VERDICT", sig: string): Promise<void> {
+async function assertApproval(milestoneId: string, kind: "MILESTONE" | "VERDICT", sig: string): Promise<{ id: string; rootHash: string } | null> {
   if (kind === "MILESTONE") {
-    const [r] = await db.select({ id: evidenceReviews.id }).from(evidenceReviews)
+    const [r] = await db.select({ id: evidenceReviews.id, rootHash: evidenceReviews.rootHash }).from(evidenceReviews)
       .where(and(eq(evidenceReviews.milestoneId, milestoneId), inArray(evidenceReviews.decision, ["APPROVE", "DEEMED_APPROVED"]), eq(evidenceReviews.signature, sig))).limit(1);
-    if (r) return;
+    if (r) return r;
     throw new DomainError("APPROVAL_REQUIRED", "This release has no recorded client approval with a matching signature. The client approves the evidence first; then the release can run.");
   }
   const [v] = await db.select({ id: verdicts.id }).from(verdicts).innerJoin(disputes, eq(disputes.id, verdicts.disputeId))
     .where(and(eq(disputes.milestoneId, milestoneId), eq(verdicts.signature, sig))).limit(1);
-  if (v) return;
+  if (v) return null;
   throw new DomainError("APPROVAL_REQUIRED", "This release has no recorded mediator verdict with a matching signature, so no disputed money can move.");
 }
 

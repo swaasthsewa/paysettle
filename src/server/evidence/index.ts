@@ -6,7 +6,6 @@
  * P3: the AI verifier only advises — its output is stored beside the package and never decides anything here.
  * P4: every release this module triggers carries an HMAC approval signature over (milestoneId + evidence root hash).
  */
-import { createHmac, timingSafeEqual } from "node:crypto";
 import { and, desc, eq, inArray, isNotNull, sql } from "drizzle-orm";
 import { db, type Db, type Tx } from "@/db/client";
 import { evidencePackages, tranches, users, workspaces, wsMilestones, type ProofSpec } from "@/db/schema";
@@ -29,6 +28,7 @@ import { duplicateSignal, findPhotoMatch, hashImage, toSigned, type PhotoMatch }
 import {
   MAX_FILE_BYTES, MAX_FILES, MAX_NOTE, blocks, kindOfType, normalizeType, parseNote, sniffType, specSignals, type Signal,
 } from "./spec";
+import { approvalSignature } from "./signing";
 
 export type { Signal } from "./spec";
 export const REVIEW_HOURS = 48, REMINDER_HOURS = [24, 36] as const, TIMEOUT_HOURS = 72, FIX_WINDOW_HOURS = 72, MAX_ATTEMPTS = 3;
@@ -48,21 +48,8 @@ type Pkg = typeof evidencePackages.$inferSelect;
 const actorOf = (a: Actor) => ({ id: a.id, role: a.role, requestId: a.requestId });
 const SYSTEM = { id: null, role: "system" };
 
-/* ── signatures (P4) ── */
-function signingKey(): string {
-  const k = process.env.SIGNING_KEY;
-  if (k) return k;
-  if (!sandboxMode()) throw new Error("SIGNING_KEY is not set (P8)");
-  // Sandbox only: a key derived from this deployment's database address, so local demos work without setup.
-  return sha256("paysettle-sandbox-approval-key:" + (process.env.DATABASE_URL ?? "local"));
-}
-export const approvalSignature = (milestoneId: string, rootHash: string) => createHmac("sha256", signingKey()).update(milestoneId + rootHash).digest("hex");
-/** HMAC with the same deployment key as approvals, for other signed evidence-module consents (F3.03 sequence override). */
-export const evidenceHmac = (payload: string) => createHmac("sha256", signingKey()).update(payload).digest("hex");
-export function verifyApprovalSignature(milestoneId: string, rootHash: string, sig: string): boolean {
-  const want = Buffer.from(approvalSignature(milestoneId, rootHash), "hex"), got = Buffer.from(sig ?? "", "hex");
-  return want.length === got.length && timingSafeEqual(want, got);
-}
+/* ── signatures (P4): HMAC over (milestoneId + evidence root hash), in ./signing so money can verify them ── */
+export { approvalSignature, evidenceHmac, verifyApprovalSignature } from "./signing";
 
 /** Root hash: SHA-256 over the package's file hashes, sorted, joined with no separator. No files → the note's hash stands in. */
 export function rootHashOf(fileHashes: string[], note = ""): string {

@@ -8,6 +8,28 @@ DROP TRIGGER IF EXISTS revisions_immutable ON revisions;
 CREATE TRIGGER revisions_immutable BEFORE UPDATE OR DELETE ON revisions FOR EACH ROW EXECUTE FUNCTION ps_refuse_change();
 DROP TRIGGER IF EXISTS verdicts_immutable ON verdicts;
 CREATE TRIGGER verdicts_immutable BEFORE DELETE ON verdicts FOR EACH ROW EXECUTE FUNCTION ps_refuse_change();
+-- Verdicts (F4.06 F4.08): the signed terms are final once inserted. Only the execution legs move in place (PENDING,
+-- IN_FLIGHT, FAILED until DONE; DONE and SKIPPED are final) and the co-signer is set once (src/server/disputes/index.ts).
+CREATE OR REPLACE FUNCTION ps_verdict_final() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF NEW.id IS DISTINCT FROM OLD.id OR NEW.dispute_id IS DISTINCT FROM OLD.dispute_id OR NEW.origin IS DISTINCT FROM OLD.origin
+     OR NEW.mediator_id IS DISTINCT FROM OLD.mediator_id OR NEW.provider_share_bps IS DISTINCT FROM OLD.provider_share_bps
+     OR NEW.refund_cents IS DISTINCT FROM OLD.refund_cents OR NEW.release_cents IS DISTINCT FROM OLD.release_cents
+     OR NEW.findings IS DISTINCT FROM OLD.findings OR NEW.root_cause IS DISTINCT FROM OLD.root_cause
+     OR NEW.disposition IS DISTINCT FROM OLD.disposition OR NEW.fault IS DISTINCT FROM OLD.fault
+     OR NEW.signature IS DISTINCT FROM OLD.signature OR NEW.created_at IS DISTINCT FROM OLD.created_at THEN
+    RAISE EXCEPTION 'PaySettle: a verdict''s terms are final once signed';
+  END IF;
+  IF OLD.cosigner_id IS NOT NULL AND NEW.cosigner_id IS DISTINCT FROM OLD.cosigner_id THEN
+    RAISE EXCEPTION 'PaySettle: a verdict''s co-signer is final once recorded';
+  END IF;
+  IF (OLD.leg1 IN ('DONE', 'SKIPPED') AND NEW.leg1 IS DISTINCT FROM OLD.leg1) OR (OLD.leg2 IN ('DONE', 'SKIPPED') AND NEW.leg2 IS DISTINCT FROM OLD.leg2) THEN
+    RAISE EXCEPTION 'PaySettle: a finished verdict leg is final';
+  END IF;
+  RETURN NEW;
+END $$;
+DROP TRIGGER IF EXISTS verdicts_final ON verdicts;
+CREATE TRIGGER verdicts_final BEFORE UPDATE ON verdicts FOR EACH ROW EXECUTE FUNCTION ps_verdict_final();
 DROP TRIGGER IF EXISTS ledger_immutable ON ledger_entries;
 CREATE TRIGGER ledger_immutable BEFORE UPDATE OR DELETE ON ledger_entries FOR EACH ROW EXECUTE FUNCTION ps_refuse_change();
 

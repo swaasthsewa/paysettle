@@ -8,6 +8,7 @@
  * for the client's signed approval, offers that meet, or a mediator's signed verdict.
  */
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { createHmac } from "node:crypto";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -32,7 +33,7 @@ import { mockControl } from "@/lib/rails/mock";
 import { DomainError, type Actor } from "./types";
 import { confirmTranche, fundTranche, releaseMilestone } from "./money";
 import { ingestPaypalWebhook, processWebhookEvent } from "./money/webhook";
-import { makeContract, setMilestoneState, setOffset, type Fixture } from "./money/fixtures";
+import { makeContract, recordApproval, setMilestoneState, setOffset, type Fixture } from "./money/fixtures";
 import { approveMilestone, runReviewTimers, submitEvidence, SpecFailed } from "./evidence";
 import { LocalDiskStore, setObjectStore } from "./evidence/storage";
 import { craftExifJpeg } from "./evidence/exif";
@@ -575,18 +576,17 @@ describe("cheat attempts", () => {
       expect(await verifyChain(tx as unknown as Db)).toMatchObject({ ok: false, brokenAt: agreed.seq });
     });
 
-    // verdict amounts are not trigger-protected (leg status and co-signer are updated in place); an edit no longer matches
-    // the verdict's signature, and once a verdict has been carried out an edit moves nothing more
+    // the stored verdict still matches its signature (the canonical hash over its terms and the two sealed commits);
+    // its terms and its finished legs cannot be edited (C17 covers a verdict that has not run yet)
     const [d] = await db.select().from(disputes).where(eq(disputes.id, disputeId));
     const round1 = await db.select().from(bids).where(and(eq(bids.disputeId, disputeId), eq(bids.round, 1)));
     const commits = ["client", "provider"].map((role) => round1.find((b) => b.role === role)!.commit);
-    const sigOf = (x: typeof v) => canonicalHash({ verdict: x.id, dispute: d.id, milestone: d.milestoneId, amountCents: d.amountCents, origin: x.origin, mediatorId: x.mediatorId, providerShareBps: x.providerShareBps, refundCents: x.refundCents, releaseCents: x.releaseCents, findings: x.findings, rootCause: x.rootCause, disposition: x.disposition, fault: x.fault ?? null, dossierRoot: d.dossierRoot, commits });
-    expect(sigOf(v)).toBe(v.signature);
+    const [now] = await db.select().from(verdicts).where(eq(verdicts.id, v.id));
+    expect(canonicalHash({ verdict: now.id, dispute: d.id, milestone: d.milestoneId, amountCents: d.amountCents, origin: now.origin, mediatorId: now.mediatorId, providerShareBps: now.providerShareBps, refundCents: now.refundCents, releaseCents: now.releaseCents, findings: now.findings, rootCause: now.rootCause, disposition: now.disposition, fault: now.fault ?? null, dossierRoot: d.dossierRoot, commits })).toBe(now.signature);
+    expect(await tryWrite(sql`UPDATE verdicts SET release_cents = release_cents + 50000, refund_cents = refund_cents - 50000 WHERE id = ${v.id}`)).toMatch(/terms are final/);
+    expect(await tryWrite(sql`UPDATE verdicts SET leg2 = 'PENDING' WHERE id = ${v.id}`)).toMatch(/finished verdict leg is final/);
     const ledgerBefore = await db.select().from(ledgerEntries).where(eq(ledgerEntries.trancheId, f.trancheId));
     const railBefore = mockControl.txns();
-    await db.update(verdicts).set({ releaseCents: v.releaseCents + 50_000, refundCents: v.refundCents - 50_000 }).where(eq(verdicts.id, v.id));
-    const [edited] = await db.select().from(verdicts).where(eq(verdicts.id, v.id));
-    expect(sigOf(edited)).not.toBe(edited.signature);
     expect(await retryExecution(c, disputeId)).toEqual({ done: true });
     expect(mockControl.txns()).toEqual(railBefore);
     expect(await db.select().from(ledgerEntries).where(eq(ledgerEntries.trancheId, f.trancheId))).toEqual(ledgerBefore);
@@ -675,4 +675,67 @@ describe("cheat attempts", () => {
     expect(m.ledger.filter((e) => e.milestoneId === ms && (e.type === "RELEASE" || e.type === "FEE")).reduce((a, e) => a + e.amountCents, 0)).toBe(s.releaseCents);
     expect((await msRow(ms)).state).toBe("SETTLED_BY_VERDICT");
   });
+
+  it("C17 verdict amounts edited in the database before the verdict runs are refused; the leg and co-signer updates the disputes module makes still work", async () => {
+    const { f, ms, disputeId, signer, second } = await awaitingCosign();
+    const [v] = await db.select().from(verdicts).where(eq(verdicts.disputeId, disputeId));
+    for (const set of [
+      sql`release_cents = release_cents + 100000, refund_cents = refund_cents - 100000`, sql`provider_share_bps = 10000`, sql`signature = ${"0".repeat(64)}`,
+      sql`mediator_id = ${second.id}`, sql`origin = 'TIER1'`, sql`dispute_id = ${"dsp_other"}`, sql`findings = 'Every criterion is met by the evidence on file.'`,
+    ]) expect(await tryWrite(sql`UPDATE verdicts SET ${set} WHERE id = ${v.id}`)).toMatch(/terms are final/);
+    // the columns the disputes module moves in place stay writable (checked in rolled-back transactions)
+    expect(await tryWrite(sql`UPDATE verdicts SET leg1 = 'IN_FLIGHT' WHERE id = ${v.id}`)).toBe("accepted");
+    expect(await tryWrite(sql`UPDATE verdicts SET cosigner_id = ${second.id} WHERE id = ${v.id}`)).toBe("accepted");
+    await expectNothingMoved(f.trancheId, ms);
+
+    // the real co-signature then carries out exactly the signed split
+    await cosignVerdict(second, disputeId);
+    const [done] = await db.select().from(verdicts).where(eq(verdicts.id, v.id));
+    expect([done.leg1, done.leg2, done.cosignerId, done.refundCents, done.releaseCents]).toEqual(["DONE", "DONE", second.id, v.refundCents, v.releaseCents]);
+    const m = await moved(f.trancheId);
+    expect(m.ledger.filter((e) => e.milestoneId === ms && (e.type === "RELEASE" || e.type === "FEE")).reduce((a, e) => a + e.amountCents, 0)).toBe(v.releaseCents);
+    expect(m.ledger.filter((e) => e.type === "VOID" || e.type === "REFUND").reduce((a, e) => a + e.amountCents, 0)).toBe(v.refundCents);
+    // once recorded, the co-signer and the finished legs are final as well
+    expect(await tryWrite(sql`UPDATE verdicts SET cosigner_id = ${signer.id} WHERE id = ${v.id}`)).toMatch(/co-signer is final/);
+    expect(await tryWrite(sql`UPDATE verdicts SET leg1 = 'FAILED' WHERE id = ${v.id}`)).toMatch(/finished verdict leg is final/);
+  });
+
+  it("C18 an APPROVE review written straight into the database with a forged signature cannot trigger a release, and $0 moves", async () => {
+    const job = await heldJob({ artifacts: [{ kind: "PDF", min: 1 }], criteria: ["The survey report is delivered"] });
+    const r = await submitEvidence(job.p, job.ms, [{ name: "survey.pdf", type: "application/pdf", bytes: samplePdf("Survey", ["Done"]) }], "");
+    const forgeries: [string, string][] = [
+      ["a random value", sha256("not a signature")],
+      ["an HMAC with another key", createHmac("sha256", "attacker-key").update(job.ms + r.rootHash).digest("hex")],
+      ["a genuine signature copied from another milestone", await recordApproval(job.f.milestoneIds[1], { by: job.c.id })],
+    ];
+    for (const [what, sig] of forgeries) {
+      await db.insert(evidenceReviews).values({ id: newId("rv"), packageId: r.packageId, milestoneId: job.ms, decision: "APPROVE", rootHash: r.rootHash, signature: sig, byUser: job.c.id, mfa: "verified" });
+      expect(await code(releaseMilestone(job.c, job.ms, { kind: "MILESTONE", approvalSig: sig })), what).toBe("APPROVAL_SIGNATURE_INVALID");
+    }
+    // the app's retry path picks up the forged row once the milestone is set to APPROVED, and still releases nothing
+    await setMilestoneState(job.ms, "APPROVED");
+    expect(await code(approveMilestone(job.c, job.ms, r.rootHash))).toBe("RELEASE_QUEUED");
+
+    const m = await moved(job.f.trancheId);
+    expect([m.rail, m.ledger, m.releases]).toEqual([[], [], []]); // no release row: the check runs before anything is recorded
+    expect((await trRow(job.f.trancheId)).state).toBe("HELD");
+    const refused = await db.select().from(auditChain).where(and(eq(auditChain.target, job.ms), eq(auditChain.action, "money.approval_signature_invalid")));
+    expect(refused).toHaveLength(forgeries.length + 1);
+  });
 });
+
+/** A $6,000 Tier 3 verdict signed by the assigned mediator and waiting for a second mediator's co-signature. */
+async function awaitingCosign() {
+  const h = await heldDispute(600_000);
+  const tag = h.f.orgId.slice(-10);
+  const m1: Actor = { id: `u_cv1_${tag}`, role: "mediator" }, m2: Actor = { id: `u_cv2_${tag}`, role: "mediator" };
+  await db.insert(users).values([m1, m2].map((m) => ({ id: m.id, orgId: h.f.orgId, email: `${m.id}@test.invalid`, name: `Mediator ${m.id}`, role: "mediator" as const })));
+  await skipToVault(h.c, h.disputeId);
+  await lockVault(h.c, h.disputeId);
+  await lockVault(h.p, h.disputeId);
+  const assigned = (await db.select().from(disputes).where(eq(disputes.id, h.disputeId)))[0].mediatorId;
+  const signer = assigned === m1.id ? m1 : m2, second = signer === m1 ? m2 : m1;
+  expect(assigned).toBe(signer.id);
+  await issueVerdict(signer, h.disputeId, { providerShareBps: 5000, findings: "Half of the criteria are met by the evidence on file.", rootCause: "CRITERIA_VAGUE", disposition: "RESUME", fault: "SHARED" });
+  return { ...h, signer, second };
+}
